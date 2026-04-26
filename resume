@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+# Resume an existing autolab project. Optionally seed an additional Hypothesis.
+#
+# Usage:
+#   ./resume                                    # interactive: list and pick
+#   ./resume --project <id>                     # continue named project
+#   ./resume --project <id> --hypothesis "..."  # add a user-supplied Hypothesis, then continue
+#   ./resume --project <id> --resume-from-bank  # pop next parked HYP from ideas/parking_lot.md as new seed
+#   ./resume --project <id> --watchdog          # hands-off resume
+#   ./resume --list                             # just print the project table
+set -euo pipefail
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$REPO_DIR"
+
+PROJECT_ID=""
+HYPOTHESIS=""
+LIST_ONLY=0
+WATCHDOG=0
+PASS_ARGS=("--resume")
+
+usage() {
+  cat <<EOF
+Usage: ./resume [--project <id>] [options]
+
+Options:
+  --project <id>           Project to resume (required unless --list or interactive pick)
+  --hypothesis "<text>"    Seed an additional Hypothesis directly into the thread
+  --resume-from-bank       Pop the first parked HYP-* from ideas/parking_lot.md as a new seed
+  --benchmark <name>       Bias the experiment-designer toward a tracked benchmark
+  --watchdog               Run under the idle watchdog
+  --single-step            Run only the next phase, then exit
+  --list                   Print the projects table and exit
+  -h, --help               Show this help
+EOF
+}
+
+while (( $# > 0 )); do
+  case "$1" in
+    --project)
+      PROJECT_ID="${2:-}"
+      shift 2
+      ;;
+    --hypothesis)
+      HYPOTHESIS="${2:-}"
+      shift 2
+      ;;
+    --watchdog)
+      WATCHDOG=1
+      shift
+      ;;
+    --list)
+      LIST_ONLY=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      PASS_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [[ -f "$REPO_DIR/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$REPO_DIR/.env"
+  set +a
+fi
+
+mkdir -p projects
+uv run python tools/refresh_indexes.py --projects
+
+if (( LIST_ONLY )); then
+  if [[ -f "projects/INDEX.md" ]]; then
+    cat "projects/INDEX.md"
+  else
+    echo "(no projects)"
+  fi
+  exit 0
+fi
+
+# Interactive picker if no --project given
+if [[ -z "$PROJECT_ID" ]]; then
+  mapfile -t CANDIDATES < <(find projects -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort)
+  if (( ${#CANDIDATES[@]} == 0 )); then
+    echo "no projects found. Use ./start --idea \"...\" first." >&2
+    exit 2
+  fi
+  echo "Available projects:"
+  for i in "${!CANDIDATES[@]}"; do
+    n=$((i+1))
+    echo "  [$n] ${CANDIDATES[$i]}"
+  done
+  read -r -p "Select project [1-${#CANDIDATES[@]}]: " choice
+  if [[ ! "$choice" =~ ^[0-9]+$ ]] || (( choice < 1 || choice > ${#CANDIDATES[@]} )); then
+    echo "invalid selection" >&2
+    exit 2
+  fi
+  PROJECT_ID="${CANDIDATES[$((choice - 1))]}"
+fi
+
+if [[ ! -d "projects/$PROJECT_ID" ]]; then
+  echo "ERROR: project '$PROJECT_ID' does not exist under projects/" >&2
+  exit 2
+fi
+
+export AUTOLAB_PROJECT="$PROJECT_ID"
+echo ">>> resuming project: $PROJECT_ID"
+[[ -n "$HYPOTHESIS" ]] && echo ">>> seeding additional Hypothesis: $HYPOTHESIS"
+
+if [[ -n "$HYPOTHESIS" ]]; then
+  PASS_ARGS+=("--hypothesis" "$HYPOTHESIS")
+fi
+
+if (( WATCHDOG )); then
+  exec uv run python tools/idle_continue.py
+else
+  exec uv run python tools/run_orchestrator.py "${PASS_ARGS[@]}"
+fi

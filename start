@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# Start a new autolab project on a seed idea. Does NOT touch existing projects.
+#
+# Usage:
+#   ./start --idea "investigate whether layer-wise LRs help small MLPs on MNIST"
+#   ./start --idea "..." --benchmark mnist
+#   ./start --idea "..." --watchdog            # hands-off mode
+#   ./start --idea "..." --single-step         # run only the seed phase, then exit
+#   ./start --idea "..." --project-id custom-name   # override the auto-generated id
+set -euo pipefail
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$REPO_DIR"
+
+IDEA=""
+PROJECT_ID=""
+WATCHDOG=0
+PASS_ARGS=()
+
+usage() {
+  cat <<EOF
+Usage: ./start --idea "<seed idea>" [options]
+
+Required:
+  --idea <text>          One-line research idea to seed the run
+
+Optional:
+  --project-id <id>      Override auto-generated <slug>-<YYYYMMDD>
+  --benchmark <name>     Bias the experiment-designer toward a tracked benchmark
+  --watchdog             Run under the idle watchdog (hands-off mode)
+  --single-step          Run only the seed phase, then exit
+  -h, --help             Show this help
+EOF
+}
+
+while (( $# > 0 )); do
+  case "$1" in
+    --idea)
+      IDEA="${2:-}"
+      shift 2
+      ;;
+    --project-id)
+      PROJECT_ID="${2:-}"
+      shift 2
+      ;;
+    --watchdog)
+      WATCHDOG=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      PASS_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [[ -z "$IDEA" ]]; then
+  echo "ERROR: --idea is required" >&2
+  echo
+  usage >&2
+  exit 2
+fi
+
+if [[ -f "$REPO_DIR/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$REPO_DIR/.env"
+  set +a
+fi
+
+# Compute a project id: <slug>-<YYYYMMDD>, suffixed -2/-3 on collision.
+if [[ -z "$PROJECT_ID" ]]; then
+  PROJECT_ID="$(uv run python -c '
+import sys
+from tools._paths import make_project_id
+print(make_project_id(sys.argv[1]))
+' "$IDEA")"
+elif [[ -d "projects/$PROJECT_ID" ]]; then
+  echo "ERROR: project id '$PROJECT_ID' already exists; pick a different one or use ./resume" >&2
+  exit 2
+fi
+
+echo ">>> creating project: $PROJECT_ID"
+echo ">>> seed idea: $IDEA"
+
+mkdir -p "projects/$PROJECT_ID/logs"
+
+export AUTOLAB_PROJECT="$PROJECT_ID"
+
+if (( WATCHDOG )); then
+  # First, materialize the seed phase synchronously so the watchdog has a
+  # checkpoint to resume from.
+  uv run python tools/run_orchestrator.py --idea "$IDEA" --single-step "${PASS_ARGS[@]}"
+  exec uv run python tools/idle_continue.py
+else
+  exec uv run python tools/run_orchestrator.py --idea "$IDEA" "${PASS_ARGS[@]}"
+fi
