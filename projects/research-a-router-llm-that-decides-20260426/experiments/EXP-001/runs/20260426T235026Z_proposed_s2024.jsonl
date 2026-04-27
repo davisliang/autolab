@@ -1,1 +1,0 @@
-{"seed": 2024, "config": "proposed", "unnecessary_escalation_reduction_ratio": 0.22, "mean_quality_delta": 0.159375, "bootstrap_95ci_lower": -0.022247, "n_test_turns": 160, "base_ue": 50, "prop_ue": 39}

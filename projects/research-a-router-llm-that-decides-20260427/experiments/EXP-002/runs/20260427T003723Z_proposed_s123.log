@@ -1,5 +1,0 @@
-# cmd: uv run python /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260427/experiments/EXP-002/code/run.py --seed 123 --config proposed --out /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260427/experiments/EXP-002/runs/20260427T003723Z_proposed_s123.jsonl
-`trust_remote_code` is not supported anymore.
-Please check that the Hugging Face dataset 'cais/mmlu' isn't based on a loading script and remove `trust_remote_code`.
-If the dataset is based on a loading script, please ask the dataset author to remove it and convert it to a standard format like Parquet.
-seed=123 config=proposed qab_normalized=1.2963 acc_small=0.460 acc_large=0.845

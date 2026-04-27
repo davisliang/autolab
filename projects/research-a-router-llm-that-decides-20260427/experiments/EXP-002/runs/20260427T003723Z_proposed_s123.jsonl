@@ -1,1 +1,0 @@
-{"seed": 123, "config": "proposed", "quality_at_budget_normalized": 1.2963253246753248, "accuracy_small_only": 0.46, "accuracy_large_only": 0.845, "accuracy_entropy_router": 0.82, "accuracy_text_router": 0.0, "cost_ratio_entropy": 0.6666666666666666, "cost_ratio_text": 0.0}

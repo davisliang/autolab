@@ -23,6 +23,7 @@ import argparse
 import concurrent.futures
 import json
 import os
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -36,6 +37,7 @@ from _paths import (
     checkpoints_dir,
     cost_ledger,
     drafts_dir,
+    experiments_dir,
     get_project_id,
     init_project_dir,
     orchestrator_log,
@@ -719,6 +721,144 @@ def phase_write() -> list[str]:
     return new_ids
 
 
+def _fmt_num(v, sig: int = 4) -> str:
+    """Compact numeric formatter: avoids scientific where possible, max sig figs."""
+    if v is None:
+        return "—"
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return str(v)
+    if f == 0:
+        return "0"
+    abs_f = abs(f)
+    if abs_f >= 1000 or abs_f < 0.001:
+        return f"{f:.{sig-1}e}"
+    if abs_f >= 1:
+        return f"{f:.{max(0, sig - len(str(int(abs_f))))}f}"
+    return f"{f:.{sig}f}"
+
+
+def _read_result_json(plan_id: str) -> dict | None:
+    p = experiments_dir() / plan_id / "result.json"
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def _format_results_tables() -> str:
+    """Generate a markdown block of results tables comparing proposed vs baseline
+    for every ExperimentResult that has a corresponding result.json on disk.
+
+    Output: a summary table (one row per experiment) + per-experiment detail tables
+    (one row per metric, with mean ± stddev for both conditions and Δ).
+    """
+    thread = read_thread()
+    plans = {p["id"]: p for p in by_type(thread, "ExperimentPlan")}
+    results = by_type(thread, "ExperimentResult")
+    hyps = {h["id"]: h for h in by_type(thread, "Hypothesis")}
+    if not results:
+        return ""
+
+    summary_rows: list[str] = []
+    detail_blocks: list[str] = []
+
+    for res in results:
+        plan_id = res.get("plan_id")
+        plan = plans.get(plan_id, {})
+        rj = _read_result_json(plan_id)
+        if not rj:
+            continue
+        metrics = rj.get("metrics", {})
+        proposed = metrics.get("proposed", {}) or {}
+        baseline = metrics.get("baseline", {}) or {}
+        if not proposed and not baseline:
+            continue
+
+        # Linked Hypothesis (first HYP- parent of the plan)
+        hyp_id = next(
+            (p for p in (plan.get("parent_ids") or []) if p.startswith("HYP-")),
+            None,
+        )
+        hyp = hyps.get(hyp_id, {}) if hyp_id else {}
+        pred_metric = hyp.get("prediction_metric", "") or ""
+        pred_threshold = hyp.get("prediction_threshold", "")
+        pred_direction = hyp.get("prediction_direction", "")
+
+        status = (res.get("status") or "?").lower()
+        marker = {"pass": "**✓ pass**", "fail": "✗ fail", "crash": "⚠ crash"}.get(status, f"? {status}")
+        is_ablation = " *(ablation)*" if plan.get("is_ablation") else ""
+
+        # Summary row
+        if pred_metric and pred_metric in proposed:
+            p_mean = proposed[pred_metric].get("mean")
+            b_mean = baseline.get(pred_metric, {}).get("mean")
+            delta = (p_mean - b_mean) if (p_mean is not None and b_mean is not None) else None
+            hyp_short = (hyp.get("summary", "") or "")[:50].replace("|", "\\|")
+            summary_rows.append(
+                f"| `{plan_id}`{is_ablation} | `{hyp_id or '—'}` {hyp_short} | "
+                f"`{pred_metric}` | {_fmt_num(b_mean)} | {_fmt_num(p_mean)} | "
+                f"{(_fmt_num(delta) if delta is None else f'{delta:+.4g}')} | {marker} |"
+            )
+
+        # Detail block
+        all_metrics = sorted(set(proposed.keys()) | set(baseline.keys()))
+        rows = []
+        for m in all_metrics:
+            b = baseline.get(m, {}) or {}
+            p = proposed.get(m, {}) or {}
+            b_str = (
+                f"{_fmt_num(b.get('mean'))} ± {_fmt_num(b.get('stddev'), 2)}"
+                if b else "—"
+            )
+            p_str = (
+                f"{_fmt_num(p.get('mean'))} ± {_fmt_num(p.get('stddev'), 2)}"
+                if p else "—"
+            )
+            n = p.get("n_seeds") or b.get("n_seeds") or 0
+            d = None
+            if b and p and b.get("mean") is not None and p.get("mean") is not None:
+                d = p["mean"] - b["mean"]
+            d_str = f"{d:+.4g}" if d is not None else "—"
+            tag = " ←" if m == pred_metric else ""
+            rows.append(f"| `{m}`{tag} | {b_str} | {p_str} | {d_str} | {n} |")
+
+        threshold_note = ""
+        if pred_metric:
+            threshold_note = (
+                f"_Hypothesis prediction: `{pred_metric}` "
+                f"{pred_direction} threshold `{pred_threshold}` — {marker}_\n\n"
+            )
+
+        detail_blocks.append(
+            f"#### `{plan_id}`{is_ablation} → {(hyp.get('summary','')[:120] if hyp_id else '(no linked hypothesis)')}\n\n"
+            f"{threshold_note}"
+            f"| Metric | Baseline (mean ± std) | Proposed (mean ± std) | Δ | Seeds |\n"
+            f"|--------|----------------------|----------------------|---|-------|\n"
+            + "\n".join(rows)
+        )
+
+    if not summary_rows and not detail_blocks:
+        return ""
+
+    out = ["### Results Summary\n"]
+    if summary_rows:
+        out.append(
+            "| Plan | Hypothesis | Predicted Metric | Baseline | Proposed | Δ | Status |\n"
+            "|------|------------|------------------|----------|----------|---|--------|\n"
+            + "\n".join(summary_rows)
+            + "\n"
+        )
+    else:
+        out.append("_(no predicted-metric rows available)_\n")
+    if detail_blocks:
+        out.append("\n### Per-Experiment Detail\n\n" + "\n\n".join(detail_blocks) + "\n")
+    return "\n".join(out)
+
+
 def phase_final() -> list[str]:
     drafts = drafts_dir()
     drafts.mkdir(parents=True, exist_ok=True)
@@ -736,8 +876,13 @@ def phase_final() -> list[str]:
     if ideas:
         title = ideas[-1].get("summary", title)[:120]
     out = [f"# {title}", ""]
+    results_tables = _format_results_tables()
     for key, header in order:
         out.append(header)
+        # Inject auto-generated results tables at the top of the Experiments
+        # section so the reader can skim outcomes before the prose.
+        if key == "experiments" and results_tables:
+            out.append(results_tables)
         sec = sections.get(key)
         if not sec:
             out.append("_(missing)_\n")
@@ -751,7 +896,65 @@ def phase_final() -> list[str]:
     final_path = drafts / "paper-vFINAL.md"
     final_path.write_text("\n".join(out) + "\n")
     log_line(f"final: wrote {final_path}")
-    return [str(final_path)]
+    pdf_path = drafts / "paper-vFINAL.pdf"
+    bib_path = drafts / "citations.bib"
+    err = render_pdf(final_path, bib_path, pdf_path)
+    out_paths = [str(final_path)]
+    if err:
+        log_line(f"final: PDF skipped — {err}")
+    else:
+        log_line(f"final: wrote {pdf_path}")
+        out_paths.append(str(pdf_path))
+    return out_paths
+
+
+def render_pdf(md_path: Path, bib_path: Path, out_path: Path) -> str | None:
+    """Render `md_path` to `out_path` via pandoc. Returns None on success,
+    or a human-readable error string. Never raises."""
+    if not md_path.exists():
+        return f"source markdown missing: {md_path}"
+    if not shutil.which("pandoc"):
+        return (
+            "pandoc not installed. Install with `brew install pandoc basictex` "
+            "(macOS) or `apt install pandoc texlive-xetex` (Linux). "
+            "The .md is the canonical artifact; PDF is a convenience render."
+        )
+    cmd = [
+        "pandoc",
+        str(md_path),
+        "-o", str(out_path),
+        "--citeproc",
+        "--standalone",
+        "-V", "geometry:margin=1in",
+        "-V", "fontsize=11pt",
+        "-V", "linkcolor:blue",
+        "-V", "colorlinks=true",
+    ]
+    if bib_path.exists():
+        cmd += ["--bibliography", str(bib_path)]
+    # Prefer xelatex if present (better unicode); else let pandoc auto-pick.
+    if shutil.which("xelatex"):
+        cmd += ["--pdf-engine", "xelatex"]
+    elif shutil.which("pdflatex"):
+        cmd += ["--pdf-engine", "pdflatex"]
+    elif shutil.which("wkhtmltopdf"):
+        cmd += ["--pdf-engine", "wkhtmltopdf"]
+    elif shutil.which("weasyprint"):
+        cmd += ["--pdf-engine", "weasyprint"]
+    else:
+        return (
+            "no PDF engine found. Install one: `brew install basictex` (xelatex), "
+            "`brew install --cask wkhtmltopdf`, or `pip install weasyprint`."
+        )
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+    except subprocess.TimeoutExpired:
+        return "pandoc timed out (>180s)"
+    except FileNotFoundError as e:
+        return f"pandoc invocation failed: {e}"
+    if r.returncode != 0:
+        return f"pandoc rc={r.returncode}: {(r.stderr or r.stdout).strip()[:400]}"
+    return None
 
 
 def cycle_state_path() -> Path:

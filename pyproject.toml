@@ -13,6 +13,7 @@ dependencies = [
     "scikit-learn>=1.4.0",
     "sentence-transformers>=5.4.1",
     "datasets>=4.8.4",
+    "weasyprint>=68.1",
 ]
 
 [project.optional-dependencies]

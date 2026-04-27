@@ -1,2 +1,0 @@
-# cmd: uv run python /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260427/experiments/EXP-003/code/run.py --seed 456 --config proposed --out /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260427/experiments/EXP-003/runs/20260427T004925Z_proposed_s456.jsonl
-seed=456 config=proposed f1=0.6838 cost=$0.682013 cost_reduction@matchedF1=0.0000

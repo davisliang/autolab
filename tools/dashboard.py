@@ -394,6 +394,34 @@ def read_thought_full(pid: str, thought_id: str) -> dict:
     return {"id": safe_id, "content": safe_read(p, 200_000)}
 
 
+_BINARY_DRAFT_EXTS = {".pdf", ".png", ".jpg", ".jpeg", ".gif", ".zip"}
+
+
+def _safe_draft_name(name: str) -> str | None:
+    safe = re.sub(r"[^A-Za-z0-9._-]", "", name)
+    if not safe or safe.startswith(".") or "/" in safe or "\\" in safe:
+        return None
+    return safe
+
+
+def read_draft_full(pid: str, filename: str) -> dict:
+    safe = _safe_draft_name(filename)
+    if not safe:
+        return {"error": "bad_name"}
+    p = drafts_dir(pid) / safe
+    if not p.exists() or not p.is_file():
+        return {"error": "not_found", "name": safe}
+    suffix = p.suffix.lower()
+    if suffix in _BINARY_DRAFT_EXTS:
+        return {
+            "name": safe,
+            "binary": True,
+            "size": p.stat().st_size,
+            "raw_url": f"/raw/{pid}/draft/{safe}",
+        }
+    return {"name": safe, "content": safe_read(p, 500_000)}
+
+
 INDEX_HTML = """<!doctype html>
 <html lang="en">
 <head>
@@ -468,18 +496,29 @@ INDEX_HTML = """<!doctype html>
   .hcnt .tag { display:inline-block; width:24px; color:#5b667a; }
   .legend { display:flex; gap:14px; font-size:10px; color:#8b95a7; padding:0 0 6px 90px; }
   .legend .swatch { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
-  /* Live status banner */
-  .live-banner { background:linear-gradient(90deg,#1d2742,#161b22); border:1px solid #2f3e63; border-radius:6px; padding:10px 14px; margin-bottom:14px; }
+  /* Live status banner — single-line, expandable */
+  .live-banner { background:linear-gradient(90deg,#1d2742,#161b22); border:1px solid #2f3e63; border-radius:6px; padding:8px 12px; margin-bottom:14px; user-select:none; }
   .live-banner.idle { background:#161b22; border-color:#2a313c; }
-  .live-banner .row { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
-  .live-banner .running { color:#fbbf24; font-weight:600; font-size:13px; }
-  .live-banner .running.idle { color:#5b667a; font-weight:400; }
-  .live-banner .meta { color:#7c8699; font-size:11px; }
-  .live-banner .calls { margin-top:8px; display:flex; flex-direction:column; gap:4px; }
+  .live-banner.expandable { cursor:pointer; }
+  .live-banner.expandable:hover { background:linear-gradient(90deg,#243154,#1a2030); }
+  .live-banner .banner-row { color:#fbbf24; font-weight:500; font-size:12px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .live-banner.idle .banner-row { color:#8b95a7; font-weight:400; }
+  .live-banner .expand-hint { color:#5b667a; font-size:10px; font-weight:400; }
+  .live-banner .banner-detail { display:none; margin-top:8px; flex-direction:column; gap:4px; }
+  .live-banner.open .banner-detail { display:flex; }
   .live-banner .call { display:flex; gap:10px; font-size:11px; padding:4px 8px; background:#0a0e14; border-radius:4px; }
   .live-banner .call .skill { color:#7dd3fc; font-weight:600; min-width:140px; }
   .live-banner .call .model { color:#86efac; }
   .live-banner .call .age { color:#8b95a7; margin-left:auto; }
+  /* One-line stat strip in place of cards */
+  .statstrip { padding:10px 12px; background:#161b22; border:1px solid #2a313c; border-radius:6px; color:#dde3ef; font-size:13px; display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin-bottom:4px; }
+  .statstrip .item b { color:#7dd3fc; font-weight:600; font-variant-numeric:tabular-nums; }
+  .statstrip .item .lbl { color:#7c8699; font-size:11px; text-transform:uppercase; letter-spacing:.5px; margin-left:6px; }
+  .statstrip .sep { color:#3a4658; }
+  /* Collapsible H2: parking lot, papers index, etc. */
+  h2.collapsible { cursor:pointer; user-select:none; }
+  h2.collapsible:hover { color:#bae6fd; }
+  h2.collapsible .caret { display:inline-block; width:14px; color:#5b667a; font-weight:400; }
   .empty { color:#5b667a; font-style:italic; padding:6px 0; }
   .status { display:inline-block; width:8px; height:8px; border-radius:50%; background:#5b667a; margin-right:6px; }
   .status.live { background:#86efac; box-shadow:0 0 6px #86efac; }
@@ -538,23 +577,107 @@ async function loadProjects(){
   }));
   if (!activeId && data.projects.length){ activeId = data.projects[0].id; loadDetail(); loadProjects(); }
 }
+// Persisted across re-renders: whether the live banner detail is open
+let bannerOpen = false;
 function liveBanner(live, cycle, nRetreats){
   const running = live.running_phase;
   const idle = !running && live.inflight_calls.length === 0;
-  const callsHtml = live.inflight_calls.length
-    ? '<div class="calls">' + live.inflight_calls.map(c =>
+  const callsCount = live.inflight_calls.length;
+  const cycleStr = cycle && cycle > 1
+    ? ` · cycle ${cycle}` + (nRetreats ? ` (${nRetreats} retreat${nRetreats>1?'s':''})` : '')
+    : '';
+  const callsStr = callsCount ? ` · ${callsCount} call${callsCount>1?'s':''} in flight` : '';
+  const phaseAgo = live.phase_started_at ? ` · started ${fmtAgo(live.phase_started_at)}` : '';
+  const lastLog = live.last_event_ts ? ` · last log ${fmtAgo(live.last_event_ts)}` : '';
+  const summary = running
+    ? `▶ ${escHtml(running)}${cycleStr}${callsStr}${phaseAgo}`
+    : `◼ idle${cycleStr}${lastLog}`;
+  const expandable = callsCount > 0;
+  const detail = expandable
+    ? '<div class="banner-detail">' + live.inflight_calls.map(c =>
         `<div class="call"><span class="skill">${escHtml(c.skill)}</span> <span>phase=${escHtml(c.phase)}</span> <span class="model">${escHtml(c.model)}</span> <span class="age">started ${fmtAgo(c.started_at)}</span></div>`
       ).join('') + '</div>'
-    : '<div class="meta" style="margin-top:6px">no claude subprocess in flight</div>';
-  const cycleStr = cycle && cycle > 1 ? ` · cycle ${cycle}` + (nRetreats ? ` (${nRetreats} retreat${nRetreats>1?'s':''})` : '') : '';
-  return `
-    <div class="live-banner ${idle?'idle':''}">
-      <div class="row">
-        <span class="running ${running?'':'idle'}">${running ? '▶ phase: '+escHtml(running) : '◼ no phase running'}${cycleStr}</span>
-        <span class="meta">${live.phase_started_at ? 'phase started '+fmtAgo(live.phase_started_at) : ''} ${live.last_event_ts ? ' · last log '+fmtAgo(live.last_event_ts) : ''}</span>
-      </div>
-      ${callsHtml}
+    : '';
+  const cls = (idle?'idle ':'') + (expandable?'expandable ':'') + (expandable && bannerOpen ? 'open':'');
+  const hint = expandable ? `<span class="expand-hint">${bannerOpen?'▾':'▸'} ${callsCount} call${callsCount>1?'s':''}</span>` : '';
+  return `<div class="live-banner ${cls}" id="liveBanner">
+    <div class="banner-row">
+      <span>${summary}</span>
+      ${hint}
+    </div>
+    ${detail}
+  </div>`;
+}
+
+// Collapsed sections — track by stable key so state survives re-renders.
+const collapsedSections = new Set(['parking', 'papersIndex']); // collapsed by default
+function applyCollapsibles(){
+  document.querySelectorAll('h2.collapsible').forEach(h => {
+    const k = h.dataset.key;
+    const target = document.getElementById(k);
+    const collapsed = collapsedSections.has(k);
+    const caret = h.querySelector('.caret');
+    if (caret) caret.textContent = collapsed ? '▸' : '▾';
+    if (target) target.style.display = collapsed ? 'none' : '';
+    h.onclick = () => {
+      if (collapsedSections.has(k)) collapsedSections.delete(k);
+      else collapsedSections.add(k);
+      applyCollapsibles();
+    };
+  });
+}
+
+// Drafts: click a row to expand its contents inline (text), or open a new tab (binary).
+const expandedDrafts = new Map();  // name -> content | '__loading__' | {binary, raw_url, size}
+async function loadDraftFull(name){
+  if (!activeId) return;
+  if (expandedDrafts.has(name)) return;
+  expandedDrafts.set(name, '__loading__');
+  renderDrafts(window.__lastDetail.drafts);
+  const r = await fetch('/api/project/' + encodeURIComponent(activeId) + '/draft/' + encodeURIComponent(name));
+  const j = await r.json();
+  if (j.binary){
+    // binary: open in new tab, don't keep expanded
+    expandedDrafts.delete(name);
+    window.open(j.raw_url, '_blank', 'noopener');
+    renderDrafts(window.__lastDetail.drafts);
+    return;
+  }
+  expandedDrafts.set(name, j.content || j.error || '(empty)');
+  renderDrafts(window.__lastDetail.drafts);
+}
+function renderDrafts(drafts, prevExpandedScroll){
+  const wrap = document.getElementById('drafts');
+  if (!wrap) return;
+  if (!drafts.length){ wrap.innerHTML = '<div class="empty">none yet — paper renders here after the write phase</div>'; return; }
+  wrap.innerHTML = drafts.map(f => {
+    const exp = expandedDrafts.get(f.name);
+    const isExp = expandedDrafts.has(f.name);
+    let fullHtml = '';
+    if (isExp){
+      if (exp === '__loading__') fullHtml = '<div class="thought-full loading">loading…</div>';
+      else fullHtml = `<div class="thought-full">${escHtml(exp)}</div>`;
+    }
+    return `<div class="thought ${isExp?'expanded':''}" data-name="${escHtml(f.name)}">
+      <div class="title">${escHtml(f.name)}</div>
+      <div class="sum">${(f.size/1024).toFixed(1)} KB · ${fmtAgo(f.mtime)}</div>
+      ${fullHtml}
     </div>`;
+  }).join('');
+  wrap.querySelectorAll('.thought').forEach(el => el.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    const name = el.dataset.name;
+    if (expandedDrafts.has(name)){ expandedDrafts.delete(name); renderDrafts(drafts); }
+    else { loadDraftFull(name); }
+  }));
+  if (prevExpandedScroll){
+    Object.entries(prevExpandedScroll).forEach(([name, top]) => {
+      if (top > 4){
+        const card = wrap.querySelector('.thought[data-name="' + CSS.escape(name) + '"] .thought-full');
+        if (card) card.scrollTop = top;
+      }
+    });
+  }
 }
 function pctOf(part, total){ return total > 0 ? (part/total*100).toFixed(1) : '0.0'; }
 function tokenHistogram(byBucket){
@@ -672,7 +795,6 @@ async function loadDetail(){
     const hit = r.input_tokens > 0 ? (cr/r.input_tokens*100).toFixed(0)+'%' : '—';
     return `<tr><td>${escHtml(r.ts.slice(11,19))}</td><td>${escHtml(r.phase)}</td><td>${escHtml(r.skill)}</td><td>${escHtml(r.model)}</td><td>${fmtTok(fresh)}</td><td>${fmtTok(cc)}</td><td>${fmtTok(cr)}</td><td>${hit}</td><td>${fmtTok(r.output_tokens)}</td></tr>`;
   }).join('');
-  const drafts = d.drafts.length ? d.drafts.map(f => `<div>${escHtml(f.name)} — ${(f.size/1024).toFixed(1)} KB · ${fmtAgo(f.mtime)}</div>`).join('') : '<div class="empty">none yet</div>';
   const experiments = d.experiments.length ? d.experiments.map(e => `<div>${escHtml(e.name)} · ${fmtAgo(e.mtime)}</div>`).join('') : '<div class="empty">none yet</div>';
   const logText = (d.recent_log||[]).join('\\n');
   const detail = document.getElementById('detail');
@@ -686,15 +808,23 @@ async function loadDetail(){
     const card = el.closest('.thought');
     if (card && card.dataset.id) prevExpandedScroll[card.dataset.id] = el.scrollTop;
   });
+  const prevExpandedDraftScroll = {};
+  document.querySelectorAll('#drafts .thought-full').forEach(el => {
+    const card = el.closest('.thought');
+    if (card && card.dataset.name) prevExpandedDraftScroll[card.dataset.name] = el.scrollTop;
+  });
   detail.innerHTML = `
     <h2>${escHtml(d.id)}</h2>
     ${liveBanner(d.live, d.cycle, d.n_retreats)}
     <div class="phases">${phaseHtml}</div>
-    <div class="grid2" style="grid-template-columns:repeat(4,1fr)">
-      <div class="card"><div class="lbl">tokens in</div><div class="stat">${fmtTok(d.ledger.total_in_tokens)}</div></div>
-      <div class="card"><div class="lbl">tokens out</div><div class="stat">${fmtTok(d.ledger.total_out_tokens)}</div></div>
-      <div class="card"><div class="lbl">cache hit %</div><div class="stat">${(d.ledger.cache_hit_ratio*100).toFixed(1)}%</div></div>
-      <div class="card"><div class="lbl">claude calls</div><div class="stat">${d.n_calls}</div></div>
+    <div class="statstrip">
+      <span class="item"><b>${fmtTok(d.ledger.total_in_tokens)}</b><span class="lbl">in</span></span>
+      <span class="sep">·</span>
+      <span class="item"><b>${fmtTok(d.ledger.total_out_tokens)}</b><span class="lbl">out</span></span>
+      <span class="sep">·</span>
+      <span class="item"><b>${(d.ledger.cache_hit_ratio*100).toFixed(1)}%</b><span class="lbl">cache hit</span></span>
+      <span class="sep">·</span>
+      <span class="item"><b>${d.n_calls}</b><span class="lbl">calls</span></span>
     </div>
     <h2>orchestrator log <span class="ctl">${(d.recent_log||[]).length} lines</span></h2>
     <pre id="log" class="tall">${escHtml(logText)}</pre>
@@ -715,13 +845,30 @@ async function loadDetail(){
       </div>
     </div>
     <div class="grid2">
-      <div><h2>drafts</h2><div class="scrollbox short">${drafts}</div></div>
+      <div>
+        <h2>drafts <span class="ctl">${d.drafts.length} · click to preview</span></h2>
+        <div class="scrollbox short" id="drafts"></div>
+      </div>
       <div><h2>experiments</h2><div class="scrollbox short">${experiments}</div></div>
     </div>
-    <h2>parking lot</h2><pre>${escHtml(d.parking_lot||'(empty)')}</pre>
-    <h2>papers index</h2><pre>${escHtml(d.papers_index||'(empty)')}</pre>
+    <h2 class="collapsible" data-key="parking"><span class="caret">▸</span> parking lot</h2>
+    <pre id="parking">${escHtml(d.parking_lot||'(empty)')}</pre>
+    <h2 class="collapsible" data-key="papersIndex"><span class="caret">▸</span> papers index</h2>
+    <pre id="papersIndex">${escHtml(d.papers_index||'(empty)')}</pre>
   `;
   renderThoughts(d.thoughts || [], prevExpandedScroll);
+  renderDrafts(d.drafts || [], prevExpandedDraftScroll);
+  applyCollapsibles();
+  // Wire live-banner click-to-expand
+  const lb = document.getElementById('liveBanner');
+  if (lb && lb.classList.contains('expandable')){
+    lb.addEventListener('click', () => {
+      bannerOpen = !bannerOpen;
+      lb.classList.toggle('open', bannerOpen);
+      const hint = lb.querySelector('.expand-hint');
+      if (hint) hint.textContent = (bannerOpen ? '▾' : '▸') + hint.textContent.slice(1);
+    });
+  }
   // Log: follow-tail OR preserve scroll
   const logEl = document.getElementById('log');
   if (logEl){
@@ -764,6 +911,16 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _raw(self, p: Path, content_type: str = "application/octet-stream"):
+        body = p.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Content-Disposition", f'inline; filename="{p.name}"')
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_GET(self):
         url = urlparse(self.path)
         path = url.path
@@ -774,6 +931,30 @@ class Handler(BaseHTTPRequestHandler):
                 projects = [project_summary(p) for p in list_projects()]
                 projects.sort(key=lambda x: x.get("last_activity_ts") or 0, reverse=True)
                 return self._json({"projects": projects, "now": datetime.now(timezone.utc).isoformat(timespec="seconds")})
+            if path.startswith("/raw/"):
+                rest = path[len("/raw/"):]
+                parts = rest.split("/", 3)
+                if len(parts) < 3 or parts[1] != "draft":
+                    return self.send_error(404, "Not Found")
+                pid, _, name = parts[0], parts[1], parts[2]
+                if pid not in list_projects():
+                    return self.send_error(404, "Not Found")
+                safe = _safe_draft_name(name)
+                if not safe:
+                    return self.send_error(400, "Bad name")
+                p = drafts_dir(pid) / safe
+                if not p.exists() or not p.is_file():
+                    return self.send_error(404, "Not Found")
+                ct = {
+                    ".pdf": "application/pdf",
+                    ".md": "text/markdown; charset=utf-8",
+                    ".bib": "text/plain; charset=utf-8",
+                    ".png": "image/png",
+                    ".jpg": "image/jpeg",
+                    ".jpeg": "image/jpeg",
+                    ".gif": "image/gif",
+                }.get(p.suffix.lower(), "application/octet-stream")
+                return self._raw(p, ct)
             if path.startswith("/api/project/"):
                 rest = path[len("/api/project/"):]
                 parts = rest.split("/", 2)
@@ -788,6 +969,10 @@ class Handler(BaseHTTPRequestHandler):
                     if len(parts) < 3 or not parts[2]:
                         return self._json({"error": "missing_id"}, code=400)
                     return self._json(read_thought_full(pid, parts[2]))
+                if len(parts) >= 2 and parts[1] == "draft":
+                    if len(parts) < 3 or not parts[2]:
+                        return self._json({"error": "missing_name"}, code=400)
+                    return self._json(read_draft_full(pid, parts[2]))
                 return self._json({"error": "unknown_subpath"}, code=404)
             self.send_error(404, "Not Found")
         except Exception as e:
