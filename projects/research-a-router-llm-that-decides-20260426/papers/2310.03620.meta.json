@@ -1,0 +1,35 @@
+{
+  "title": "PeaTMOSS: Mining Pre-Trained Models in Open-Source Software",
+  "summary": "Developing and training deep learning models is expensive, so software engineers have begun to reuse pre-trained deep learning models (PTMs) and fine-tune them for downstream tasks. Despite the wide-spread use of PTMs, we know little about the corresponding software engineering behaviors and challenges.\n  To enable the study of software engineering with PTMs, we present the PeaTMOSS dataset: Pre-Trained Models in Open-Source Software. PeaTMOSS has three parts: a snapshot of (1) 281,638 PTMs, (2) 27,270 open-source software repositories that use PTMs, and (3) a mapping between PTMs and the projects that use them. We challenge PeaTMOSS miners to discover software engineering practices around PTMs. A demo and link to the full dataset are available at: https://github.com/PurdueDualityLab/PeaTMOSS-Demos.",
+  "publishedAt": "2023-10-05T15:58:45Z",
+  "authors": [
+    {
+      "name": "Wenxin Jiang"
+    },
+    {
+      "name": "Jason Jones"
+    },
+    {
+      "name": "Jerin Yasmin"
+    },
+    {
+      "name": "Nicholas Synovic"
+    },
+    {
+      "name": "Rajeev Sashti"
+    },
+    {
+      "name": "Sophie Chen"
+    },
+    {
+      "name": "George K. Thiruvathukal"
+    },
+    {
+      "name": "Yuan Tian"
+    },
+    {
+      "name": "James C. Davis"
+    }
+  ],
+  "_source": "arxiv"
+}

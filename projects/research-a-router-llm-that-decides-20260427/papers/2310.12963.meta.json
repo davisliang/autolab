@@ -1,0 +1,154 @@
+{
+  "id": "2310.12963",
+  "authors": [
+    {
+      "_id": "65320eaec8da3465f480d99e",
+      "user": {
+        "_id": "61bbc2b2d96f5d4111901dcb",
+        "avatarUrl": "/avatars/83c826d5cad7bab27d33585cb7e64575.svg",
+        "isPro": false,
+        "fullname": "Aman Madaan",
+        "user": "amanmadaan",
+        "type": "user",
+        "name": "amanmadaan"
+      },
+      "name": "Aman Madaan",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-10-20T08:40:09.589Z",
+      "hidden": false
+    },
+    {
+      "_id": "65320eaec8da3465f480d99f",
+      "user": {
+        "_id": "60f3280b702e4ecabac96740",
+        "avatarUrl": "/avatars/ce12e328352aac25f0370333bf7f6cce.svg",
+        "isPro": false,
+        "fullname": "Pranjal Aggarwal",
+        "user": "Pranjal2041",
+        "type": "user",
+        "name": "Pranjal2041"
+      },
+      "name": "Pranjal Aggarwal",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-10-20T08:40:32.283Z",
+      "hidden": false
+    },
+    {
+      "_id": "65320eaec8da3465f480d9a0",
+      "name": "Ankit Anand",
+      "hidden": false
+    },
+    {
+      "_id": "65320eaec8da3465f480d9a1",
+      "name": "Srividya Pranavi Potharaju",
+      "hidden": false
+    },
+    {
+      "_id": "65320eaec8da3465f480d9a2",
+      "user": {
+        "_id": "61841feb7c380c66d40cad54",
+        "avatarUrl": "/avatars/7a79362a24b844860781fb0625527eae.svg",
+        "isPro": false,
+        "fullname": "Swaroop Mishra",
+        "user": "swaroop7",
+        "type": "user",
+        "name": "swaroop7"
+      },
+      "name": "Swaroop Mishra",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-10-20T08:41:36.585Z",
+      "hidden": false
+    },
+    {
+      "_id": "65320eaec8da3465f480d9a3",
+      "user": {
+        "_id": "60844fd056f7623a0b84914b",
+        "avatarUrl": "/avatars/f7d2763258b8c614783ead9480fbcf8d.svg",
+        "isPro": false,
+        "fullname": "Pei Zhou",
+        "user": "peiz",
+        "type": "user",
+        "name": "peiz"
+      },
+      "name": "Pei Zhou",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-10-20T08:41:44.573Z",
+      "hidden": false
+    },
+    {
+      "_id": "65320eaec8da3465f480d9a4",
+      "user": {
+        "_id": "64bac8eb01f1983a862e58b2",
+        "avatarUrl": "/avatars/ba005db511bf9fa2e79ca2e78852f8fd.svg",
+        "isPro": false,
+        "fullname": "Aditya Gupta",
+        "user": "aditya2211",
+        "type": "user",
+        "name": "aditya2211"
+      },
+      "name": "Aditya Gupta",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2023-10-21T09:22:35.175Z",
+      "hidden": false
+    },
+    {
+      "_id": "65320eaec8da3465f480d9a5",
+      "name": "Dheeraj Rajagopal",
+      "hidden": false
+    },
+    {
+      "_id": "65320eaec8da3465f480d9a6",
+      "name": "Karthik Kappaganthu",
+      "hidden": false
+    },
+    {
+      "_id": "65320eaec8da3465f480d9a7",
+      "name": "Yiming Yang",
+      "hidden": false
+    },
+    {
+      "_id": "65320eaec8da3465f480d9a8",
+      "name": "Shyam Upadhyay",
+      "hidden": false
+    },
+    {
+      "_id": "65320eaec8da3465f480d9a9",
+      "name": "Mausam",
+      "hidden": false
+    },
+    {
+      "_id": "65320eaec8da3465f480d9aa",
+      "name": "Manaal Faruqui",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-10-19T17:57:39.000Z",
+  "submittedOnDailyAt": "2023-10-20T03:52:55.322Z",
+  "title": "AutoMix: Automatically Mixing Language Models",
+  "submittedOnDailyBy": {
+    "_id": "60f1abe7544c2adfd699860c",
+    "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1674929746905-60f1abe7544c2adfd699860c.jpeg",
+    "isPro": false,
+    "fullname": "AK",
+    "user": "akhaliq",
+    "type": "user",
+    "name": "akhaliq"
+  },
+  "summary": "Large language models (LLMs) are now available in various sizes and\nconfigurations from cloud API providers. While this diversity offers a broad\nspectrum of choices, effectively leveraging the options to optimize\ncomputational cost and performance remains challenging. In this work, we\npresent AutoMix, an approach that strategically routes queries to larger LMs,\nbased on the approximate correctness of outputs from a smaller LM. Central to\nAutoMix is a few-shot self-verification mechanism, which estimates the\nreliability of its own outputs without requiring training. Given that\nverifications can be noisy, we employ a meta verifier in AutoMix to refine the\naccuracy of these assessments. Our experiments using LLAMA2-13/70B, on five\ncontext-grounded reasoning datasets demonstrate that AutoMix surpasses\nestablished baselines, improving the incremental benefit per cost by up to 89%.\nOur code and data are available at https://github.com/automix-llm/automix.",
+  "upvotes": 14,
+  "discussionId": "65320eafc8da3465f480d9d8",
+  "githubRepo": "https://github.com/automix-llm/automix",
+  "githubRepoAddedBy": "auto",
+  "ai_summary": "AutoMix strategically routes queries to larger LLMs based on a noise-refined self-verification mechanism, improving the incremental benefit per cost.",
+  "ai_keywords": [
+    "AutoMix",
+    "few-shot self-verification",
+    "meta verifier",
+    "LLMs",
+    "large language models",
+    "context-grounded reasoning",
+    "LLAMA2-13/70B"
+  ],
+  "githubStars": 114,
+  "_source": "hf"
+}

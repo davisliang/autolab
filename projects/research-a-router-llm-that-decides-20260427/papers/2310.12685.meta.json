@@ -1,0 +1,17 @@
+{
+  "title": "Zarankiewicz numbers near the triple system threshold",
+  "summary": "For positive integers $m$ and $n$, the Zarankiewicz number $Z_{2,2}(m,n)$ can be defined as the maximum total degree of a linear hypergraph with $m$ vertices and $n$ edges. Guy determined $Z_{2,2}(m,n)$ for all $n \\geq \\binom{m}{2}/3+O(m)$. Here, we extend this by determining $Z_{2,2}(m,n)$ for all $n \\geq \\binom{m}{2}/3$ and, when $m$ is large, for all $n \\geq \\binom{m}{2}/6+O(m)$.",
+  "publishedAt": "2023-10-19T12:31:28Z",
+  "authors": [
+    {
+      "name": "Guangzhou Chen"
+    },
+    {
+      "name": "Daniel Horsley"
+    },
+    {
+      "name": "Adam Mammoliti"
+    }
+  ],
+  "_source": "arxiv"
+}

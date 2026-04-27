@@ -1,0 +1,5 @@
+[sanity] best_arm_rate (last 16 steps): 0.938  (threshold ≥0.80, best_arm=opus)
+[sanity] choices last 16: ['opus', 'opus', 'opus', 'opus', 'opus', 'opus', 'haiku', 'opus', 'opus', 'opus', 'opus', 'opus', 'opus', 'opus', 'opus', 'opus']
+[sanity] final cov traces per arm: ['0.890', '0.855', '0.548'] (init=1.0)
+[sanity] posterior_updated=True
+[sanity] PASS

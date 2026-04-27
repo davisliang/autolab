@@ -1,0 +1,94 @@
+{
+  "id": "2406.18665",
+  "authors": [
+    {
+      "_id": "6684fddac1cbe5e008e5c693",
+      "user": {
+        "_id": "6559c0cf4a49906b2c5add33",
+        "avatarUrl": "/avatars/5967a291f926be0b3b7b30e0ad28dede.svg",
+        "isPro": false,
+        "fullname": "Isaac Ong",
+        "user": "iojw",
+        "type": "user",
+        "name": "iojw"
+      },
+      "name": "Isaac Ong",
+      "status": "extracted_pending",
+      "statusLastChangedAt": "2024-07-03T07:29:31.398Z",
+      "hidden": false
+    },
+    {
+      "_id": "6684fddac1cbe5e008e5c694",
+      "name": "Amjad Almahairi",
+      "hidden": false
+    },
+    {
+      "_id": "6684fddac1cbe5e008e5c695",
+      "name": "Vincent Wu",
+      "hidden": false
+    },
+    {
+      "_id": "6684fddac1cbe5e008e5c696",
+      "user": {
+        "_id": "63071772fd79b417f1b92291",
+        "avatarUrl": "/avatars/ec68d20dcedf4553bb31d9f6e0ded813.svg",
+        "isPro": true,
+        "fullname": "Wei-Lin Chiang",
+        "user": "weichiang",
+        "type": "user",
+        "name": "weichiang"
+      },
+      "name": "Wei-Lin Chiang",
+      "status": "extracted_confirmed",
+      "statusLastChangedAt": "2024-07-03T07:32:03.603Z",
+      "hidden": false
+    },
+    {
+      "_id": "6684fddac1cbe5e008e5c697",
+      "name": "Tianhao Wu",
+      "hidden": false
+    },
+    {
+      "_id": "6684fddac1cbe5e008e5c698",
+      "user": {
+        "_id": "645d2e8401f4eaab2a0878ce",
+        "avatarUrl": "/avatars/1273c5fb607b4b622a746a42692fa632.svg",
+        "isPro": false,
+        "fullname": "Joseph E. Gonzalez",
+        "user": "ProfJoeyG",
+        "type": "user",
+        "name": "ProfJoeyG"
+      },
+      "name": "Joseph E. Gonzalez",
+      "status": "extracted_pending",
+      "statusLastChangedAt": "2024-07-03T07:29:31.398Z",
+      "hidden": false
+    },
+    {
+      "_id": "6684fddac1cbe5e008e5c699",
+      "name": "M Waleed Kadous",
+      "hidden": false
+    },
+    {
+      "_id": "6684fddac1cbe5e008e5c69a",
+      "name": "Ion Stoica",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2024-06-26T18:10:22.000Z",
+  "title": "RouteLLM: Learning to Route LLMs with Preference Data",
+  "summary": "Large language models (LLMs) exhibit impressive capabilities across a wide\nrange of tasks, yet the choice of which model to use often involves a trade-off\nbetween performance and cost. More powerful models, though effective, come with\nhigher expenses, while less capable models are more cost-effective. To address\nthis dilemma, we propose several efficient router models that dynamically\nselect between a stronger and a weaker LLM during inference, aiming to optimize\nthe balance between cost and response quality. We develop a training framework\nfor these routers leveraging human preference data and data augmentation\ntechniques to enhance performance. Our evaluation on widely-recognized\nbenchmarks shows that our approach significantly reduces costs-by over 2 times\nin certain cases-without compromising the quality of responses. Interestingly,\nour router models also demonstrate significant transfer learning capabilities,\nmaintaining their performance even when the strong and weak models are changed\nat test time. This highlights the potential of these routers to provide a\ncost-effective yet high-performance solution for deploying LLMs.",
+  "upvotes": 7,
+  "discussionId": "6684fddbc1cbe5e008e5c6e8",
+  "ai_summary": "Efficient router models dynamically select between strong and weak LLMs during inference to reduce costs without compromising response quality, demonstrating transfer learning capabilities.",
+  "ai_keywords": [
+    "LLMs",
+    "router models",
+    "dynamic selection",
+    "inference",
+    "human preference data",
+    "data augmentation",
+    "transfer learning"
+  ],
+  "_source": "hf"
+}

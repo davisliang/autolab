@@ -1,0 +1,4 @@
+# cmd: uv run python /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260427/experiments/EXP-001/code/run.py --seed 456 --config proposed --out /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260427/experiments/EXP-001/runs/20260427T002729Z_proposed_s456.jsonl
+Split: train=1050 val=225 test=225
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 16287.64it/s]
+seed=456 config=proposed routing_accuracy=0.8133 cost_savings=0.7384 quality=0.9607

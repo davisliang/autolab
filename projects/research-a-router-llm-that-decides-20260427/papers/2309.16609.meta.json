@@ -1,0 +1,597 @@
+{
+  "id": "2309.16609",
+  "authors": [
+    {
+      "_id": "651630afbc063171987181c1",
+      "user": {
+        "_id": "60113fad51e116b62cd0a30e",
+        "avatarUrl": "/avatars/469357d0a4a5d2e104ae5e32801b395d.svg",
+        "isPro": false,
+        "fullname": "Jinze Bai",
+        "user": "Jinze",
+        "type": "user",
+        "name": "Jinze"
+      },
+      "name": "Jinze Bai",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:24:05.009Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181c2",
+      "user": {
+        "_id": "63451cf0a05b51f7ded25505",
+        "avatarUrl": "/avatars/dec4bbee4a82b773fc58dfc2dce9dbeb.svg",
+        "isPro": false,
+        "fullname": "shuai bai",
+        "user": "ShuaiBai623",
+        "type": "user",
+        "name": "ShuaiBai623"
+      },
+      "name": "Shuai Bai",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:24:28.046Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181c3",
+      "user": {
+        "_id": "62c6a751a71b40cf26f359a8",
+        "avatarUrl": "/avatars/49abd2e71946035452c316d703baaac6.svg",
+        "isPro": false,
+        "fullname": "Yunfei Chu",
+        "user": "faychu",
+        "type": "user",
+        "name": "faychu"
+      },
+      "name": "Yunfei Chu",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:24:35.652Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181c4",
+      "user": {
+        "_id": "643fb14a18afbc4d1f3ebfb4",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/643fb14a18afbc4d1f3ebfb4/2qeL_qPSB9_MTzZf46ynJ.png",
+        "isPro": false,
+        "fullname": "czy yente",
+        "user": "cyente",
+        "type": "user",
+        "name": "cyente"
+      },
+      "name": "Zeyu Cui",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-09-23T14:22:30.930Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181c5",
+      "name": "Kai Dang",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181c6",
+      "name": "Xiaodong Deng",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181c7",
+      "name": "Yang Fan",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181c8",
+      "user": {
+        "_id": "634d06c6f0a69955f662e641",
+        "avatarUrl": "/avatars/5a0af8af0a21d2a93192f4a3c430fc60.svg",
+        "isPro": false,
+        "fullname": "Wenbin Ge",
+        "user": "gewenbin292",
+        "type": "user",
+        "name": "gewenbin292"
+      },
+      "name": "Wenbin Ge",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:25:57.232Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181c9",
+      "name": "Yu Han",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181ca",
+      "user": {
+        "_id": "635b8b6a37c6a2c12e2cce00",
+        "avatarUrl": "/avatars/229fb72180529141515d1df797b33709.svg",
+        "isPro": false,
+        "fullname": "Fei Huang",
+        "user": "hzhwcmhf",
+        "type": "user",
+        "name": "hzhwcmhf"
+      },
+      "name": "Fei Huang",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:26:37.681Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181cb",
+      "user": {
+        "_id": "61e4c4ca1ab24785ac11ba69",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/61e4c4ca1ab24785ac11ba69/1Q1zhhyGSJ9RJG9MzwxVv.jpeg",
+        "isPro": false,
+        "fullname": "Binyuan Hui",
+        "user": "huybery",
+        "type": "user",
+        "name": "huybery"
+      },
+      "name": "Binyuan Hui",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:26:46.394Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181cc",
+      "name": "Luo Ji",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181cd",
+      "name": "Mei Li",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181ce",
+      "user": {
+        "_id": "620760a26e3b7210c2ff1943",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/620760a26e3b7210c2ff1943/VC-rKqimF6yxGESNVlPoR.jpeg",
+        "isPro": false,
+        "fullname": "Junyang Lin",
+        "user": "JustinLin610",
+        "type": "user",
+        "name": "JustinLin610"
+      },
+      "name": "Junyang Lin",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:27:03.767Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181cf",
+      "user": {
+        "_id": "649a52e5de0fb7f3f499e583",
+        "avatarUrl": "/avatars/25f6106fa168ae57ad5cd8ef55c70d31.svg",
+        "isPro": false,
+        "fullname": "Runji Lin",
+        "user": "RunjiLin",
+        "type": "user",
+        "name": "RunjiLin"
+      },
+      "name": "Runji Lin",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-12-10T11:18:06.766Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181d0",
+      "user": {
+        "_id": "6434d4989bd5a84b5dd0b0f5",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/6434d4989bd5a84b5dd0b0f5/0Elf9qbfG9Hkgypm9pTGm.jpeg",
+        "isPro": false,
+        "fullname": "Dayiheng Liu",
+        "user": "Losin94",
+        "type": "user",
+        "name": "Losin94"
+      },
+      "name": "Dayiheng Liu",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:27:21.332Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181d1",
+      "user": {
+        "_id": "63c5cbe46d132b995ff072b0",
+        "avatarUrl": "/avatars/848180069e75f36bf6d979f2c1aca0ca.svg",
+        "isPro": false,
+        "fullname": "Gao LIU",
+        "user": "etoiles",
+        "type": "user",
+        "name": "etoiles"
+      },
+      "name": "Gao Liu",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:27:29.483Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181d2",
+      "user": {
+        "_id": "61de751fc59d602a3a85b1aa",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1641968925128-noauth.jpeg",
+        "isPro": false,
+        "fullname": "lu",
+        "user": "cq",
+        "type": "user",
+        "name": "cq"
+      },
+      "name": "Chengqiang Lu",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-02-21T10:01:34.745Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181d3",
+      "user": {
+        "_id": "6453fa96ed6d7fede94408e0",
+        "avatarUrl": "/avatars/e8c9025ef24cec958c87a1008bb54fd7.svg",
+        "isPro": false,
+        "fullname": "Keming Lu",
+        "user": "keminglu",
+        "type": "user",
+        "name": "keminglu"
+      },
+      "name": "Keming Lu",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:27:44.635Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181d4",
+      "name": "Jianxin Ma",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181d5",
+      "user": {
+        "_id": "6209bb200436d7d6f27cbeea",
+        "avatarUrl": "/avatars/0b8a72a8b66ef7b36780fe2ccc343f78.svg",
+        "isPro": false,
+        "fullname": "Iurnem",
+        "user": "Iurnem",
+        "type": "user",
+        "name": "Iurnem"
+      },
+      "name": "Rui Men",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-09-23T16:30:31.933Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181d6",
+      "user": {
+        "_id": "645c82c4081be4b32049633a",
+        "avatarUrl": "/avatars/e5a08cf0ec5a04bd9d66111382ce0508.svg",
+        "isPro": false,
+        "fullname": "xzhren",
+        "user": "xingzhang",
+        "type": "user",
+        "name": "xingzhang"
+      },
+      "name": "Xingzhang Ren",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-01-03T14:07:25.188Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181d7",
+      "name": "Xuancheng Ren",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181d8",
+      "name": "Chuanqi Tan",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181d9",
+      "user": {
+        "_id": "6337a9bb0267ebcf026ad110",
+        "avatarUrl": "/avatars/12a170b28ade8df979067077828d719c.svg",
+        "isPro": false,
+        "fullname": "Sinan Tan",
+        "user": "tinytangent",
+        "type": "user",
+        "name": "tinytangent"
+      },
+      "name": "Sinan Tan",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:28:39.628Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181da",
+      "user": {
+        "_id": "621a1f739e50c5bea7aa48fb",
+        "avatarUrl": "/avatars/80963b2bf2849d5eac7254541e087663.svg",
+        "isPro": false,
+        "fullname": "Tu Jianhong",
+        "user": "tuhahaha",
+        "type": "user",
+        "name": "tuhahaha"
+      },
+      "name": "Jianhong Tu",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:28:52.248Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181db",
+      "name": "Peng Wang",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181dc",
+      "user": {
+        "_id": "6472321922016353ae3ab2e9",
+        "avatarUrl": "/avatars/93d9e397ae6079ea0672d6b54234f388.svg",
+        "isPro": false,
+        "fullname": "Shijie Wang",
+        "user": "simonJJJ",
+        "type": "user",
+        "name": "simonJJJ"
+      },
+      "name": "Shijie Wang",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:36:30.321Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181dd",
+      "name": "Wei Wang",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181de",
+      "user": {
+        "_id": "65222f97ef06bb99753cb829",
+        "avatarUrl": "/avatars/f1a743d74e6d38b916acaec91b4e7e4f.svg",
+        "isPro": false,
+        "fullname": "Shengguang Wu",
+        "user": "danielwusg",
+        "type": "user",
+        "name": "danielwusg"
+      },
+      "name": "Shengguang Wu",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-02-21T10:01:37.916Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181df",
+      "user": {
+        "_id": "62d56f063bf5e059f7cac515",
+        "avatarUrl": "/avatars/6bd5cfdc21506ace6176d00a2973d8e5.svg",
+        "isPro": false,
+        "fullname": "BenfengXu",
+        "user": "SpiketheCowboy",
+        "type": "user",
+        "name": "SpiketheCowboy"
+      },
+      "name": "Benfeng Xu",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:37:12.724Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181e0",
+      "name": "Jin Xu",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181e1",
+      "user": {
+        "_id": "62088594a5943c8a8fc94560",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1644733028938-62088594a5943c8a8fc94560.png",
+        "isPro": false,
+        "fullname": "An Yang",
+        "user": "yangapku",
+        "type": "user",
+        "name": "yangapku"
+      },
+      "name": "An Yang",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-09-23T16:30:30.527Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181e2",
+      "name": "Hao Yang",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181e3",
+      "user": {
+        "_id": "66d82581b842183143b87da8",
+        "avatarUrl": "/avatars/8eb678c007879ba1e61272e31086c58b.svg",
+        "isPro": false,
+        "fullname": "Jian Yang",
+        "user": "csjiaya",
+        "type": "user",
+        "name": "csjiaya"
+      },
+      "name": "Jian Yang",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-10-14T19:08:22.871Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181e4",
+      "user": {
+        "_id": "627ccf058b4e56cfc2716425",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1652346592327-noauth.jpeg",
+        "isPro": true,
+        "fullname": "Shusheng Yang",
+        "user": "ShushengYang",
+        "type": "user",
+        "name": "ShushengYang"
+      },
+      "name": "Shusheng Yang",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-12-19T18:06:41.349Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181e5",
+      "name": "Yang Yao",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181e6",
+      "user": {
+        "_id": "63d9d68c1cae35c27bf7a6a7",
+        "avatarUrl": "/avatars/b5ad98cf269ae5f1fe90861fb4170fae.svg",
+        "isPro": false,
+        "fullname": "Bowen Yu",
+        "user": "Tigerph",
+        "type": "user",
+        "name": "Tigerph"
+      },
+      "name": "Bowen Yu",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-06-24T07:36:59.556Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181e7",
+      "name": "Hongyi Yuan",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181e8",
+      "user": {
+        "_id": "5f694b8b5e78cc6b0ed31bd2",
+        "avatarUrl": "/avatars/63f21d30918c34fff9ea592e1039b3f0.svg",
+        "isPro": false,
+        "fullname": "Zheng Yuan",
+        "user": "GanjinZero",
+        "type": "user",
+        "name": "GanjinZero"
+      },
+      "name": "Zheng Yuan",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-08-06T19:40:05.181Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181e9",
+      "name": "Jianwei Zhang",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181ea",
+      "user": {
+        "_id": "63440a1be01a38440ef25daa",
+        "avatarUrl": "/avatars/622e8ca69f1867be7932d03b91eaf6e7.svg",
+        "isPro": false,
+        "fullname": "xxzhang",
+        "user": "xuange",
+        "type": "user",
+        "name": "xuange"
+      },
+      "name": "Xingxuan Zhang",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-11-10T21:04:08.987Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181eb",
+      "name": "Yichang Zhang",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181ec",
+      "user": {
+        "_id": "64704e973601bb7b06643e98",
+        "avatarUrl": "/avatars/52e51f4d1be6769e4397b8be2799cf32.svg",
+        "isPro": false,
+        "fullname": "Zhenru Zhang",
+        "user": "Zhenru",
+        "type": "user",
+        "name": "Zhenru"
+      },
+      "name": "Zhenru Zhang",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:39:00.863Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181ed",
+      "user": {
+        "_id": "622892774323cef93a956a4a",
+        "avatarUrl": "/avatars/e57ef5c3b0c4289988ccd42f14e54336.svg",
+        "isPro": false,
+        "fullname": "chang zhou",
+        "user": "jiemizc",
+        "type": "user",
+        "name": "jiemizc"
+      },
+      "name": "Chang Zhou",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-29T11:38:35.560Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181ee",
+      "name": "Jingren Zhou",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181ef",
+      "user": {
+        "_id": "668f5875b5b3081d776e4094",
+        "avatarUrl": "/avatars/8c763393f25afbe5fb8b132f775e746a.svg",
+        "isPro": false,
+        "fullname": "Xiaohuan Zhou",
+        "user": "XiaohuanZhou",
+        "type": "user",
+        "name": "XiaohuanZhou"
+      },
+      "name": "Xiaohuan Zhou",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-03-04T08:54:24.075Z",
+      "hidden": false
+    },
+    {
+      "_id": "651630afbc063171987181f0",
+      "name": "Tianhang Zhu",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-09-28T17:07:49.000Z",
+  "submittedOnDailyAt": "2023-09-29T00:34:33.855Z",
+  "title": "Qwen Technical Report",
+  "submittedOnDailyBy": {
+    "_id": "60f1abe7544c2adfd699860c",
+    "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1674929746905-60f1abe7544c2adfd699860c.jpeg",
+    "isPro": false,
+    "fullname": "AK",
+    "user": "akhaliq",
+    "type": "user",
+    "name": "akhaliq"
+  },
+  "summary": "Large language models (LLMs) have revolutionized the field of artificial\nintelligence, enabling natural language processing tasks that were previously\nthought to be exclusive to humans. In this work, we introduce Qwen, the first\ninstallment of our large language model series. Qwen is a comprehensive\nlanguage model series that encompasses distinct models with varying parameter\ncounts. It includes Qwen, the base pretrained language models, and Qwen-Chat,\nthe chat models finetuned with human alignment techniques. The base language\nmodels consistently demonstrate superior performance across a multitude of\ndownstream tasks, and the chat models, particularly those trained using\nReinforcement Learning from Human Feedback (RLHF), are highly competitive. The\nchat models possess advanced tool-use and planning capabilities for creating\nagent applications, showcasing impressive performance even when compared to\nbigger models on complex tasks like utilizing a code interpreter. Furthermore,\nwe have developed coding-specialized models, Code-Qwen and Code-Qwen-Chat, as\nwell as mathematics-focused models, Math-Qwen-Chat, which are built upon base\nlanguage models. These models demonstrate significantly improved performance in\ncomparison with open-source models, and slightly fall behind the proprietary\nmodels.",
+  "upvotes": 38,
+  "discussionId": "651630b1bc0631719871823c",
+  "githubRepo": "https://github.com/QwenLM/Qwen-7B",
+  "githubRepoAddedBy": "auto",
+  "ai_summary": "Qwen, a series of large language models, including chat and specialized coding and mathematics variants, exhibit superior performance across various tasks and outperform open-source models.",
+  "ai_keywords": [
+    "LLMs",
+    "large language models",
+    "pretrained language models",
+    "Reinforcement Learning from Human Feedback",
+    "RLHF",
+    "chat models",
+    "tool-use",
+    "planning capabilities",
+    "agent applications",
+    "coding-specialized models",
+    "mathematics-focused models"
+  ],
+  "githubStars": 21072,
+  "_source": "hf"
+}

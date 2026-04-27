@@ -1,0 +1,65 @@
+{
+  "title": "Characterizing the Near-infrared Spectra of Flares from TRAPPIST-1 During JWST Transit Spectroscopy Observations",
+  "summary": "We present the first analysis of JWST near-infrared spectroscopy of stellar flares from TRAPPIST-1 during transits of rocky exoplanets. Four flares were observed from 0.6--2.8 $\u03bc$m with NIRISS and 0.6--3.5 $\u03bc$m with NIRSpec during transits of TRAPPIST-1b, f, and g. We discover P$\u03b1$ and Br$\u03b2$ line emission and characterize flare continuum at wavelengths from 1--3.5 $\u03bc$m for the first time. Observed lines include H$\u03b1$, P$\u03b1$-P$\u03b5$, Br$\u03b2$, He I $\u03bb$0.7062$\u03bc$m, two Ca II infrared triplet (IRT) lines, and the He I IRT. We observe a reversed Paschen decrement from P$\u03b1$-P$\u03b3$ alongside changes in the light curve shapes of these lines. The continuum of all four flares is well-described by blackbody emission with an effective temperature below 5300 K, lower than temperatures typically observed at optical wavelengths. The 0.6--1 $\u03bc$m spectra were convolved with the TESS response, enabling us to measure the flare rate of TRAPPIST-1 in the TESS bandpass. We find flares of 10$^{30}$ erg large enough to impact transit spectra occur at a rate of 3.6$\\substack{+2.1 \\\\ -1.3}$ flare d$^{-1}$, $\\sim$10$\\times$ higher than previous predictions from K2. We measure the amount of flare contamination at 2 $\u03bc$m for the TRAPPIST-1b and f transits to be 500$\\pm$450 and 2100$\\pm$400 ppm, respectively. We find up to 80% of flare contamination can be removed, with mitigation most effective from 1.0--2.4 $\u03bc$m. These results suggest transits affected by flares may still be useful for atmospheric characterization efforts.",
+  "publishedAt": "2023-10-05T18:00:02Z",
+  "authors": [
+    {
+      "name": "Ward S. Howard"
+    },
+    {
+      "name": "Adam F. Kowalski"
+    },
+    {
+      "name": "Laura Flagg"
+    },
+    {
+      "name": "Meredith A. MacGregor"
+    },
+    {
+      "name": "Olivia Lim"
+    },
+    {
+      "name": "Michael Radica"
+    },
+    {
+      "name": "Caroline Piaulet"
+    },
+    {
+      "name": "Pierre-Alexis Roy"
+    },
+    {
+      "name": "David Lafreni\u00e8re"
+    },
+    {
+      "name": "Bj\u00f6rn Benneke"
+    },
+    {
+      "name": "Alexander Brown"
+    },
+    {
+      "name": "N\u00e9stor Espinoza"
+    },
+    {
+      "name": "Ren\u00e9 Doyon"
+    },
+    {
+      "name": "Louis-Philippe Coulombe"
+    },
+    {
+      "name": "Doug Johnstone"
+    },
+    {
+      "name": "Nicolas B. Cowan"
+    },
+    {
+      "name": "Ray Jayawardhana"
+    },
+    {
+      "name": "Jake D. Turner"
+    },
+    {
+      "name": "Lisa Dang"
+    }
+  ],
+  "_source": "arxiv"
+}

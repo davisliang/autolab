@@ -1,0 +1,115 @@
+{
+  "id": "2309.03409",
+  "authors": [
+    {
+      "_id": "64fa7df1dcc5ce730e443fa0",
+      "user": {
+        "_id": "64fbab29e0dc35986bac8e03",
+        "avatarUrl": "/avatars/7c11abfac56a06c1122750332c40d189.svg",
+        "isPro": false,
+        "fullname": "Chengrun Yang",
+        "user": "chengrun",
+        "type": "user",
+        "name": "chengrun"
+      },
+      "name": "Chengrun Yang",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2023-09-09T05:38:16.308Z",
+      "hidden": false
+    },
+    {
+      "_id": "64fa7df1dcc5ce730e443fa1",
+      "name": "Xuezhi Wang",
+      "hidden": false
+    },
+    {
+      "_id": "64fa7df1dcc5ce730e443fa2",
+      "user": {
+        "_id": "6344a8050f69ad8aa61cb663",
+        "avatarUrl": "/avatars/ed637f510d18ccd1f4bdd6861d5c858e.svg",
+        "isPro": false,
+        "fullname": "Yifeng Lu",
+        "user": "yifenglu",
+        "type": "user",
+        "name": "yifenglu"
+      },
+      "name": "Yifeng Lu",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-08T10:04:42.501Z",
+      "hidden": false
+    },
+    {
+      "_id": "64fa7df1dcc5ce730e443fa3",
+      "name": "Hanxiao Liu",
+      "hidden": false
+    },
+    {
+      "_id": "64fa7df1dcc5ce730e443fa4",
+      "name": "Quoc V. Le",
+      "hidden": false
+    },
+    {
+      "_id": "64fa7df1dcc5ce730e443fa5",
+      "user": {
+        "_id": "65d4d62d493aeaf0bb295f1b",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/noauth/vXMxaoWwFziul8TqIhQw8.jpeg",
+        "isPro": false,
+        "fullname": "Denny Zhou",
+        "user": "dennyzhou",
+        "type": "user",
+        "name": "dennyzhou"
+      },
+      "name": "Denny Zhou",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-02-20T18:28:19.081Z",
+      "hidden": false
+    },
+    {
+      "_id": "64fa7df1dcc5ce730e443fa6",
+      "user": {
+        "_id": "64d0268001931c60161e026a",
+        "avatarUrl": "/avatars/0ea48c47b0270b449fd6b97b495e64a6.svg",
+        "isPro": false,
+        "fullname": "Xinyun Chen",
+        "user": "xinyunchen",
+        "type": "user",
+        "name": "xinyunchen"
+      },
+      "name": "Xinyun Chen",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-08T13:11:40.793Z",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-09-07T00:07:15.000Z",
+  "submittedOnDailyAt": "2023-09-08T00:20:42.269Z",
+  "title": "Large Language Models as Optimizers",
+  "submittedOnDailyBy": {
+    "_id": "60f1abe7544c2adfd699860c",
+    "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1674929746905-60f1abe7544c2adfd699860c.jpeg",
+    "isPro": false,
+    "fullname": "AK",
+    "user": "akhaliq",
+    "type": "user",
+    "name": "akhaliq"
+  },
+  "summary": "Optimization is ubiquitous. While derivative-based algorithms have been\npowerful tools for various problems, the absence of gradient imposes challenges\non many real-world applications. In this work, we propose Optimization by\nPROmpting (OPRO), a simple and effective approach to leverage large language\nmodels (LLMs) as optimizers, where the optimization task is described in\nnatural language. In each optimization step, the LLM generates new solutions\nfrom the prompt that contains previously generated solutions with their values,\nthen the new solutions are evaluated and added to the prompt for the next\noptimization step. We first showcase OPRO on linear regression and traveling\nsalesman problems, then move on to prompt optimization where the goal is to\nfind instructions that maximize the task accuracy. With a variety of LLMs, we\ndemonstrate that the best prompts optimized by OPRO outperform human-designed\nprompts by up to 8% on GSM8K, and by up to 50% on Big-Bench Hard tasks.",
+  "upvotes": 79,
+  "discussionId": "64fa7df2dcc5ce730e443fbd",
+  "githubRepo": "https://github.com/google-deepmind/opro",
+  "githubRepoAddedBy": "auto",
+  "ai_summary": "OPRO, a method using large language models to optimize tasks described in natural language, outperforms human-designed prompts on various benchmark datasets.",
+  "ai_keywords": [
+    "derivative-based algorithms",
+    "Optimization by PROmpting (OPRO)",
+    "large language models (LLMs)",
+    "natural language",
+    "linear regression",
+    "traveling salesman problems",
+    "prompt optimization",
+    "GSM8K",
+    "Big-Bench Hard tasks"
+  ],
+  "githubStars": 736,
+  "_source": "hf"
+}

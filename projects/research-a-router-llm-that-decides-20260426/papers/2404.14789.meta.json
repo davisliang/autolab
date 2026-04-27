@@ -1,0 +1,17 @@
+{
+  "title": "Opinion Update in a Subjective Logic Model for Social Networks",
+  "summary": "Subjective Logic (SL) is a logic incorporating uncertainty and opinions for agents in dynamic systems. In this work, we investigate the use of subjective logic to model opinions and belief change in social networks. In particular, we work toward the development of a subjective logic belief/opinion update function appropriate for modeling belief change as communication occurs in social networks. We found through experiments that an update function with belief fusion from SL does not have ideal properties to represent a rational update. Even without these properties, we found that an update function with cumulative belief fusion can describe behaviors not explored by the social network model defined by Alvim, Knight, and Valencia (2019).",
+  "publishedAt": "2024-04-23T07:02:00Z",
+  "authors": [
+    {
+      "name": "M\u00e1rio S. Alvim"
+    },
+    {
+      "name": "Sophia Knight"
+    },
+    {
+      "name": "Jos\u00e9 C. Oliveira"
+    }
+  ],
+  "_source": "arxiv"
+}

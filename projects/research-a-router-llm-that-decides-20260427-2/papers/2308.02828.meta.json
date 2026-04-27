@@ -1,0 +1,20 @@
+{
+  "title": "An Empirical Study of the Non-determinism of ChatGPT in Code Generation",
+  "summary": "There has been a recent explosion of research on Large Language Models (LLMs) for software engineering tasks, in particular code generation. However, results from LLMs can be highly unstable; nondeterministically returning very different codes for the same prompt. Non-determinism is a potential menace to scientific conclusion validity. When non-determinism is high, scientific conclusions simply cannot be relied upon unless researchers change their behaviour to control for it in their empirical analyses. This paper conducts an empirical study to demonstrate that non-determinism is, indeed, high, thereby underlining the need for this behavioural change. We choose to study ChatGPT because it is already highly prevalent in the code generation research literature. We report results from a study of 829 code generation problems from three code generation benchmarks (i.e., CodeContests, APPS, and HumanEval). Our results reveal high degrees of non-determinism: the ratio of coding tasks with zero equal test output across different requests is 75.76%, 51.00%, and 47.56% for CodeContests, APPS, and HumanEval, respectively. In addition, we find that setting the temperature to 0 does not guarantee determinism in code generation, although it indeed brings less non-determinism than the default configuration (temperature=1). These results confirm that there is, currently, a significant threat to scientific conclusion validity. In order to put LLM-based research on firmer scientific foundations, researchers need to take into account non-determinism in drawing their conclusions.",
+  "publishedAt": "2023-08-05T09:30:33Z",
+  "authors": [
+    {
+      "name": "Shuyin Ouyang"
+    },
+    {
+      "name": "Jie M. Zhang"
+    },
+    {
+      "name": "Mark Harman"
+    },
+    {
+      "name": "Meng Wang"
+    }
+  ],
+  "_source": "arxiv"
+}

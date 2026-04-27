@@ -1,0 +1,14 @@
+{
+  "title": "Effects of electrons on nuclear clock transition frequency in $^{229}$Th ions",
+  "summary": "We perform calculations of the energy shift of the nuclear clock transition frequency $^{229}$Th as a function of the number of electrons in Th ion.\n  We demonstrate that the dependence of the nuclear frequency on electron configuration is significant. E.g., removing one electron from the atom leads to relative shift of the nuclear frequency $\\sim 10^{-7}$, which is twelve orders of magnitude larger than expected relative uncertainty of the nuclear clock transition frequency ($\\sim 10^{-19}$). This leads to difference of the nuclear clock frequencies in Th~IV, Th~III, Th~II and Th~I.\n  The relative change of the nuclear frequency between neutral Th and its bare nucleus is 1\\%. We also calculate the field shift constants for isotopic and isomeric shifts of atomic electron transitions in Th ions.",
+  "publishedAt": "2023-09-20T09:52:14Z",
+  "authors": [
+    {
+      "name": "V. A. Dzuba"
+    },
+    {
+      "name": "V. V. Flambaum"
+    }
+  ],
+  "_source": "arxiv"
+}

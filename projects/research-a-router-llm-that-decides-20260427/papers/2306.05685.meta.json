@@ -1,0 +1,185 @@
+{
+  "id": "2306.05685",
+  "authors": [
+    {
+      "_id": "64866c1360b30c3615c7d12a",
+      "user": {
+        "_id": "62d35f3ceaf3858ce253ab7a",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/62d35f3ceaf3858ce253ab7a/3yiiMriltXJBi242FZY-W.jpeg",
+        "isPro": false,
+        "fullname": "Lianmin",
+        "user": "lmzheng",
+        "type": "user",
+        "name": "lmzheng"
+      },
+      "name": "Lianmin Zheng",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2023-06-12T18:59:04.900Z",
+      "hidden": false
+    },
+    {
+      "_id": "64866c1360b30c3615c7d12b",
+      "user": {
+        "_id": "63071772fd79b417f1b92291",
+        "avatarUrl": "/avatars/ec68d20dcedf4553bb31d9f6e0ded813.svg",
+        "isPro": true,
+        "fullname": "Wei-Lin Chiang",
+        "user": "weichiang",
+        "type": "user",
+        "name": "weichiang"
+      },
+      "name": "Wei-Lin Chiang",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-22T19:24:36.433Z",
+      "hidden": false
+    },
+    {
+      "_id": "64866c1360b30c3615c7d12c",
+      "user": {
+        "_id": "6455b969654d8bccae50736c",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/6455b969654d8bccae50736c/WsK0_sbQSVeosi-fh-O_U.jpeg",
+        "isPro": false,
+        "fullname": "Ying Sheng",
+        "user": "ying1123",
+        "type": "user",
+        "name": "ying1123"
+      },
+      "name": "Ying Sheng",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-06-13T13:46:25.519Z",
+      "hidden": false
+    },
+    {
+      "_id": "64866c1360b30c3615c7d12d",
+      "name": "Siyuan Zhuang",
+      "hidden": false
+    },
+    {
+      "_id": "64866c1360b30c3615c7d12e",
+      "user": {
+        "_id": "6429b84e8852afdf89beeae5",
+        "avatarUrl": "/avatars/7cfc1a484077a8d511c46392de8dee07.svg",
+        "isPro": false,
+        "fullname": "Zhanghao Wu",
+        "user": "michaelvll",
+        "type": "user",
+        "name": "michaelvll"
+      },
+      "name": "Zhanghao Wu",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-06-13T13:46:01.420Z",
+      "hidden": false
+    },
+    {
+      "_id": "64866c1360b30c3615c7d12f",
+      "user": {
+        "_id": "64ab987073790912c7ad79e6",
+        "avatarUrl": "/avatars/bfa00418c46da0fd1e522d6561944ec9.svg",
+        "isPro": false,
+        "fullname": "Yonghao Zhuang",
+        "user": "ZYHowell",
+        "type": "user",
+        "name": "ZYHowell"
+      },
+      "name": "Yonghao Zhuang",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-10-24T16:18:10.252Z",
+      "hidden": false
+    },
+    {
+      "_id": "64866c1360b30c3615c7d130",
+      "name": "Zi Lin",
+      "hidden": false
+    },
+    {
+      "_id": "64866c1360b30c3615c7d131",
+      "name": "Zhuohan Li",
+      "hidden": false
+    },
+    {
+      "_id": "64866c1360b30c3615c7d132",
+      "user": {
+        "_id": "63715b25ffc0489ed7d1f415",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/63715b25ffc0489ed7d1f415/xZJepbs0LRqFbW1knnBKR.jpeg",
+        "isPro": false,
+        "fullname": "Dacheng Li",
+        "user": "DachengLi",
+        "type": "user",
+        "name": "DachengLi"
+      },
+      "name": "Dacheng Li",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-06-13T13:47:12.747Z",
+      "hidden": false
+    },
+    {
+      "_id": "64866c1360b30c3615c7d133",
+      "name": "Eric. P Xing",
+      "hidden": false
+    },
+    {
+      "_id": "64866c1360b30c3615c7d134",
+      "user": {
+        "_id": "62d363143eebd640a4fa41fa",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/62d363143eebd640a4fa41fa/pvPwXlJ5OOb-UIfmffv4E.jpeg",
+        "isPro": false,
+        "fullname": "Hao Zhang",
+        "user": "zhisbug",
+        "type": "user",
+        "name": "zhisbug"
+      },
+      "name": "Hao Zhang",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-01-01T20:15:17.449Z",
+      "hidden": false
+    },
+    {
+      "_id": "64866c1360b30c3615c7d135",
+      "name": "Joseph E. Gonzalez",
+      "hidden": false
+    },
+    {
+      "_id": "64866c1360b30c3615c7d136",
+      "name": "Ion Stoica",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-06-09T05:55:52.000Z",
+  "submittedOnDailyAt": "2023-06-11T23:21:32.367Z",
+  "title": "Judging LLM-as-a-judge with MT-Bench and Chatbot Arena",
+  "submittedOnDailyBy": {
+    "_id": "60f1abe7544c2adfd699860c",
+    "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1674929746905-60f1abe7544c2adfd699860c.jpeg",
+    "isPro": false,
+    "fullname": "AK",
+    "user": "akhaliq",
+    "type": "user",
+    "name": "akhaliq"
+  },
+  "summary": "Evaluating large language model (LLM) based chat assistants is challenging\ndue to their broad capabilities and the inadequacy of existing benchmarks in\nmeasuring human preferences. To address this, we explore using strong LLMs as\njudges to evaluate these models on more open-ended questions. We examine the\nusage and limitations of LLM-as-a-judge, such as position and verbosity biases\nand limited reasoning ability, and propose solutions to migrate some of them.\nWe then verify the agreement between LLM judges and human preferences by\nintroducing two benchmarks: MT-bench, a multi-turn question set; and Chatbot\nArena, a crowdsourced battle platform. Our results reveal that strong LLM\njudges like GPT-4 can match both controlled and crowdsourced human preferences\nwell, achieving over 80\\% agreement, the same level of agreement between\nhumans. Hence, LLM-as-a-judge is a scalable and explainable way to approximate\nhuman preferences, which are otherwise very expensive to obtain. Additionally,\nwe show our benchmark and traditional benchmarks complement each other by\nevaluating several variants of LLaMA/Vicuna. We will publicly release 80\nMT-bench questions, 3K expert votes, and 30K conversations with human\npreferences from Chatbot Arena.",
+  "upvotes": 42,
+  "discussionId": "64866c1460b30c3615c7d14c",
+  "githubRepo": "https://github.com/lm-sys/fastchat",
+  "githubRepoAddedBy": "auto",
+  "ai_summary": "Using strong large language models as judges for evaluating other LLM-based chat assistants achieves high agreement with human preferences, offering a scalable and explainable solution compared to traditional benchmarks.",
+  "ai_keywords": [
+    "large language model",
+    "LLM",
+    "LLM-as-a-judge",
+    "position bias",
+    "verbosity bias",
+    "reasoning ability",
+    "MT-bench",
+    "Chatbot Arena",
+    "human preferences",
+    "agreement",
+    "scalability",
+    "explainability",
+    "LLaMA",
+    "Vicuna",
+    "controlled preferences",
+    "crowdsourced preferences"
+  ],
+  "githubStars": 39457,
+  "_source": "hf"
+}

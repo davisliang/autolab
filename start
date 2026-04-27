@@ -94,8 +94,8 @@ export AUTOLAB_PROJECT="$PROJECT_ID"
 if (( WATCHDOG )); then
   # First, materialize the seed phase synchronously so the watchdog has a
   # checkpoint to resume from.
-  uv run python tools/run_orchestrator.py --idea "$IDEA" --single-step "${PASS_ARGS[@]}"
+  uv run python tools/run_orchestrator.py --idea "$IDEA" --single-step ${PASS_ARGS[@]+"${PASS_ARGS[@]}"}
   exec uv run python tools/idle_continue.py
 else
-  exec uv run python tools/run_orchestrator.py --idea "$IDEA" "${PASS_ARGS[@]}"
+  exec uv run python tools/run_orchestrator.py --idea "$IDEA" ${PASS_ARGS[@]+"${PASS_ARGS[@]}"}
 fi

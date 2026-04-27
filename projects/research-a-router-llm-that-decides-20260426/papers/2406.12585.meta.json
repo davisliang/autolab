@@ -1,0 +1,57 @@
+{
+  "id": "2406.12585",
+  "authors": [
+    {
+      "_id": "68b3dfa1851c6e7b001ec889",
+      "name": "Yao-Ching Yu",
+      "hidden": false
+    },
+    {
+      "_id": "68b3dfa1851c6e7b001ec88a",
+      "user": {
+        "_id": "63aea0d12314b93f9e6e6639",
+        "avatarUrl": "/avatars/c12df5352775b7e9a50be96036306596.svg",
+        "isPro": false,
+        "fullname": "tony kuo",
+        "user": "tony92151",
+        "type": "user",
+        "name": "tony92151"
+      },
+      "name": "Chun-Chih Kuo",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-09-01T07:51:11.842Z",
+      "hidden": false
+    },
+    {
+      "_id": "68b3dfa1851c6e7b001ec88b",
+      "name": "Ziqi Ye",
+      "hidden": false
+    },
+    {
+      "_id": "68b3dfa1851c6e7b001ec88c",
+      "name": "Yu-Cheng Chang",
+      "hidden": false
+    },
+    {
+      "_id": "68b3dfa1851c6e7b001ec88d",
+      "name": "Yueh-Se Li",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2024-06-18T13:17:26.000Z",
+  "title": "Breaking the Ceiling of the LLM Community by Treating Token Generation\n  as a Classification for Ensembling",
+  "summary": "Ensembling multiple models has always been an effective approach to push the\nlimits of existing performance and is widely used in classification tasks by\nsimply averaging the classification probability vectors from multiple\nclassifiers to achieve better accuracy. However, in the thriving open-source\nLarge Language Model (LLM) community, ensembling methods are rare and typically\nlimited to ensembling the full-text outputs of LLMs, such as selecting the best\noutput using a ranker, which leads to underutilization of token-level\nprobability information. In this paper, we treat the Generation of each token\nby LLMs as a Classification (GaC) for ensembling. This approach fully exploits\nthe probability information at each generation step and better prevents LLMs\nfrom producing early incorrect tokens that lead to snowballing errors. In\nexperiments, we ensemble state-of-the-art LLMs on several benchmarks, including\nexams, mathematics and reasoning, and observe that our method breaks the\nexisting community performance ceiling. Furthermore, we observed that most of\nthe tokens in the answer are simple and do not affect the correctness of the\nfinal answer. Therefore, we also experimented with ensembling only key tokens,\nand the results showed better performance with lower latency across benchmarks.",
+  "upvotes": 2,
+  "discussionId": "68b3dfa1851c6e7b001ec88e",
+  "githubRepo": "https://github.com/yaoching0/gac",
+  "githubRepoAddedBy": "auto",
+  "ai_summary": "Ensembling LLMs by treating token generation as classification improves performance and reduces errors compared to full-text ensembling.",
+  "ai_keywords": [
+    "Generation of each token by LLMs as a Classification (GaC)",
+    "token-level probability information",
+    "snowballing errors",
+    "key tokens"
+  ],
+  "githubStars": 53,
+  "_source": "hf"
+}

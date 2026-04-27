@@ -11,7 +11,6 @@ this script. Subprocesses (`claude -p`, tools/*.py, tools/*.sh) inherit it.
 Stop conditions:
   * <project>/thread/checkpoints/final.json exists
   * STOP file at repo root
-  * cost ledger sum exceeds MAX_BUDGET_USD env var (default 10)
 
 Usage:
     AUTOLAB_PROJECT=<id> tools/run_orchestrator.py --idea "..."   # fresh run
@@ -58,6 +57,12 @@ PHASES = [
     "write",
     "final",
 ]
+
+# Phases re-run on retreat (everything from survey through critique).
+RETREAT_PHASES = ["survey", "gap-fill", "screen", "design", "run", "critique"]
+
+MAX_CYCLES = int(os.environ.get("AUTOLAB_MAX_CYCLES", "5"))
+MAX_CRASH_RETRIES = int(os.environ.get("AUTOLAB_MAX_CRASH_RETRIES", "2"))
 
 
 def now_iso() -> str:
@@ -121,38 +126,54 @@ def write_checkpoint(phase: str, completed_ids: list[str], next_action: str | No
     (ckdir / f"{phase}.json").write_text(json.dumps(data, indent=2))
 
 
-def append_cost(phase: str, skill: str, model: str, claude_json: dict):
+def _result_envelope(parsed) -> dict:
+    """Normalize parsed `claude -p` stdout into a single result-envelope dict.
+
+    `--output-format json` should return one dict, but some CLI versions emit
+    a list of events (stream-json style). Drill in either way; never raise.
+    """
+    if isinstance(parsed, dict):
+        return parsed
+    if isinstance(parsed, list):
+        for ev in reversed(parsed):
+            if isinstance(ev, dict) and (
+                ev.get("type") == "result"
+                or "usage" in ev
+                or "total_cost_usd" in ev
+            ):
+                return ev
+        for ev in reversed(parsed):
+            if isinstance(ev, dict):
+                return ev
+    return {}
+
+
+def append_cost(phase: str, skill: str, model: str, claude_json):
+    """Append a token-usage row to the ledger. USD is intentionally not tracked.
+
+    Columns: timestamp, phase, skill, model, input_tokens (fresh, uncached),
+    cache_creation_tokens, cache_read_tokens, output_tokens.
+    """
     cl = cost_ledger()
     cl.parent.mkdir(parents=True, exist_ok=True)
     if not cl.exists():
         cl.write_text(
-            "timestamp\tphase\tskill\tmodel\tinput_tokens\toutput_tokens\tusd\n"
+            "timestamp\tphase\tskill\tmodel\t"
+            "input_tokens\tcache_creation_tokens\tcache_read_tokens\toutput_tokens\n"
         )
-    usage = claude_json.get("usage", {}) or {}
-    in_tok = usage.get("input_tokens", 0) or 0
+    env = _result_envelope(claude_json)
+    usage = env.get("usage") or {}
+    if not isinstance(usage, dict):
+        usage = {}
+    fresh_in = usage.get("input_tokens", 0) or 0
+    cache_create = usage.get("cache_creation_input_tokens", 0) or 0
+    cache_read = usage.get("cache_read_input_tokens", 0) or 0
     out_tok = usage.get("output_tokens", 0) or 0
-    usd = claude_json.get("total_cost_usd", 0.0) or 0.0
     with cl.open("a") as f:
         f.write(
-            f"{now_iso()}\t{phase}\t{skill}\t{model}\t{in_tok}\t{out_tok}\t{usd:.6f}\n"
+            f"{now_iso()}\t{phase}\t{skill}\t{model}\t"
+            f"{fresh_in}\t{cache_create}\t{cache_read}\t{out_tok}\n"
         )
-
-
-def cost_total_usd() -> float:
-    cl = cost_ledger()
-    if not cl.exists():
-        return 0.0
-    total = 0.0
-    with cl.open() as f:
-        next(f, None)
-        for line in f:
-            parts = line.rstrip("\n").split("\t")
-            if len(parts) >= 7:
-                try:
-                    total += float(parts[6])
-                except ValueError:
-                    pass
-    return total
 
 
 def project_paths_block() -> str:
@@ -198,6 +219,13 @@ def call_claude(
     ]
     log_line(f"call_claude phase={phase} skill={skill} model={model}")
     env = os.environ.copy()
+    for k in (
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_BASE_URL",
+        "ANTHROPIC_AUTH_TOKEN",
+        "CLAUDE_CODE_OAUTH_TOKEN",
+    ):
+        env.pop(k, None)
     env["AUTOLAB_PROJECT"] = get_project_id()
     try:
         r = subprocess.run(
@@ -214,13 +242,31 @@ def call_claude(
         return {"is_error": True, "error": "timeout", "result": ""}
     if r.returncode != 0:
         log_line(
-            f"call_claude exit={r.returncode} phase={phase} stderr={r.stderr[:400]}"
+            f"call_claude exit={r.returncode} phase={phase} skill={skill}\n"
+            f"  stdout: {r.stdout[:2000] if r.stdout else '(empty)'}\n"
+            f"  stderr: {r.stderr[:2000] if r.stderr else '(empty)'}"
         )
     try:
-        envelope = json.loads(r.stdout) if r.stdout.strip() else {}
+        parsed = json.loads(r.stdout) if r.stdout.strip() else {}
     except json.JSONDecodeError:
-        envelope = {"is_error": True, "result": r.stdout, "raw_stderr": r.stderr}
+        parsed = {"is_error": True, "result": r.stdout, "raw_stderr": r.stderr}
+    envelope = _result_envelope(parsed)
+    # Debug: log the raw usage block so we can verify cache attribution.
+    _u = envelope.get("usage") if isinstance(envelope, dict) else None
+    if isinstance(_u, dict):
+        log_line(
+            f"call_claude usage phase={phase} skill={skill} "
+            f"in={_u.get('input_tokens')} "
+            f"cache_create={_u.get('cache_creation_input_tokens')} "
+            f"cache_read={_u.get('cache_read_input_tokens')} "
+            f"out={_u.get('output_tokens')}"
+        )
     append_cost(phase, skill, model, envelope)
+    if r.returncode != 0 or envelope.get("is_error"):
+        raise SystemExit(
+            f"claude failed in phase={phase} skill={skill} rc={r.returncode} "
+            f"envelope_keys={list(envelope.keys())}; see logs/orchestrator.log for full output"
+        )
     return envelope
 
 
@@ -327,10 +373,6 @@ def stop_conditions_met() -> str | None:
         return "final checkpoint exists"
     if STOP_FILE.exists():
         return "STOP file present"
-    cap = float(os.environ.get("MAX_BUDGET_USD", "10"))
-    spend = cost_total_usd()
-    if spend >= cap:
-        return f"cost {spend:.2f} >= budget {cap:.2f}"
     return None
 
 
@@ -368,12 +410,14 @@ def phase_survey() -> list[str]:
     hyps = by_type(thread, "Hypothesis")
     if not hyps:
         raise SystemExit("survey: no Hypothesis artifacts to survey")
+    cycle_ctx = cycle_context_block(read_cycle_state())
     jobs = []
     for h in hyps[:5]:
         prompt = (
             f"Phase: survey\n"
             f"Invoke skill: literature-scout\n"
             f"Target: {h['id']}\n\n"
+            f"{cycle_ctx}"
             f"Read thread/INDEX.md and thoughts/{h['id']}.md (under the active project root). "
             f"Per the literature-scout skill, fetch 3-7 papers and emit LitFinding rows. "
             f"Use tools/fetch_paper.py for caching, then tools/append_artifact.py for emission. "
@@ -501,12 +545,14 @@ def phase_design(benchmark: str | None) -> list[str]:
         log_line("design: no surviving hypotheses; nothing to design")
         return []
     bench_note = f" Benchmark hint: {benchmark}." if benchmark else ""
+    cycle_ctx = cycle_context_block(read_cycle_state())
     jobs = []
     for h in survivors:
         prompt = (
             f"Phase: design\n"
             f"Invoke skill: experiment-designer (mode=primary)\n"
             f"Target: {h['id']}\n\n"
+            f"{cycle_ctx}"
             f"Read thoughts/{h['id']}.md. Per the experiment-designer skill, "
             f"emit one ExperimentPlan with seeds (>=3) and baseline_spec.{bench_note} "
             f"End with the stdout contract."
@@ -590,7 +636,20 @@ def phase_run() -> list[str]:
                 and p["id"] not in seen_plans
             ):
                 queue.append(p["id"])
-    return new_results
+    # Orchestrator-level crash retries: any plan whose latest result is `crash`
+    # gets re-run with a debug-fix prompt, up to MAX_CRASH_RETRIES times each.
+    for _ in range(MAX_CRASH_RETRIES + 1):
+        if not crash_retry_pass():
+            break
+    # Recompute the new_results list to include any retried results.
+    final_results: list[str] = []
+    seen_plan_results: set[str] = set()
+    for r in by_type(read_thread(), "ExperimentResult"):
+        if r["id"] in new_results or r.get("plan_id") in {pid for pid in seen_plans}:
+            if r["id"] not in seen_plan_results:
+                final_results.append(r["id"])
+                seen_plan_results.add(r["id"])
+    return final_results or new_results
 
 
 def phase_critique() -> list[str]:
@@ -695,11 +754,200 @@ def phase_final() -> list[str]:
     return [str(final_path)]
 
 
+def cycle_state_path() -> Path:
+    return checkpoints_dir().parent / "cycles.json"
+
+
+def read_cycle_state() -> dict:
+    """{ current: int, history: [{cycle, ended_at, failed_plan_ids, failed_hyp_ids, summary}], crash_retries: {plan_id: int} }"""
+    p = cycle_state_path()
+    if not p.exists():
+        return {"current": 1, "history": [], "crash_retries": {}}
+    try:
+        s = json.loads(p.read_text())
+        s.setdefault("current", 1)
+        s.setdefault("history", [])
+        s.setdefault("crash_retries", {})
+        return s
+    except json.JSONDecodeError:
+        return {"current": 1, "history": [], "crash_retries": {}}
+
+
+def write_cycle_state(state: dict):
+    p = cycle_state_path()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(state, indent=2))
+
+
+def _wipe_checkpoints_from(phase_name: str):
+    """Remove checkpoints for `phase_name` and every later phase, forcing rerun."""
+    if phase_name not in PHASES:
+        return
+    start_idx = PHASES.index(phase_name)
+    ckdir = checkpoints_dir()
+    for ph in PHASES[start_idx:]:
+        f = ckdir / f"{ph}.json"
+        if f.exists():
+            f.unlink()
+
+
+def _last_critique_completed_at() -> str | None:
+    """Timestamp the latest 'critique' checkpoint was written, used to scope
+    'current cycle' artifacts vs. those from prior cycles."""
+    ck = checkpoints_dir() / "critique.json"
+    if not ck.exists():
+        return None
+    try:
+        return json.loads(ck.read_text()).get("completed_at")
+    except json.JSONDecodeError:
+        return None
+
+
+def _experiment_results_after(boundary_iso: str | None) -> list[dict]:
+    thread = read_thread()
+    results = by_type(thread, "ExperimentResult")
+    if not boundary_iso:
+        return results
+    return [r for r in results if (r.get("created_at") or r.get("ts") or "") > boundary_iso]
+
+
+def cycle_retreat_check() -> str | None:
+    """Decide whether to retreat after the just-completed `critique` phase.
+
+    Returns the phase name to retreat to ("survey") if conditions met, else None.
+    """
+    state = read_cycle_state()
+    cycle = state["current"]
+    if MAX_CYCLES > 0 and cycle >= MAX_CYCLES:
+        log_line(f"retreat: at MAX_CYCLES={MAX_CYCLES}, advancing to write")
+        return None
+    # Look at results emitted since the previous cycle's retreat (or all results
+    # if this is cycle 1). The boundary is the previous cycle's ended_at marker.
+    prev_boundary = state["history"][-1]["ended_at"] if state["history"] else None
+    results = _experiment_results_after(prev_boundary)
+    # Ignore ablation results — we care about whether the *primary* hypothesis test passed.
+    primary = [r for r in results if not r.get("is_ablation", False)]
+    if not primary:
+        log_line("retreat: no primary ExperimentResults found; not retreating")
+        return None
+    has_pass = any(r.get("status") == "pass" for r in primary)
+    if has_pass:
+        log_line(f"retreat: cycle {cycle} has pass result(s); advancing to write")
+        return None
+    # No positive result. Park the failed hypotheses so subagents don't reuse them,
+    # record the cycle, and retreat to survey.
+    failed_plan_ids = [r.get("plan_id") for r in primary if r.get("plan_id")]
+    failed_hyp_ids = []
+    plans_by_id = {p["id"]: p for p in by_type(read_thread(), "ExperimentPlan")}
+    for pid in failed_plan_ids:
+        plan = plans_by_id.get(pid, {})
+        for parent in plan.get("parent_ids") or []:
+            if parent.startswith("HYP-") and parent not in failed_hyp_ids:
+                failed_hyp_ids.append(parent)
+    park_hypotheses(failed_hyp_ids, reason=f"cycle {cycle}: experiments did not produce a positive result")
+    state["history"].append({
+        "cycle": cycle,
+        "ended_at": now_iso(),
+        "failed_plan_ids": failed_plan_ids,
+        "failed_hyp_ids": failed_hyp_ids,
+        "summary": f"{len(primary)} primary experiment(s), 0 pass",
+    })
+    state["current"] = cycle + 1
+    write_cycle_state(state)
+    _wipe_checkpoints_from("survey")
+    log_line(
+        f"retreat: cycle {cycle} → cycle {cycle+1}; "
+        f"parked {len(failed_hyp_ids)} HYPs ({failed_hyp_ids}); "
+        f"wiped checkpoints from survey onward"
+    )
+    return "survey"
+
+
+def park_hypotheses(hyp_ids: list[str], reason: str):
+    if not hyp_ids:
+        return
+    pl = parking_lot()
+    pl.parent.mkdir(parents=True, exist_ok=True)
+    thread = read_thread()
+    by_id = {h["id"]: h for h in by_type(thread, "Hypothesis")}
+    with pl.open("a") as f:
+        f.write(f"\n## Parked at {now_iso()} — {reason}\n\n")
+        for hid in hyp_ids:
+            h = by_id.get(hid, {})
+            f.write(f"- `{hid}` ({h.get('author','?')}): {h.get('summary','')}\n")
+
+
+def crash_retry_pass() -> int:
+    """After phase_run, retry experiment-runner for plans whose only results crashed.
+
+    Returns the number of retries performed this pass. Bounded per-plan by
+    MAX_CRASH_RETRIES (separate from the 2 retries the runner does internally).
+    """
+    state = read_cycle_state()
+    retries_done = 0
+    thread = read_thread()
+    plans = [p for p in by_type(thread, "ExperimentPlan") if not p.get("is_ablation")]
+    for plan in plans:
+        pid = plan["id"]
+        results_for = [r for r in by_type(thread, "ExperimentResult") if r.get("plan_id") == pid]
+        if not results_for:
+            continue
+        latest = results_for[-1]
+        if latest.get("status") != "crash":
+            continue
+        used = state["crash_retries"].get(pid, 0)
+        if used >= MAX_CRASH_RETRIES:
+            log_line(f"crash-retry: {pid} exhausted ({used}/{MAX_CRASH_RETRIES}), giving up")
+            continue
+        state["crash_retries"][pid] = used + 1
+        write_cycle_state(state)
+        log_line(f"crash-retry: re-running {pid} (orchestrator attempt {used+1}/{MAX_CRASH_RETRIES})")
+        prompt = (
+            f"Phase: run-debug-retry\n"
+            f"Invoke skill: experiment-runner\n"
+            f"Target: {pid}\n\n"
+            f"PRIOR ATTEMPT CRASHED. Read thoughts/{pid}.md, the latest "
+            f"experiments/{pid}/runs/*.log, and any failure-analysis Critiques. "
+            f"Per the experiment-runner skill, diagnose the crash, edit "
+            f"experiments/{pid}/code/run.py to address the root cause "
+            f"(common: hyperparam out of range, dtype mismatch, OOM, missing import, "
+            f"shape error). Re-run with sanity gate then full sweep. Emit a fresh "
+            f"ExperimentResult. End with the stdout contract."
+        )
+        call_claude("run-debug-retry", "experiment-runner", "sonnet", prompt, timeout_s=2400)
+        refresh_indexes()
+        retries_done += 1
+    return retries_done
+
+
+def cycle_context_block(state: dict) -> str:
+    """Prompt prefix injected into survey/design phases when cycle > 1."""
+    if state["current"] <= 1 or not state["history"]:
+        return ""
+    last = state["history"][-1]
+    failed_hyps = last.get("failed_hyp_ids", [])
+    failed_plans = last.get("failed_plan_ids", [])
+    return (
+        f"\n## RETREAT CONTEXT (cycle {state['current']} of up to {MAX_CYCLES})\n"
+        f"This is iteration {state['current']}. Previous cycle(s) did NOT yield a positive result.\n"
+        f"Parked failed Hypotheses (do not re-propose these): {failed_hyps}\n"
+        f"Failed ExperimentPlans: {failed_plans}\n"
+        f"Read each parked HYP's body and any linked ExperimentResult/Critique to "
+        f"understand WHY it failed (wrong mechanism? bad metric? confounded baseline?). "
+        f"Propose materially different angles — not minor variations of the same idea.\n"
+    )
+
+
 def next_phase_to_run(args) -> str | None:
     cp = latest_checkpoint()
     if cp is None:
         return "seed" if args.idea else None
     cur = cp.get("phase", "seed")
+    # Retreat hook: after critique, decide whether to loop back to survey.
+    if cur == "critique":
+        retreat = cycle_retreat_check()
+        if retreat:
+            return retreat
     try:
         i = PHASES.index(cur)
     except ValueError:

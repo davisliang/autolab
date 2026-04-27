@@ -1,0 +1,99 @@
+{
+  "id": "2407.00788",
+  "authors": [
+    {
+      "_id": "6683c0bd21b4b78318103968",
+      "user": {
+        "_id": "637745113a63a2983ffbde13",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669187672174-637745113a63a2983ffbde13.jpeg",
+        "isPro": false,
+        "fullname": "Haofan Wang",
+        "user": "wanghaofan",
+        "type": "user",
+        "name": "wanghaofan"
+      },
+      "name": "Haofan Wang",
+      "status": "extracted_confirmed",
+      "statusLastChangedAt": "2024-10-30T09:37:33.259Z",
+      "hidden": false
+    },
+    {
+      "_id": "6683c0bd21b4b78318103969",
+      "user": {
+        "_id": "649f7b742bf2e21d955c1067",
+        "avatarUrl": "/avatars/270026405d5640886a86f961a001b057.svg",
+        "isPro": false,
+        "fullname": "xing",
+        "user": "xingpng",
+        "type": "user",
+        "name": "xingpng"
+      },
+      "name": "Peng Xing",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-08-30T07:18:15.742Z",
+      "hidden": false
+    },
+    {
+      "_id": "6683c0bd21b4b7831810396a",
+      "name": "Renyuan Huang",
+      "hidden": false
+    },
+    {
+      "_id": "6683c0bd21b4b7831810396b",
+      "user": {
+        "_id": "6464d47c07a7f745c59ce7f4",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/6464d47c07a7f745c59ce7f4/6mOib8MSaQ5RejmJboIya.jpeg",
+        "isPro": false,
+        "fullname": "aihao2000",
+        "user": "AisingioroHao0",
+        "type": "user",
+        "name": "AisingioroHao0"
+      },
+      "name": "Hao Ai",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-07-02T21:08:58.061Z",
+      "hidden": false
+    },
+    {
+      "_id": "6683c0bd21b4b7831810396c",
+      "name": "Qixun Wang",
+      "hidden": false
+    },
+    {
+      "_id": "6683c0bd21b4b7831810396d",
+      "name": "Xu Bai",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2024-06-30T18:05:33.000Z",
+  "submittedOnDailyAt": "2024-07-02T07:28:04.761Z",
+  "title": "InstantStyle-Plus: Style Transfer with Content-Preserving in\n  Text-to-Image Generation",
+  "submittedOnDailyBy": {
+    "_id": "637745113a63a2983ffbde13",
+    "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669187672174-637745113a63a2983ffbde13.jpeg",
+    "isPro": false,
+    "fullname": "Haofan Wang",
+    "user": "wanghaofan",
+    "type": "user",
+    "name": "wanghaofan"
+  },
+  "summary": "Style transfer is an inventive process designed to create an image that\nmaintains the essence of the original while embracing the visual style of\nanother. Although diffusion models have demonstrated impressive generative\npower in personalized subject-driven or style-driven applications, existing\nstate-of-the-art methods still encounter difficulties in achieving a seamless\nbalance between content preservation and style enhancement. For example,\namplifying the style's influence can often undermine the structural integrity\nof the content. To address these challenges, we deconstruct the style transfer\ntask into three core elements: 1) Style, focusing on the image's aesthetic\ncharacteristics; 2) Spatial Structure, concerning the geometric arrangement and\ncomposition of visual elements; and 3) Semantic Content, which captures the\nconceptual meaning of the image. Guided by these principles, we introduce\nInstantStyle-Plus, an approach that prioritizes the integrity of the original\ncontent while seamlessly integrating the target style. Specifically, our method\naccomplishes style injection through an efficient, lightweight process,\nutilizing the cutting-edge InstantStyle framework. To reinforce the content\npreservation, we initiate the process with an inverted content latent noise and\na versatile plug-and-play tile ControlNet for preserving the original image's\nintrinsic layout. We also incorporate a global semantic adapter to enhance the\nsemantic content's fidelity. To safeguard against the dilution of style\ninformation, a style extractor is employed as discriminator for providing\nsupplementary style guidance. Codes will be available at\nhttps://github.com/instantX-research/InstantStyle-Plus.",
+  "upvotes": 24,
+  "discussionId": "6683c0c021b4b78318103a64",
+  "projectPage": "https://instantstyle-plus.github.io/",
+  "githubRepo": "https://github.com/instantX-research/InstantStyle-Plus",
+  "githubRepoAddedBy": "user",
+  "ai_summary": "InstantStyle-Plus enhances style transfer by maintaining content integrity and semantic fidelity while efficiently integrating target styles using advanced components like ControlNet and semantic adapters.",
+  "ai_keywords": [
+    "diffusion models",
+    "style transfer",
+    "InstantStyle",
+    "ControlNet",
+    "semantic content",
+    "semantic adapter",
+    "style extractor",
+    "discriminator"
+  ],
+  "githubStars": 154,
+  "_source": "hf"
+}

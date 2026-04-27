@@ -1,0 +1,83 @@
+{
+  "id": "2211.12561",
+  "authors": [
+    {
+      "_id": "649b9c74e9769d64c8cf61f2",
+      "user": {
+        "_id": "621e9388345a1d9ab65391c3",
+        "avatarUrl": "/avatars/d009c811dc63224f8eba1889fefad04b.svg",
+        "isPro": false,
+        "fullname": "Michihiro Yasunaga",
+        "user": "michiyasunaga",
+        "type": "user",
+        "name": "michiyasunaga"
+      },
+      "name": "Michihiro Yasunaga",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2023-08-01T19:48:48.987Z",
+      "hidden": false
+    },
+    {
+      "_id": "649b9c74e9769d64c8cf61f3",
+      "name": "Armen Aghajanyan",
+      "hidden": false
+    },
+    {
+      "_id": "649b9c74e9769d64c8cf61f4",
+      "name": "Weijia Shi",
+      "hidden": false
+    },
+    {
+      "_id": "649b9c74e9769d64c8cf61f5",
+      "name": "Rich James",
+      "hidden": false
+    },
+    {
+      "_id": "649b9c74e9769d64c8cf61f6",
+      "name": "Jure Leskovec",
+      "hidden": false
+    },
+    {
+      "_id": "649b9c74e9769d64c8cf61f7",
+      "name": "Percy Liang",
+      "hidden": false
+    },
+    {
+      "_id": "649b9c74e9769d64c8cf61f8",
+      "name": "Mike Lewis",
+      "hidden": false
+    },
+    {
+      "_id": "649b9c74e9769d64c8cf61f9",
+      "name": "Luke Zettlemoyer",
+      "hidden": false
+    },
+    {
+      "_id": "649b9c74e9769d64c8cf61fa",
+      "name": "Wen-tau Yih",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2022-11-22T20:26:44.000Z",
+  "title": "Retrieval-Augmented Multimodal Language Modeling",
+  "summary": "Recent multimodal models such as DALL-E and CM3 have achieved remarkable\nprogress in text-to-image and image-to-text generation. However, these models\nstore all learned knowledge (e.g., the appearance of the Eiffel Tower) in the\nmodel parameters, requiring increasingly larger models and training data to\ncapture more knowledge. To integrate knowledge in a more scalable and modular\nway, we propose a retrieval-augmented multimodal model, which enables a base\nmultimodal model (generator) to refer to relevant text and images fetched by a\nretriever from external memory (e.g., documents on the web). Specifically, for\nthe retriever, we use a pretrained CLIP, and for the generator, we train a CM3\nTransformer on the LAION dataset. Our resulting model, named\nRetrieval-Augmented CM3 (RA-CM3), is the first multimodal model that can\nretrieve and generate both text and images. We show that RA-CM3 significantly\noutperforms baseline multimodal models such as DALL-E and CM3 on both image and\ncaption generation tasks (12 FID and 17 CIDEr improvements on MS-COCO), while\nrequiring much less compute for training (<30% of DALL-E). Moreover, we show\nthat RA-CM3 exhibits novel capabilities, such as faithful image generation and\nmultimodal in-context learning (e.g., image generation from demonstrations).",
+  "upvotes": 1,
+  "discussionId": "649b9c75e9769d64c8cf6218",
+  "ai_summary": "A retrieval-augmented multimodal model, RA-CM3, improves text-to-image and image-to-text generation by integrating external knowledge, outperforming models like DALL-E and CM3 with lower computational requirements.",
+  "ai_keywords": [
+    "DALL-E",
+    "CM3",
+    "multimodal models",
+    "retrieval-augmented",
+    "pretrained CLIP",
+    "CM3 Transformer",
+    "LAION dataset",
+    "Retrieval-Augmented CM3 (RA-CM3)",
+    "MS-COCO",
+    "FID",
+    "CIDEr",
+    "faithful image generation",
+    "multimodal in-context learning"
+  ],
+  "_source": "hf"
+}

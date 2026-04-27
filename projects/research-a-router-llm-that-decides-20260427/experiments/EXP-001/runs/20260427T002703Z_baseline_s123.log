@@ -1,0 +1,4 @@
+# cmd: uv run python /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260427/experiments/EXP-001/code/run.py --seed 123 --config baseline --out /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260427/experiments/EXP-001/runs/20260427T002703Z_baseline_s123.jsonl
+Split: train=1050 val=225 test=225
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 19880.96it/s]
+seed=123 config=baseline routing_accuracy=0.9111 cost_savings=0.7324 quality=0.9820

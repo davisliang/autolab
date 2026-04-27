@@ -1,0 +1,2 @@
+# cmd: uv run python /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260426/experiments/EXP-001/code/run.py --seed 42 --config baseline --out /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260426/experiments/EXP-001/runs/20260426T235016Z_baseline_s42.jsonl
+seed=42 config=baseline reduction=0.073 quality_delta=+0.1875 ci_lower=-0.226 base_ue=41 prop_ue=38/160

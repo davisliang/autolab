@@ -1,0 +1,2 @@
+# cmd: uv run python /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260426/experiments/EXP-001/code/run.py --seed 137 --config proposed --out /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260426/experiments/EXP-001/runs/20260426T235022Z_proposed_s137.jsonl
+seed=137 config=proposed reduction=0.208 quality_delta=+0.1562 ci_lower=0.019 base_ue=53 prop_ue=42/160

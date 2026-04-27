@@ -1,0 +1,15 @@
+timestamp	phase	skill	model	input_tokens	cache_creation_tokens	cache_read_tokens	output_tokens
+2026-04-27T01:47:45+00:00	expand	idea-expander	sonnet	19	25992	470195	12304
+2026-04-27T01:50:52+00:00	survey	literature-scout	sonnet	27	51348	1057771	9604
+2026-04-27T01:51:01+00:00	survey	literature-scout	sonnet	14	64481	595096	12140
+2026-04-27T01:51:05+00:00	survey	literature-scout	sonnet	20	82615	1235172	11714
+2026-04-27T01:54:02+00:00	survey	literature-scout	sonnet	38	72498	1976632	21138
+2026-04-27T01:56:28+00:00	gap-fill	idea-expander	sonnet	14	22744	305674	5972
+2026-04-27T01:57:11+00:00	screen-boredom	critic	haiku	74	48526	350945	2991
+2026-04-27T01:57:16+00:00	screen-boredom	critic	haiku	42	45335	170999	2668
+2026-04-27T01:57:16+00:00	screen-boredom	critic	haiku	58	47798	264599	4623
+2026-04-27T01:57:19+00:00	screen-boredom	critic	haiku	42	46692	172864	3012
+2026-04-27T01:57:28+00:00	screen-boredom	critic	haiku	58	48512	264379	4724
+2026-04-27T01:58:21+00:00	screen-boredom	critic	haiku	74	11103	405761	5761
+2026-04-27T02:00:34+00:00	screen-novelty	novelty-checker	haiku	154	56385	1305477	12331
+2026-04-27T02:01:28+00:00	design	experiment-designer	opus	8	17966	137716	2061

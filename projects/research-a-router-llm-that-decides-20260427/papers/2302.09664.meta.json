@@ -1,0 +1,37 @@
+{
+  "id": "2302.09664",
+  "authors": [
+    {
+      "_id": "65ba2616504b3aacd117680d",
+      "name": "Lorenz Kuhn",
+      "hidden": false
+    },
+    {
+      "_id": "65ba2616504b3aacd117680e",
+      "name": "Yarin Gal",
+      "hidden": false
+    },
+    {
+      "_id": "65ba2616504b3aacd117680f",
+      "name": "Sebastian Farquhar",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-02-19T20:10:07.000Z",
+  "title": "Semantic Uncertainty: Linguistic Invariances for Uncertainty Estimation\n  in Natural Language Generation",
+  "summary": "We introduce a method to measure uncertainty in large language models. For\ntasks like question answering, it is essential to know when we can trust the\nnatural language outputs of foundation models. We show that measuring\nuncertainty in natural language is challenging because of \"semantic\nequivalence\" -- different sentences can mean the same thing. To overcome these\nchallenges we introduce semantic entropy -- an entropy which incorporates\nlinguistic invariances created by shared meanings. Our method is unsupervised,\nuses only a single model, and requires no modifications to off-the-shelf\nlanguage models. In comprehensive ablation studies we show that the semantic\nentropy is more predictive of model accuracy on question answering data sets\nthan comparable baselines.",
+  "upvotes": 4,
+  "discussionId": "65ba2617504b3aacd1176821",
+  "githubRepo": "https://github.com/lorenzkuhn/semantic_uncertainty",
+  "githubRepoAddedBy": "auto",
+  "ai_summary": "A method for measuring uncertainty in large language models using semantic entropy is introduced, which is more accurate than baselines in question answering tasks.",
+  "ai_keywords": [
+    "large language models",
+    "semantic entropy",
+    "linguistic invariances",
+    "semantic equivalence",
+    "ablation studies"
+  ],
+  "githubStars": 185,
+  "_source": "hf"
+}

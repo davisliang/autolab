@@ -1,0 +1,25 @@
+# cmd: uv run python /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260426/experiments/EXP-001/code/run.py --seed 0 --config proposed --out /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260426/experiments/EXP-001/runs/20260426T234838Z_proposed_s0.jsonl --sanity
+Traceback (most recent call last):
+  File "/Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260426/experiments/EXP-001/code/run.py", line 330, in <module>
+    main()
+  File "/Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260426/experiments/EXP-001/code/run.py", line 324, in main
+    cmd_sanity(args.seed, args.out)
+  File "/Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260426/experiments/EXP-001/code/run.py", line 170, in cmd_sanity
+    import lightgbm as lgb
+  File "/Users/davis/Documents/code/autolab/.venv/lib/python3.12/site-packages/lightgbm/__init__.py", line 11, in <module>
+    from .basic import Booster, Dataset, Sequence, register_logger
+  File "/Users/davis/Documents/code/autolab/.venv/lib/python3.12/site-packages/lightgbm/basic.py", line 9, in <module>
+    from .libpath import _LIB  # isort: skip
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/davis/Documents/code/autolab/.venv/lib/python3.12/site-packages/lightgbm/libpath.py", line 49, in <module>
+    _LIB = ctypes.cdll.LoadLibrary(_find_lib_path()[0])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/davis/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/ctypes/__init__.py", line 460, in LoadLibrary
+    return self._dlltype(name)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/davis/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: dlopen(/Users/davis/Documents/code/autolab/.venv/lib/python3.12/site-packages/lightgbm/lib/lib_lightgbm.dylib, 0x0006): Library not loaded: @rpath/libomp.dylib
+  Referenced from: <D44045CD-B874-3A27-9A61-F131D99AACE4> /Users/davis/Documents/code/autolab/.venv/lib/python3.12/site-packages/lightgbm/lib/lib_lightgbm.dylib
+  Reason: tried: '/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/opt/local/lib/libomp/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/local/lib/libomp/libomp.dylib' (no such file), '/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/opt/local/lib/libomp/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/local/lib/libomp/libomp.dylib' (no such file), '/Users/davis/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/libomp.dylib' (no such file)

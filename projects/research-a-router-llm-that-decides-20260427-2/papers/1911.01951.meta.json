@@ -1,0 +1,11 @@
+{
+  "title": "The Bron-Kerbosch Algorithm with Vertex Ordering is Output-Sensitive",
+  "summary": "The Bron-Kerbosch algorithm is a well known maximal clique enumeration algorithm. So far it was unknown whether it was output sensitive or not. In this paper we partially answer this question by proving that the Bron-Kerbosch Algorithm with vertex ordering, first introduced and studied by Eppstein, L\u00f6ffler and Strash in \"Listing all maximal cliques in sparse graphs in near-optimal time. International Symposium on Algorithms and Computation. Springer, Berlin, Heidelberg, 2010\" is output sensitive.",
+  "publishedAt": "2019-11-05T17:21:28Z",
+  "authors": [
+    {
+      "name": "George Manoussakis"
+    }
+  ],
+  "_source": "arxiv"
+}

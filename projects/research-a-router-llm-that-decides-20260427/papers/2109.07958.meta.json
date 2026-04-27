@@ -1,0 +1,64 @@
+{
+  "id": "2109.07958",
+  "authors": [
+    {
+      "_id": "6411c77c6b75ddced388fae9",
+      "name": "Stephanie Lin",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77c6b75ddced388faea",
+      "user": {
+        "_id": "63e8f3e8ca4fc7d30de92015",
+        "avatarUrl": "/avatars/5f90359115f04adb586bdc970d6d9eb8.svg",
+        "isPro": false,
+        "fullname": "Jacob Hilton",
+        "user": "jacobhilton22",
+        "type": "user",
+        "name": "jacobhilton22"
+      },
+      "name": "Jacob Hilton",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-05-29T13:17:37.764Z",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77c6b75ddced388faeb",
+      "user": {
+        "_id": "65d15849bda9379ede9468f5",
+        "avatarUrl": "/avatars/4f166dd1ab30058c757d9ef46599b52a.svg",
+        "isPro": false,
+        "fullname": "Owain Evans",
+        "user": "owainevans",
+        "type": "user",
+        "name": "owainevans"
+      },
+      "name": "Owain Evans",
+      "status": "extracted_confirmed",
+      "statusLastChangedAt": "2024-02-18T18:19:06.300Z",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2021-09-08T17:15:27.000Z",
+  "title": "TruthfulQA: Measuring How Models Mimic Human Falsehoods",
+  "summary": "We propose a benchmark to measure whether a language model is truthful in\ngenerating answers to questions. The benchmark comprises 817 questions that\nspan 38 categories, including health, law, finance and politics. We crafted\nquestions that some humans would answer falsely due to a false belief or\nmisconception. To perform well, models must avoid generating false answers\nlearned from imitating human texts. We tested GPT-3, GPT-Neo/J, GPT-2 and a\nT5-based model. The best model was truthful on 58% of questions, while human\nperformance was 94%. Models generated many false answers that mimic popular\nmisconceptions and have the potential to deceive humans. The largest models\nwere generally the least truthful. This contrasts with other NLP tasks, where\nperformance improves with model size. However, this result is expected if false\nanswers are learned from the training distribution. We suggest that scaling up\nmodels alone is less promising for improving truthfulness than fine-tuning\nusing training objectives other than imitation of text from the web.",
+  "upvotes": 2,
+  "discussionId": "641192333ea54b1aa7e2eebc",
+  "ai_summary": "A benchmark measures language models' truthfulness in answering questions, showing that even large models perform poorly compared to humans due to learned misconceptions.",
+  "ai_keywords": [
+    "language model",
+    "truthfulness",
+    "benchmark",
+    "questions",
+    "categories",
+    "false beliefs",
+    "misconceptions",
+    "GPT-3",
+    "GPT-Neo/J",
+    "GPT-2",
+    "T5-based model",
+    "training distribution",
+    "fine-tuning"
+  ],
+  "_source": "hf"
+}

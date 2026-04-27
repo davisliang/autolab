@@ -1,0 +1,32 @@
+{
+  "title": "The battery capacity of energy-storing quantum systems",
+  "summary": "The quantum battery capacity is introduced in this letter as a figure of merit that expresses the potential of a quantum system to store and supply energy. It is defined as the difference between the highest and the lowest energy that can be reached by means of the unitary evolution of the system. This function is closely connected to the ergotropy, but it does not depend on the temporary level of energy of the system. The capacity of a quantum battery can be directly linked with the entropy of the battery state, as well as with measures of coherence and entanglement.",
+  "publishedAt": "2023-02-20T11:06:43Z",
+  "authors": [
+    {
+      "name": "Xue Yang"
+    },
+    {
+      "name": "Yan-Han Yang"
+    },
+    {
+      "name": "Mir Alimuddin"
+    },
+    {
+      "name": "Raffaele Salvia"
+    },
+    {
+      "name": "Shao-Ming Fei"
+    },
+    {
+      "name": "Li-Ming Zhao"
+    },
+    {
+      "name": "Stefan Nimmrichter"
+    },
+    {
+      "name": "Ming-Xing Luo"
+    }
+  ],
+  "_source": "arxiv"
+}

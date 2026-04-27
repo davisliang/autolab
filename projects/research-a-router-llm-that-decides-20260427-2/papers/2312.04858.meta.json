@@ -1,0 +1,20 @@
+{
+  "title": "A short tutorial on Wirtinger Calculus with applications in quantum information",
+  "summary": "The optimization of system parameters is a ubiquitous problem in science and engineering. The traditional approach involves setting to zero the partial derivatives of the objective function with respect to each parameter, in order to extract the optimal solution. However, the system parameters often take the form of complex matrices. In such situations, conventional methods become unwieldy. The `Wirtinger Calculus' provides a relatively simple methodology for such optimization problems. In this tutorial, we provide a pedagogical introduction to Wirtinger Calculus. To illustrate the utility of this framework in quantum information theory, we also discuss a few example applications.",
+  "publishedAt": "2023-12-08T06:26:04Z",
+  "authors": [
+    {
+      "name": "Kelvin Koor"
+    },
+    {
+      "name": "Yixian Qiu"
+    },
+    {
+      "name": "Leong Chuan Kwek"
+    },
+    {
+      "name": "Patrick Rebentrost"
+    }
+  ],
+  "_source": "arxiv"
+}

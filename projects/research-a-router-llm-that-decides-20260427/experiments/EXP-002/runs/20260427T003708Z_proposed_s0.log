@@ -1,0 +1,2 @@
+# cmd: uv run python /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260427/experiments/EXP-002/code/run.py --seed 0 --config proposed --out /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260427/experiments/EXP-002/runs/20260427T003708Z_proposed_s0.jsonl --sanity
+sanity seed=0: initial_loss=0.6931 final_loss=0.2201 drop=68.25%

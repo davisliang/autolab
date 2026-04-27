@@ -1,0 +1,82 @@
+{
+  "id": "2310.03744",
+  "authors": [
+    {
+      "_id": "651f6912da9dcb165cbfd133",
+      "user": {
+        "_id": "63898b61ec1f539adc0f4da2",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1674248167280-63898b61ec1f539adc0f4da2.jpeg",
+        "isPro": false,
+        "fullname": "Haotian Liu",
+        "user": "liuhaotian",
+        "type": "user",
+        "name": "liuhaotian"
+      },
+      "name": "Haotian Liu",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2023-10-09T14:12:57.025Z",
+      "hidden": false
+    },
+    {
+      "_id": "651f6912da9dcb165cbfd134",
+      "user": {
+        "_id": "62aba526cae4462c0c6caa0f",
+        "avatarUrl": "/avatars/430560ec2c2547f819225769ab432f30.svg",
+        "isPro": false,
+        "fullname": "Chunyuan Li",
+        "user": "Chunyuan24",
+        "type": "user",
+        "name": "Chunyuan24"
+      },
+      "name": "Chunyuan Li",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-10-09T08:47:09.450Z",
+      "hidden": false
+    },
+    {
+      "_id": "651f6912da9dcb165cbfd135",
+      "name": "Yuheng Li",
+      "hidden": false
+    },
+    {
+      "_id": "651f6912da9dcb165cbfd136",
+      "user": {
+        "_id": "649f41ee70a478f8b36b2984",
+        "avatarUrl": "/avatars/1c9a76717a450ac4aeb62a1e823d2e4a.svg",
+        "isPro": false,
+        "fullname": "Yong Jae Lee",
+        "user": "yjlee0222",
+        "type": "user",
+        "name": "yjlee0222"
+      },
+      "name": "Yong Jae Lee",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-10-09T08:46:09.628Z",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-10-05T17:59:56.000Z",
+  "submittedOnDailyAt": "2023-10-06T00:25:32.583Z",
+  "title": "Improved Baselines with Visual Instruction Tuning",
+  "submittedOnDailyBy": {
+    "_id": "60f1abe7544c2adfd699860c",
+    "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1674929746905-60f1abe7544c2adfd699860c.jpeg",
+    "isPro": false,
+    "fullname": "AK",
+    "user": "akhaliq",
+    "type": "user",
+    "name": "akhaliq"
+  },
+  "summary": "Large multimodal models (LMM) have recently shown encouraging progress with\nvisual instruction tuning. In this note, we show that the fully-connected\nvision-language cross-modal connector in LLaVA is surprisingly powerful and\ndata-efficient. With simple modifications to LLaVA, namely, using\nCLIP-ViT-L-336px with an MLP projection and adding academic-task-oriented VQA\ndata with simple response formatting prompts, we establish stronger baselines\nthat achieve state-of-the-art across 11 benchmarks. Our final 13B checkpoint\nuses merely 1.2M publicly available data, and finishes full training in ~1 day\non a single 8-A100 node. We hope this can make state-of-the-art LMM research\nmore accessible. Code and model will be publicly available.",
+  "upvotes": 39,
+  "discussionId": "651f6914da9dcb165cbfd162",
+  "ai_summary": "Modifications to LLaVA using CLIP-ViT-L-336px and academic VQA data improve multimodal performance, achieving state-of-the-art results with limited training data.",
+  "ai_keywords": [
+    "LLaVA",
+    "CLIP-ViT-L-336px",
+    "MLP projection",
+    "VQA",
+    "benchmarks"
+  ],
+  "_source": "hf"
+}

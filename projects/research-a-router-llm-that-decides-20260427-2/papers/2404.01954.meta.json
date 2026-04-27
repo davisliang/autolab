@@ -1,0 +1,2157 @@
+{
+  "id": "2404.01954",
+  "authors": [
+    {
+      "_id": "660ce2217674077dc5067001",
+      "user": {
+        "_id": "5f2294832128ba01bdf08c66",
+        "avatarUrl": "/avatars/334082608dd69a44b826fac00b36aa0a.svg",
+        "isPro": false,
+        "fullname": "Kang Min Yoo",
+        "user": "kmyoo",
+        "type": "user",
+        "name": "kmyoo"
+      },
+      "name": "Kang Min Yoo",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-10-30T09:56:49.509Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067002",
+      "name": "Jaegeun Han",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067003",
+      "name": "Sookyo In",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067004",
+      "name": "Heewon Jeon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067005",
+      "name": "Jisu Jeong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067006",
+      "name": "Jaewook Kang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067007",
+      "name": "Hyunwook Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067008",
+      "name": "Kyung-Min Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067009",
+      "name": "Munhyong Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506700a",
+      "name": "Sungju Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506700b",
+      "name": "Donghyun Kwak",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506700c",
+      "name": "Hanock Kwak",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506700d",
+      "name": "Se Jung Kwon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506700e",
+      "name": "Bado Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506700f",
+      "name": "Dongsoo Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067010",
+      "name": "Gichang Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067011",
+      "name": "Jooho Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067012",
+      "name": "Baeseong Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067013",
+      "name": "Seongjin Shin",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067014",
+      "name": "Joonsang Yu",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067015",
+      "name": "Seolki Baek",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067016",
+      "name": "Sumin Byeon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067017",
+      "name": "Eungsup Cho",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067018",
+      "name": "Dooseok Choe",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067019",
+      "name": "Jeesung Han",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506701a",
+      "name": "Youngkyun Jin",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506701b",
+      "name": "Hyein Jun",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506701c",
+      "name": "Jaeseung Jung",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506701d",
+      "name": "Chanwoong Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506701e",
+      "name": "Jinhong Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506701f",
+      "name": "Jinuk Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067020",
+      "name": "Dokyeong Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067021",
+      "name": "Dongwook Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067022",
+      "name": "Jeong Min Sohn",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067023",
+      "name": "Sujung Han",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067024",
+      "name": "Jiae Heo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067025",
+      "name": "Sungju Hong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067026",
+      "name": "Mina Jeon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067027",
+      "name": "Hyunhoon Jung",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067028",
+      "name": "Jungeun Jung",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067029",
+      "name": "Wangkyo Jung",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506702a",
+      "name": "Chungjoon Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506702b",
+      "name": "Hyeri Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506702c",
+      "name": "Jonghyun Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506702d",
+      "name": "Min Young Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506702e",
+      "name": "Soeun Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506702f",
+      "name": "Joonhee Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067030",
+      "name": "Jieun Shin",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067031",
+      "name": "Sojin Yang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067032",
+      "name": "Jungsoon Yoon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067033",
+      "name": "Hwaran Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067034",
+      "name": "Sanghwan Bae",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067035",
+      "name": "Jeehwan Cha",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067036",
+      "name": "Donghoon Ham",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067037",
+      "name": "Youngki Hong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067038",
+      "name": "Yunki Hong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067039",
+      "name": "Myunggeun Ji",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506703a",
+      "name": "Yeguk Jin",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506703b",
+      "name": "Chansong Jo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506703c",
+      "name": "Shinyoung Joo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506703d",
+      "name": "Seunghwan Jung",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506703e",
+      "name": "Hyomin Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506703f",
+      "user": {
+        "_id": "60a387e1eb729661127edc83",
+        "avatarUrl": "/avatars/c188436ed9b3d17730841b23a58322d7.svg",
+        "isPro": false,
+        "fullname": "Jungwhan Kim",
+        "user": "jungwhank",
+        "type": "user",
+        "name": "jungwhank"
+      },
+      "name": "Jungwhan Kim",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-04-17T08:06:24.575Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067040",
+      "name": "Minkyoung Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067041",
+      "name": "Minseung Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067042",
+      "name": "Sungdong Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067043",
+      "name": "Yonghee Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067044",
+      "name": "Youngjun Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067045",
+      "name": "Donghyeon Ko",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067046",
+      "name": "Dughyun Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067047",
+      "name": "Jaehong Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067048",
+      "name": "Jieun Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067049",
+      "name": "Jongjin Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506704a",
+      "name": "Min Young Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506704b",
+      "name": "Yehbin Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506704c",
+      "name": "Taehong Min",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506704d",
+      "name": "Kiyoon Moon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506704e",
+      "user": {
+        "_id": "6136f65440e43b8f748a0833",
+        "avatarUrl": "/avatars/f72a5ae3d3e94485de8aed8df94abdad.svg",
+        "isPro": false,
+        "fullname": "Jaesun Park",
+        "user": "jaesun",
+        "type": "user",
+        "name": "jaesun"
+      },
+      "name": "Jaesun Park",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-02-27T09:18:49.535Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506704f",
+      "name": "Kyuyon Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067050",
+      "name": "Seunghyun Seo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067051",
+      "name": "Gyubin Son",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067052",
+      "name": "Wonjoon Yoo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067053",
+      "name": "Myungin You",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067054",
+      "name": "Doheon Ahn",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067055",
+      "name": "Homin Ahn",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067056",
+      "name": "Joohee Ahn",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067057",
+      "name": "Seongmin Ahn",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067058",
+      "name": "Chanwoo An",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067059",
+      "name": "Hyeryun An",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506705a",
+      "name": "Junho An",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506705b",
+      "name": "Sang-Min An",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506705c",
+      "name": "Boram Byun",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506705d",
+      "name": "Jongho Cha",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506705e",
+      "name": "Minji Chang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506705f",
+      "name": "Seunggyu Chang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067060",
+      "name": "Haesong Cho",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067061",
+      "name": "Youngdo Cho",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067062",
+      "name": "Dalnim Choi",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067063",
+      "name": "Daseul Choi",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067064",
+      "name": "Hyoseok Choi",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067065",
+      "name": "Minseong Choi",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067066",
+      "name": "Sangho Choi",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067067",
+      "name": "Seongjae Choi",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067068",
+      "name": "Wooyong Choi",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067069",
+      "name": "Sewhan Chun",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506706a",
+      "name": "Dong Young Go",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506706b",
+      "name": "Chiheon Ham",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506706c",
+      "name": "Danbi Han",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506706d",
+      "name": "Jaemin Han",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506706e",
+      "name": "Mihak Hong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506706f",
+      "name": "Moonyoung Hong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067070",
+      "name": "Sung Bum Hong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067071",
+      "name": "Seongchan Hwang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067072",
+      "name": "Eunbin Hyun",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067073",
+      "user": {
+        "_id": "6667a3090e1819c8025b0a30",
+        "avatarUrl": "/avatars/4748a2875ec4d7f0cf3d80d903870beb.svg",
+        "isPro": false,
+        "fullname": "Jinbae Im",
+        "user": "sjc00215",
+        "type": "user",
+        "name": "sjc00215"
+      },
+      "name": "Jinbae Im",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2026-04-21T14:22:54.500Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067074",
+      "name": "Jaehyung Jang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067075",
+      "name": "Jaeni Jang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067076",
+      "name": "Sihyeon Jang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067077",
+      "name": "Sungwon Jang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067078",
+      "name": "Joonha Jeon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067079",
+      "name": "Yujin Jeon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506707a",
+      "name": "Daun Jeong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506707b",
+      "name": "Joonhyun Jeong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506707c",
+      "name": "Kyeongseok Jeong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506707d",
+      "name": "Mini Jeong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506707e",
+      "name": "Yeji Jeong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506707f",
+      "name": "Sol Jin",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067080",
+      "name": "Hanbyeol Jo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067081",
+      "name": "Hanju Jo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067082",
+      "name": "Minjung Jo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067083",
+      "name": "Lee Jonghyun",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067084",
+      "name": "Chaeyoon Jung",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067085",
+      "name": "Hyungsik Jung",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067086",
+      "name": "Jaeuk Jung",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067087",
+      "name": "Ju Hwan Jung",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067088",
+      "name": "Kwangsun Jung",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067089",
+      "name": "Seungjae Jung",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506708a",
+      "name": "Soonwon Ka",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506708b",
+      "name": "Donghan Kang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506708c",
+      "name": "Soyoung Kang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506708d",
+      "name": "Taeho Kil",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506708e",
+      "name": "Areum Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506708f",
+      "name": "Beomyoung Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067090",
+      "name": "Byeongwook Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067091",
+      "name": "Daehee Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067092",
+      "name": "Dong-Gyun Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067093",
+      "name": "Donggook Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067094",
+      "user": {
+        "_id": "61f226e7e108f2cba2dc073c",
+        "avatarUrl": "/avatars/75bdd956598eefd6a432b46727d298d6.svg",
+        "isPro": false,
+        "fullname": "DongHyunKim",
+        "user": "DongHyunKim",
+        "type": "user",
+        "name": "DongHyunKim"
+      },
+      "name": "Donghyun Kim",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-09-22T12:49:03.568Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067095",
+      "name": "Euna Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067096",
+      "name": "Eunchul Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067097",
+      "user": {
+        "_id": "6298362c9d3de7b32fd11526",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1658473855720-6298362c9d3de7b32fd11526.jpeg",
+        "isPro": false,
+        "fullname": "Geewook Kim",
+        "user": "gwkrsrch",
+        "type": "user",
+        "name": "gwkrsrch"
+      },
+      "name": "Geewook Kim",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-02-24T13:05:38.453Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067098",
+      "name": "Gyu Ri Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067099",
+      "name": "Hanbyul Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506709a",
+      "name": "Heesu Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506709b",
+      "name": "Isaac Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506709c",
+      "user": {
+        "_id": "64383d54c5a91b84ece18d62",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/64383d54c5a91b84ece18d62/4myD1o3yWpLVorb_H33ez.png",
+        "isPro": false,
+        "fullname": "Jeonghoon Kim",
+        "user": "PenPaperKeyCode",
+        "type": "user",
+        "name": "PenPaperKeyCode"
+      },
+      "name": "Jeonghoon Kim",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-04-24T09:11:48.810Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506709d",
+      "name": "Jihye Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506709e",
+      "name": "Joonghoon Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506709f",
+      "name": "Minjae Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670a0",
+      "name": "Minsub Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670a1",
+      "name": "Pil Hwan Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670a2",
+      "name": "Sammy Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670a3",
+      "name": "Seokhun Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670a4",
+      "name": "Seonghyeon Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670a5",
+      "name": "Soojin Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670a6",
+      "name": "Soong Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670a7",
+      "name": "Soyoon Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670a8",
+      "name": "Sunyoung Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670a9",
+      "name": "Taeho Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670aa",
+      "name": "Wonho Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670ab",
+      "name": "Yoonsik Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670ac",
+      "name": "You Jin Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670ad",
+      "name": "Yuri Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670ae",
+      "name": "Beomseok Kwon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670af",
+      "name": "Ohsung Kwon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670b0",
+      "name": "Yoo-Hwan Kwon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670b1",
+      "name": "Anna Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670b2",
+      "name": "Byungwook Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670b3",
+      "name": "Changho Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670b4",
+      "name": "Daun Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670b5",
+      "name": "Dongjae Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670b6",
+      "name": "Ha-Ram Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670b7",
+      "name": "Hodong Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670b8",
+      "name": "Hwiyeong Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670b9",
+      "name": "Hyunmi Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670ba",
+      "name": "Injae Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670bb",
+      "name": "Jaeung Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670bc",
+      "name": "Jeongsang Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670bd",
+      "name": "Jisoo Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670be",
+      "name": "Joongjae Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670bf",
+      "name": "Juhan Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670c0",
+      "user": {
+        "_id": "64cca4bfa34a1fab193fa394",
+        "avatarUrl": "/avatars/9706ce919577f1d2468b997a4a612ab6.svg",
+        "isPro": false,
+        "fullname": "Jung Hyun Lee",
+        "user": "onliwad101",
+        "type": "user",
+        "name": "onliwad101"
+      },
+      "name": "Jung Hyun Lee",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-07-05T06:56:10.920Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670c1",
+      "name": "Junghoon Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670c2",
+      "name": "Junwoo Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670c3",
+      "name": "Se Yun Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670c4",
+      "name": "Sujin Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670c5",
+      "name": "Sungjae Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670c6",
+      "name": "Sungwoo Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670c7",
+      "name": "Wonjae Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670c8",
+      "name": "Zoo Hyun Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670c9",
+      "name": "Jong Kun Lim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670ca",
+      "name": "Kun Lim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670cb",
+      "name": "Taemin Lim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670cc",
+      "name": "Yuri Min",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670cd",
+      "name": "Nuri Na",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670ce",
+      "name": "Jeongyeon Nam",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670cf",
+      "name": "Kyeong-Min Nam",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670d0",
+      "name": "Yeonseog Noh",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670d1",
+      "name": "Biro Oh",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670d2",
+      "name": "Hyangnam Oh",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670d3",
+      "name": "Jung-Sik Oh",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670d4",
+      "name": "Solgil Oh",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670d5",
+      "name": "Yeontaek Oh",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670d6",
+      "name": "Boyoun Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670d7",
+      "name": "Cheonbok Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670d8",
+      "name": "Dongju Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670d9",
+      "name": "Hyeonjin Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670da",
+      "name": "Hyun Tae Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670db",
+      "name": "Hyunjung Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670dc",
+      "name": "Jihye Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670dd",
+      "name": "Jooseok Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670de",
+      "name": "Junghwan Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670df",
+      "name": "Jungsoo Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670e0",
+      "name": "Miru Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670e1",
+      "user": {
+        "_id": "6639f75a910d619c288f8a86",
+        "avatarUrl": "/avatars/4b20a056798c009eaf665b0e3021db60.svg",
+        "isPro": false,
+        "fullname": "sanghee park",
+        "user": "sangheeeee",
+        "type": "user",
+        "name": "sangheeeee"
+      },
+      "name": "Sang Hee Park",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-04-02T08:57:36.063Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670e2",
+      "name": "Seunghyun Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670e3",
+      "name": "Taerim Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670e4",
+      "name": "Wonkyeong Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670e5",
+      "name": "Hyunjoon Ryu",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670e6",
+      "name": "Jeonghun Ryu",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670e7",
+      "name": "Nahyeon Ryu",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670e8",
+      "name": "Soonshin Seo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670e9",
+      "name": "Suk Min Seo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670ea",
+      "name": "Yoonjeong Shim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670eb",
+      "name": "Kyuyong Shin",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670ec",
+      "name": "Wonkwang Shin",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670ed",
+      "name": "Hyun Sim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670ee",
+      "name": "Mihyun Sim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670ef",
+      "name": "Woongseob Sim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670f0",
+      "name": "Hyejin Soh",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670f1",
+      "name": "Bokyoung Son",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670f2",
+      "name": "Hyunjun Son",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670f3",
+      "name": "Seulah Son",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670f4",
+      "name": "Chi-Yun Song",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670f5",
+      "name": "Chiyoung Song",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670f6",
+      "name": "Ka Yeon Song",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670f7",
+      "name": "Minchul Song",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670f8",
+      "name": "Seungmin Song",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670f9",
+      "name": "Jisung Wang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670fa",
+      "name": "Matt Yeo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670fb",
+      "name": "Yonggoo Yeo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670fc",
+      "name": "Myeong Yeon Yi",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670fd",
+      "name": "Moon Bin Yim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670fe",
+      "user": {
+        "_id": "643e4f08c0ed86c416e8464d",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/643e4f08c0ed86c416e8464d/VSzUrk-xSS3G3zQrVw3zF.png",
+        "isPro": false,
+        "fullname": "Taehwan Yoo",
+        "user": "NoUnique",
+        "type": "user",
+        "name": "NoUnique"
+      },
+      "name": "Taehwan Yoo",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-04-22T10:18:02.902Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc50670ff",
+      "name": "Youngjoon Yoo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067100",
+      "name": "Sungmin Yoon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067101",
+      "name": "Young Jin Yoon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067102",
+      "name": "Hangyeol Yu",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067103",
+      "name": "Ui Seon Yu",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067104",
+      "name": "Xingdong Zuo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067105",
+      "name": "Jeongin Bae",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067106",
+      "name": "Joungeun Bae",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067107",
+      "name": "Hyunsoo Cho",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067108",
+      "name": "Seonghyun Cho",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067109",
+      "name": "Yongjin Cho",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506710a",
+      "name": "Taekyoon Choi",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506710b",
+      "name": "Yera Choi",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506710c",
+      "user": {
+        "_id": "60d74d1affe0328e0167dc5f",
+        "avatarUrl": "/avatars/9b1a2df9402e9c26e1eb7c818af9bae0.svg",
+        "isPro": false,
+        "fullname": "Jiwan Chung",
+        "user": "jiwan-chung",
+        "type": "user",
+        "name": "jiwan-chung"
+      },
+      "name": "Jiwan Chung",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-06-03T09:18:04.474Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506710d",
+      "name": "Zhenghui Han",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506710e",
+      "user": {
+        "_id": "64b9feed96676e40d0fa89a7",
+        "avatarUrl": "/avatars/2154a6ceb87677ad2c9d9620de5b18ec.svg",
+        "isPro": true,
+        "fullname": "Byeongho Heo",
+        "user": "bhheo",
+        "type": "user",
+        "name": "bhheo"
+      },
+      "name": "Byeongho Heo",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-07-31T07:45:14.315Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506710f",
+      "name": "Euisuk Hong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067110",
+      "name": "Taebaek Hwang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067111",
+      "name": "Seonyeol Im",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067112",
+      "name": "Sumin Jegal",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067113",
+      "name": "Sumin Jeon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067114",
+      "name": "Yelim Jeong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067115",
+      "name": "Yonghyun Jeong",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067116",
+      "name": "Can Jiang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067117",
+      "user": {
+        "_id": "64b63712b3b69063d9aff341",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/64b63712b3b69063d9aff341/nP6GyBKBtnWWoA0TvQF3K.jpeg",
+        "isPro": false,
+        "fullname": "John",
+        "user": "juyongjiang",
+        "type": "user",
+        "name": "juyongjiang"
+      },
+      "name": "Juyong Jiang",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-12-30T19:41:02.800Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067118",
+      "user": {
+        "_id": "65e52c1c57459fa149c7fd48",
+        "avatarUrl": "/avatars/594749486825ea3cce7d0aa2c673d644.svg",
+        "isPro": false,
+        "fullname": "Jiho Jin",
+        "user": "jinjh0123",
+        "type": "user",
+        "name": "jinjh0123"
+      },
+      "name": "Jiho Jin",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-11-03T14:25:27.901Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067119",
+      "name": "Ara Jo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506711a",
+      "name": "Younghyun Jo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506711b",
+      "name": "Hoyoun Jung",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506711c",
+      "name": "Juyoung Jung",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506711d",
+      "name": "Dae Hee Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506711e",
+      "name": "Ginam Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506711f",
+      "name": "Hangyeol Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067120",
+      "user": {
+        "_id": "6311ac44d5a165db5d1dae38",
+        "avatarUrl": "/avatars/4ffc53da60e7cc0b74c22ebb319ebdc3.svg",
+        "isPro": false,
+        "fullname": "Heeseung Kim",
+        "user": "KHS",
+        "type": "user",
+        "name": "KHS"
+      },
+      "name": "Heeseung Kim",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-11-29T10:08:39.564Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067121",
+      "name": "Hyojin Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067122",
+      "name": "Hyojun Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067123",
+      "name": "Hyun-Ah Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067124",
+      "name": "Jeehye Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067125",
+      "user": {
+        "_id": "651ed7b5755e92f7f12738b5",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/noauth/0m82Fl5EAW4MQRjBQa94x.jpeg",
+        "isPro": false,
+        "fullname": "Jin-Hwa Kim",
+        "user": "jnhwkim",
+        "type": "user",
+        "name": "jnhwkim"
+      },
+      "name": "Jin-Hwa Kim",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-06-09T20:06:22.279Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067126",
+      "name": "Jiseon Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067127",
+      "name": "Jonghak Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067128",
+      "name": "Jung Yoon Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067129",
+      "name": "Rak Yeong Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506712a",
+      "name": "Seoyoon Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506712b",
+      "name": "Sewon Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506712c",
+      "name": "Sooyoung Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506712d",
+      "name": "Sukyoung Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506712e",
+      "name": "Taeyong Kim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506712f",
+      "name": "Naeun Ko",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067130",
+      "name": "Bonseung Koo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067131",
+      "name": "Heeyoung Kwak",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067132",
+      "name": "Haena Kwon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067133",
+      "name": "Youngjin Kwon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067134",
+      "name": "Boram Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067135",
+      "name": "Bruce W. Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067136",
+      "name": "Dagyeong Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067137",
+      "name": "Erin Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067138",
+      "name": "Euijin Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067139",
+      "name": "Ha Gyeong Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506713a",
+      "name": "Hyojin Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506713b",
+      "name": "Hyunjeong Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506713c",
+      "name": "Jeeyoon Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506713d",
+      "name": "Jeonghyun Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506713e",
+      "name": "Jongheok Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506713f",
+      "user": {
+        "_id": "649e8fb240d0ed8a50eac9e9",
+        "avatarUrl": "/avatars/ccea25f47333167bc826146ee3c0f318.svg",
+        "isPro": false,
+        "fullname": "Joonhyung Lee",
+        "user": "joonhyung-lee-naver",
+        "type": "user",
+        "name": "joonhyung-lee-naver"
+      },
+      "name": "Joonhyung Lee",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-07-31T07:45:16.416Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067140",
+      "name": "Junhyuk Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067141",
+      "name": "Mingu Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067142",
+      "user": {
+        "_id": "62bd42f8e06c2f0ff850f69c",
+        "avatarUrl": "/avatars/334350946195bcc049d684cd6dcb75ca.svg",
+        "isPro": false,
+        "fullname": "Nayeon Lee",
+        "user": "nayeon212",
+        "type": "user",
+        "name": "nayeon212"
+      },
+      "name": "Nayeon Lee",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-06-24T07:33:50.138Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067143",
+      "name": "Sangkyu Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067144",
+      "name": "Se Young Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067145",
+      "name": "Seulgi Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067146",
+      "name": "Seung Jin Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067147",
+      "name": "Suhyeon Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067148",
+      "name": "Yeonjae Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067149",
+      "name": "Yesol Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506714a",
+      "name": "Youngbeom Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506714b",
+      "name": "Yujin Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506714c",
+      "name": "Shaodong Li",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506714d",
+      "name": "Tianyu Liu",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506714e",
+      "name": "Seong-Eun Moon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506714f",
+      "name": "Taehong Moon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067150",
+      "name": "Max-Lasse Nihlenramstroem",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067151",
+      "name": "Wonseok Oh",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067152",
+      "name": "Yuri Oh",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067153",
+      "name": "Hongbeen Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067154",
+      "name": "Hyekyung Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067155",
+      "user": {
+        "_id": "61a5c8a50a91f17a58e16da8",
+        "avatarUrl": "/avatars/9bd27e8762a0f55b1540b847d02fb7b5.svg",
+        "isPro": false,
+        "fullname": "Nohil Park",
+        "user": "pnoil2588",
+        "type": "user",
+        "name": "pnoil2588"
+      },
+      "name": "Nohil Park",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-11-29T10:08:37.949Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067156",
+      "name": "Sangjin Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067157",
+      "name": "Jiwon Ryu",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067158",
+      "name": "Miru Ryu",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067159",
+      "name": "Simo Ryu",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506715a",
+      "name": "Ahreum Seo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506715b",
+      "name": "Hee Seo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506715c",
+      "name": "Kangdeok Seo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506715d",
+      "user": {
+        "_id": "6188cf3293317afcd1c2df7f",
+        "avatarUrl": "/avatars/95621801d5b3f3c1a681f1ad6cc66c6a.svg",
+        "isPro": false,
+        "fullname": "Jay Shin",
+        "user": "jshin49",
+        "type": "user",
+        "name": "jshin49"
+      },
+      "name": "Jamin Shin",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-04-24T12:41:22.196Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506715e",
+      "name": "Seungyoun Shin",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506715f",
+      "name": "Heetae Sin",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067160",
+      "name": "Jiangping Wang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067161",
+      "name": "Lei Wang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067162",
+      "name": "Ning Xiang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067163",
+      "name": "Longxiang Xiao",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067164",
+      "name": "Jing Xu",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067165",
+      "name": "Seonyeong Yi",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067166",
+      "name": "Haanju Yoo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067167",
+      "user": {
+        "_id": "64de32593a2db89a314cd0e0",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/64de32593a2db89a314cd0e0/8e5fjspD0j9JNgtlJWCwf.jpeg",
+        "isPro": false,
+        "fullname": "Haneul Yoo",
+        "user": "haneul-yoo",
+        "type": "user",
+        "name": "haneul-yoo"
+      },
+      "name": "Haneul Yoo",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-11-15T09:47:59.874Z",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067168",
+      "name": "Hwanhee Yoo",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067169",
+      "name": "Liang Yu",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506716a",
+      "name": "Youngjae Yu",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506716b",
+      "name": "Weijie Yuan",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506716c",
+      "name": "Bo Zeng",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506716d",
+      "name": "Qian Zhou",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506716e",
+      "name": "Kyunghyun Cho",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc506716f",
+      "name": "Jung-Woo Ha",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067170",
+      "name": "Joonsuk Park",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067171",
+      "name": "Jihyun Hwang",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067172",
+      "name": "Hyoung Jo Kwon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067173",
+      "name": "Soonyong Kwon",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067174",
+      "name": "Jungyeon Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067175",
+      "name": "Seungho Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067176",
+      "name": "Seungho Choi",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067177",
+      "name": "Sang-Woo Lee",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067178",
+      "name": "Jung Hwa Lim",
+      "hidden": false
+    },
+    {
+      "_id": "660ce2217674077dc5067179",
+      "name": "Nako Sung",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2024-04-02T13:48:49.000Z",
+  "submittedOnDailyAt": "2024-04-03T03:29:14.652Z",
+  "title": "HyperCLOVA X Technical Report",
+  "submittedOnDailyBy": {
+    "_id": "60f1abe7544c2adfd699860c",
+    "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1674929746905-60f1abe7544c2adfd699860c.jpeg",
+    "isPro": false,
+    "fullname": "AK",
+    "user": "akhaliq",
+    "type": "user",
+    "name": "akhaliq"
+  },
+  "summary": "We introduce HyperCLOVA X, a family of large language models (LLMs) tailored\nto the Korean language and culture, along with competitive capabilities in\nEnglish, math, and coding. HyperCLOVA X was trained on a balanced mix of\nKorean, English, and code data, followed by instruction-tuning with\nhigh-quality human-annotated datasets while abiding by strict safety guidelines\nreflecting our commitment to responsible AI. The model is evaluated across\nvarious benchmarks, including comprehensive reasoning, knowledge, commonsense,\nfactuality, coding, math, chatting, instruction-following, and harmlessness, in\nboth Korean and English. HyperCLOVA X exhibits strong reasoning capabilities in\nKorean backed by a deep understanding of the language and cultural nuances.\nFurther analysis of the inherent bilingual nature and its extension to\nmultilingualism highlights the model's cross-lingual proficiency and strong\ngeneralization ability to untargeted languages, including machine translation\nbetween several language pairs and cross-lingual inference tasks. We believe\nthat HyperCLOVA X can provide helpful guidance for regions or countries in\ndeveloping their sovereign LLMs.",
+  "upvotes": 25,
+  "discussionId": "660ce2227674077dc50671ca",
+  "ai_summary": "HyperCLOVA X is a multilingual large language model trained in Korean, English, and code, demonstrating strong reasoning, knowledge, and cross-lingual capabilities.",
+  "ai_keywords": [
+    "large language models",
+    "LLMs",
+    "instruction-tuning",
+    "human-annotated datasets",
+    "reasoning capabilities",
+    "knowledge",
+    "commonsense",
+    "factuality",
+    "coding",
+    "math",
+    "chatting",
+    "instruction-following",
+    "harmlessness",
+    "bilingual",
+    "multilingualism",
+    "machine translation",
+    "cross-lingual inference tasks"
+  ],
+  "_source": "hf"
+}

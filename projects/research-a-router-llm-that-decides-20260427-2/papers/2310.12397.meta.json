@@ -1,0 +1,42 @@
+{
+  "id": "2310.12397",
+  "authors": [
+    {
+      "_id": "653efe3d1170823ca9a33e91",
+      "name": "Kaya Stechly",
+      "hidden": false
+    },
+    {
+      "_id": "653efe3d1170823ca9a33e92",
+      "name": "Matthew Marquez",
+      "hidden": false
+    },
+    {
+      "_id": "653efe3d1170823ca9a33e93",
+      "name": "Subbarao Kambhampati",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-10-19T00:56:37.000Z",
+  "title": "GPT-4 Doesn't Know It's Wrong: An Analysis of Iterative Prompting for\n  Reasoning Problems",
+  "summary": "There has been considerable divergence of opinion on the reasoning abilities\nof Large Language Models (LLMs). While the initial optimism that reasoning\nmight emerge automatically with scale has been tempered thanks to a slew of\ncounterexamples, a wide spread belief in their iterative self-critique\ncapabilities persists. In this paper, we set out to systematically investigate\nthe effectiveness of iterative prompting of LLMs in the context of Graph\nColoring, a canonical NP-complete reasoning problem that is related to\npropositional satisfiability as well as practical problems like scheduling and\nallocation. We present a principled empirical study of the performance of GPT4\nin solving graph coloring instances or verifying the correctness of candidate\ncolorings. In iterative modes, we experiment with the model critiquing its own\nanswers and an external correct reasoner verifying proposed solutions. In both\ncases, we analyze whether the content of the criticisms actually affects bottom\nline performance. The study seems to indicate that (i) LLMs are bad at solving\ngraph coloring instances (ii) they are no better at verifying a solution--and\nthus are not effective in iterative modes with LLMs critiquing LLM-generated\nsolutions (iii) the correctness and content of the criticisms--whether by LLMs\nor external solvers--seems largely irrelevant to the performance of iterative\nprompting. We show that the observed increase in effectiveness is largely due\nto the correct solution being fortuitously present in the top-k completions of\nthe prompt (and being recognized as such by an external verifier). Our results\nthus call into question claims about the self-critiquing capabilities of state\nof the art LLMs.",
+  "upvotes": 1,
+  "discussionId": "653efe3d1170823ca9a33ea0",
+  "ai_summary": "The study investigates the effectiveness of iterative prompting in LLMs for graph coloring and finds that while external verification can aid, LLMs themselves are ineffective at solving or critiquing solutions.",
+  "ai_keywords": [
+    "Large Language Models",
+    "LLMs",
+    "iterative prompting",
+    "Graph Coloring",
+    "NP-complete",
+    "propositional satisfiability",
+    "scheduling",
+    "allocation",
+    "GPT4",
+    "iterative modes",
+    "external correct reasoner",
+    "self-critique",
+    "verification"
+  ],
+  "_source": "hf"
+}

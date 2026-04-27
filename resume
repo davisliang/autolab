@@ -119,5 +119,5 @@ fi
 if (( WATCHDOG )); then
   exec uv run python tools/idle_continue.py
 else
-  exec uv run python tools/run_orchestrator.py "${PASS_ARGS[@]}"
+  exec uv run python tools/run_orchestrator.py ${PASS_ARGS[@]+"${PASS_ARGS[@]}"}
 fi

@@ -1,0 +1,55 @@
+{
+  "id": "2310.05029",
+  "authors": [
+    {
+      "_id": "6526a4304e066bf73f92e294",
+      "user": {
+        "_id": "60878324a5da133ac6c3869b",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/60878324a5da133ac6c3869b/7ZEBNelx26UgDvT6g5FUM.png",
+        "isPro": false,
+        "fullname": "Howard Chen",
+        "user": "howard50b",
+        "type": "user",
+        "name": "howard50b"
+      },
+      "name": "Howard Chen",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-06-27T15:36:47.731Z",
+      "hidden": false
+    },
+    {
+      "_id": "6526a4304e066bf73f92e295",
+      "name": "Ramakanth Pasunuru",
+      "hidden": false
+    },
+    {
+      "_id": "6526a4304e066bf73f92e296",
+      "name": "Jason Weston",
+      "hidden": false
+    },
+    {
+      "_id": "6526a4304e066bf73f92e297",
+      "name": "Asli Celikyilmaz",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-10-08T06:18:14.000Z",
+  "title": "Walking Down the Memory Maze: Beyond Context Limit through Interactive\n  Reading",
+  "summary": "Large language models (LLMs) have advanced in large strides due to the\neffectiveness of the self-attention mechanism that processes and compares all\ntokens at once. However, this mechanism comes with a fundamental issue -- the\npredetermined context window is bound to be limited. Despite attempts to extend\nthe context window through methods like extrapolating the positional embedding,\nusing recurrence, or selectively retrieving essential parts of the long\nsequence, long-text understanding continues to be a challenge. We propose an\nalternative approach which instead treats the LLM as an interactive agent,\nallowing it to decide how to read the text via iterative prompting. We\nintroduce MemWalker, a method that first processes the long context into a tree\nof summary nodes. Upon receiving a query, the model navigates this tree in\nsearch of relevant information, and responds once it gathers sufficient\ninformation. On long-text question answering tasks our method outperforms\nbaseline approaches that use long context windows, recurrence, and retrieval.\nWe show that, beyond effective reading, MemWalker enhances explainability by\nhighlighting the reasoning steps as it interactively reads the text;\npinpointing the relevant text segments related to the query.",
+  "upvotes": 0,
+  "discussionId": "6526a4354e066bf73f92e43e",
+  "ai_summary": "MemWalker, a method treating LLMs as interactive agents, enhances long-text understanding by summarizing text into a tree and interactively searching it, improving performance and explainability.",
+  "ai_keywords": [
+    "self-attention mechanism",
+    "context window",
+    "positional embedding",
+    "recurrence",
+    "retrieval",
+    "interactive agent",
+    "MemWalker",
+    "summary nodes",
+    "reasoning steps",
+    "relevant text segments"
+  ],
+  "_source": "hf"
+}

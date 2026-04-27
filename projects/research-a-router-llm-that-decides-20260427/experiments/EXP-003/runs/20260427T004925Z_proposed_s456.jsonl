@@ -1,0 +1,1 @@
+{"seed": 456, "config": "proposed", "f1_accuracy": 0.6838196027322226, "total_simulated_cost": 0.6820125, "cost_reduction_percent_at_matched_f1": 0.0, "cost_reduction_percent_at_matched_accuracy": 0.0, "baseline_f1": 0.7218545970996109, "f1_gap_vs_baseline_pp": 3.803, "raw_cost_reduction": 0.6968833333333334}

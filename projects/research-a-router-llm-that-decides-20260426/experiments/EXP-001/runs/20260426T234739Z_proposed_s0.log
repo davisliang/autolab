@@ -1,0 +1,9 @@
+# cmd: uv run python /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260426/experiments/EXP-001/code/run.py --seed 0 --config proposed --out /Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260426/experiments/EXP-001/runs/20260426T234739Z_proposed_s0.jsonl --sanity
+Traceback (most recent call last):
+  File "/Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260426/experiments/EXP-001/code/run.py", line 330, in <module>
+    main()
+  File "/Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260426/experiments/EXP-001/code/run.py", line 324, in main
+    cmd_sanity(args.seed, args.out)
+  File "/Users/davis/Documents/code/autolab/projects/research-a-router-llm-that-decides-20260426/experiments/EXP-001/code/run.py", line 170, in cmd_sanity
+    import lightgbm as lgb
+ModuleNotFoundError: No module named 'lightgbm'

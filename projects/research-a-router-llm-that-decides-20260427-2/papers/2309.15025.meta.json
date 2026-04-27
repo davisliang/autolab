@@ -1,0 +1,78 @@
+{
+  "id": "2309.15025",
+  "authors": [
+    {
+      "_id": "651cdf03f2388c806866a49e",
+      "user": {
+        "_id": "61976063b1099a2392101960",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/61976063b1099a2392101960/DRlAoI6cD6yyomQfWRTU5.png",
+        "isPro": false,
+        "fullname": "Tianhao Shen",
+        "user": "magnetic",
+        "type": "user",
+        "name": "magnetic"
+      },
+      "name": "Tianhao Shen",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-02-23T12:26:19.132Z",
+      "hidden": false
+    },
+    {
+      "_id": "651cdf03f2388c806866a49f",
+      "name": "Renren Jin",
+      "hidden": false
+    },
+    {
+      "_id": "651cdf03f2388c806866a4a0",
+      "name": "Yufei Huang",
+      "hidden": false
+    },
+    {
+      "_id": "651cdf03f2388c806866a4a1",
+      "name": "Chuang Liu",
+      "hidden": false
+    },
+    {
+      "_id": "651cdf03f2388c806866a4a2",
+      "name": "Weilong Dong",
+      "hidden": false
+    },
+    {
+      "_id": "651cdf03f2388c806866a4a3",
+      "name": "Zishan Guo",
+      "hidden": false
+    },
+    {
+      "_id": "651cdf03f2388c806866a4a4",
+      "name": "Xinwei Wu",
+      "hidden": false
+    },
+    {
+      "_id": "651cdf03f2388c806866a4a5",
+      "name": "Yan Liu",
+      "hidden": false
+    },
+    {
+      "_id": "651cdf03f2388c806866a4a6",
+      "name": "Deyi Xiong",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-09-26T15:49:23.000Z",
+  "title": "Large Language Model Alignment: A Survey",
+  "summary": "Recent years have witnessed remarkable progress made in large language models\n(LLMs). Such advancements, while garnering significant attention, have\nconcurrently elicited various concerns. The potential of these models is\nundeniably vast; however, they may yield texts that are imprecise, misleading,\nor even detrimental. Consequently, it becomes paramount to employ alignment\ntechniques to ensure these models to exhibit behaviors consistent with human\nvalues.\n  This survey endeavors to furnish an extensive exploration of alignment\nmethodologies designed for LLMs, in conjunction with the extant capability\nresearch in this domain. Adopting the lens of AI alignment, we categorize the\nprevailing methods and emergent proposals for the alignment of LLMs into outer\nand inner alignment. We also probe into salient issues including the models'\ninterpretability, and potential vulnerabilities to adversarial attacks. To\nassess LLM alignment, we present a wide variety of benchmarks and evaluation\nmethodologies. After discussing the state of alignment research for LLMs, we\nfinally cast a vision toward the future, contemplating the promising avenues of\nresearch that lie ahead.\n  Our aspiration for this survey extends beyond merely spurring research\ninterests in this realm. We also envision bridging the gap between the AI\nalignment research community and the researchers engrossed in the capability\nexploration of LLMs for both capable and safe LLMs.",
+  "upvotes": 2,
+  "discussionId": "651cdf04f2388c806866a669",
+  "ai_summary": "This survey explores alignment methodologies and capability research for large language models, categorizing them into outer and inner alignment while discussing interpretability and adversarial vulnerabilities.",
+  "ai_keywords": [
+    "large language models",
+    "alignment methodologies",
+    "outer alignment",
+    "inner alignment",
+    "interpretability",
+    "adversarial attacks",
+    "benchmarks",
+    "evaluation methodologies"
+  ],
+  "_source": "hf"
+}

@@ -1,0 +1,82 @@
+{
+  "id": "2306.13063",
+  "authors": [
+    {
+      "_id": "660a166b8d305a46e399dd60",
+      "user": {
+        "_id": "6530cf34e7535baecd9620a7",
+        "avatarUrl": "/avatars/e6058a932d88e42b4957734f653cbcfd.svg",
+        "isPro": false,
+        "fullname": "Miao Xiong",
+        "user": "happymio",
+        "type": "user",
+        "name": "happymio"
+      },
+      "name": "Miao Xiong",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-05-27T10:03:53.022Z",
+      "hidden": false
+    },
+    {
+      "_id": "660a166b8d305a46e399dd61",
+      "name": "Zhiyuan Hu",
+      "hidden": false
+    },
+    {
+      "_id": "660a166b8d305a46e399dd62",
+      "user": {
+        "_id": "64424c46afba527ed365bf7a",
+        "avatarUrl": "/avatars/29ed5c6cbc397932ba5434dfd52f705c.svg",
+        "isPro": false,
+        "fullname": "Xinyang Lu",
+        "user": "xylu",
+        "type": "user",
+        "name": "xylu"
+      },
+      "name": "Xinyang Lu",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-05-09T13:55:07.013Z",
+      "hidden": false
+    },
+    {
+      "_id": "660a166b8d305a46e399dd63",
+      "name": "Yifei Li",
+      "hidden": false
+    },
+    {
+      "_id": "660a166b8d305a46e399dd64",
+      "name": "Jie Fu",
+      "hidden": false
+    },
+    {
+      "_id": "660a166b8d305a46e399dd65",
+      "name": "Junxian He",
+      "hidden": false
+    },
+    {
+      "_id": "660a166b8d305a46e399dd66",
+      "name": "Bryan Hooi",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-06-22T17:31:44.000Z",
+  "title": "Can LLMs Express Their Uncertainty? An Empirical Evaluation of\n  Confidence Elicitation in LLMs",
+  "summary": "Empowering large language models to accurately express confidence in their\nanswers is essential for trustworthy decision-making. Previous confidence\nelicitation methods, which primarily rely on white-box access to internal model\ninformation or model fine-tuning, have become less suitable for LLMs,\nespecially closed-source commercial APIs. This leads to a growing need to\nexplore the untapped area of black-box approaches for LLM uncertainty\nestimation. To better break down the problem, we define a systematic framework\nwith three components: prompting strategies for eliciting verbalized\nconfidence, sampling methods for generating multiple responses, and aggregation\ntechniques for computing consistency. We then benchmark these methods on two\nkey tasks-confidence calibration and failure prediction-across five types of\ndatasets (e.g., commonsense and arithmetic reasoning) and five widely-used LLMs\nincluding GPT-4 and LLaMA 2 Chat. Our analysis uncovers several key insights:\n1) LLMs, when verbalizing their confidence, tend to be overconfident,\npotentially imitating human patterns of expressing confidence. 2) As model\ncapability scales up, both calibration and failure prediction performance\nimprove. 3) Employing our proposed strategies, such as human-inspired prompts,\nconsistency among multiple responses, and better aggregation strategies can\nhelp mitigate this overconfidence from various perspectives. 4) Comparisons\nwith white-box methods indicate that while white-box methods perform better,\nthe gap is narrow, e.g., 0.522 to 0.605 in AUROC. Despite these advancements,\nnone of these techniques consistently outperform others, and all investigated\nmethods struggle in challenging tasks, such as those requiring professional\nknowledge, indicating significant scope for improvement. We believe this study\ncan serve as a strong baseline and provide insights for eliciting confidence in\nblack-box LLMs.",
+  "upvotes": 0,
+  "discussionId": "660a166b8d305a46e399dd7e",
+  "githubRepo": "https://github.com/miaoxiong2320/llm-uncertainty",
+  "githubRepoAddedBy": "auto",
+  "ai_summary": "A framework for eliciting and estimating confidence in large language models using black-box approaches is evaluated across various datasets and models, revealing insights into overconfidence and suggesting improvements.",
+  "ai_keywords": [
+    "prompting strategies",
+    "sampling methods",
+    "aggregation techniques",
+    "confidence calibration",
+    "failure prediction",
+    "verbalized confidence",
+    "consistency",
+    "human-inspired prompts"
+  ],
+  "githubStars": 148,
+  "_source": "hf"
+}

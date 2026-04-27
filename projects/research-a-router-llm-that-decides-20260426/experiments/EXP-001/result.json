@@ -1,0 +1,71 @@
+{
+  "plan_id": "EXP-001",
+  "metrics": {
+    "baseline": {
+      "unnecessary_escalation_reduction_ratio": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "n_seeds": 3,
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "mean_quality_delta": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "n_seeds": 3,
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "bootstrap_95ci_lower": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "n_seeds": 3,
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "proposed": {
+      "unnecessary_escalation_reduction_ratio": {
+        "mean": 0.166906,
+        "stddev": 0.0664753436546213,
+        "n_seeds": 3,
+        "per_seed": [
+          0.073171,
+          0.207547,
+          0.22
+        ]
+      },
+      "mean_quality_delta": {
+        "mean": 0.16770833333333335,
+        "stddev": 0.014052851628366713,
+        "n_seeds": 3,
+        "per_seed": [
+          0.1875,
+          0.15625,
+          0.159375
+        ]
+      },
+      "bootstrap_95ci_lower": {
+        "mean": -0.076286,
+        "stddev": 0.10707172873359241,
+        "n_seeds": 3,
+        "per_seed": [
+          -0.225806,
+          0.019195,
+          -0.022247
+        ]
+      }
+    }
+  },
+  "n_records": 6,
+  "completed_at": "2026-04-26T23:50:28+00:00"
+}
