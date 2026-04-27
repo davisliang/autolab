@@ -1,0 +1,1 @@
+{"loss_before": 0.6931, "loss_after": 0.1531, "loss_drop_pct": 77.91, "sanity_pass": true, "wall_seconds": 0.01, "config": "sanity", "seed": 42}

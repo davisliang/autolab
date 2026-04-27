@@ -1,0 +1,9 @@
+{
+  "phase": "survey",
+  "target": "HYP-002",
+  "cycle": 3,
+  "completed_artifact_ids": ["LIT-042", "LIT-043", "LIT-044", "LIT-045", "LIT-046", "LIT-047"],
+  "next_action": "gap-fill or expand with new hypothesis targeting stronger judge for output-conditioned routing",
+  "completed_at": "2026-04-27T05:33:00+00:00",
+  "notes": "HYP-002 failed due to: (1) weak regex judge, (2) serial overhead, (3) routing collapse. Survey covers: semantic agreement as training-free judge (LIT-042), PRM-guided step acceptance (LIT-043), latency-aware cascade serving (LIT-044), trained verifiers for GSM8K (LIT-045), routing collapse failure mode (LIT-046), pipeline parallelism for cascade (LIT-047)."
+}

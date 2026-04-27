@@ -1,0 +1,8 @@
+{
+  "phase": "survey",
+  "hypothesis_id": "HYP-003",
+  "completed_artifact_ids": ["LIT-027", "LIT-029", "LIT-031"],
+  "papers_fetched": ["2312.11511", "2410.10347", "2504.07113"],
+  "next_action": "continue_survey_or_gap_fill",
+  "completed_at": "2026-04-27T08:20:00+00:00"
+}

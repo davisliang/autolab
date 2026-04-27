@@ -1,0 +1,14 @@
+{
+  "title": "Are rare rogue fluctuations generic to strongly nonlinear and non-integrable systems?",
+  "summary": "Extensive dynamical simulations are used to explore the possible existence of sudden sufficiently large energy or rogue fluctuations (RF) at late times and across short time windows in the {\\it strongly nonlinear regime} of the $\u03b2$-Fermi-Pasta-Ulam-Tsingou (FPUT) type systems. Our studies build on a study of RF in the non-dissipative granular chain system and suggest that {\\it rare RF may be generic to non-integrable, strongly nonlinear systems at late enough times}. We comment on the role of initial conditions and the intriguing influence of harmonic forces on these strongly nonlinear systems. The RF under focus here are distinct from the well known Peregrine solitons used to describe rogue waves via the weakly nonlinear Schr\u00f6dinger equation.",
+  "publishedAt": "2021-05-11T13:36:41Z",
+  "authors": [
+    {
+      "name": "Rahul Kashyap"
+    },
+    {
+      "name": "Surajit Sen"
+    }
+  ],
+  "_source": "arxiv"
+}

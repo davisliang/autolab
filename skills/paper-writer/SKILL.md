@@ -17,6 +17,12 @@ The orchestrator's prompt names:
 - `cite_pool=<CITE-id,CITE-id,...>` — the universe of admissible citations (only verified=true)
 - `relevant_artifacts=<id,id,...>` — IDs to read (typically Idea + Hypotheses + ExperimentResults; section-specific)
 
+The orchestrator may also inject **pre-rendered results tables** into the prompt:
+- For `section=experiments`: a deterministic markdown block with a Results Summary table and per-experiment detail tables (proposed vs. baseline, mean ± stddev, predicted-metric markers, notes from `result.json`). Paste this block VERBATIM into your section body — do not modify, reformat, or retype the numbers. Build prose around it.
+- For `section=abstract` and `section=discussion`: the same block is provided as a numerical reference. Use the exact numbers in prose; do not duplicate the tables themselves.
+
+The pre-rendered block is delimited by `===== BEGIN PRE-RENDERED TABLES (paste verbatim) =====` and `===== END PRE-RENDERED TABLES =====`. Copy everything between those markers, excluding the markers themselves.
+
 ## Outputs
 
 - One `DraftSection` artifact with required fields:
@@ -71,7 +77,7 @@ The orchestrator's prompt names:
 | introduction  | Problem, prior gap (cite LitFindings), our hypothesis, our result, contributions list.                |
 | related-work  | Group cited papers thematically. State for each: what they do, what they don't, how we differ.        |
 | method        | Proposed mechanism, baseline definition, experiment design, dataset, model, metric definitions.       |
-| experiments   | Sanity-gate result; main results table (proposed vs baseline mean ± stddev); ablation result.         |
+| experiments   | Paste the pre-rendered tables verbatim at the top, then add prose: dataset/setup recap, sanity-gate notes, qualitative analysis of the deltas, ablation discussion. Do not retype numbers already in the tables. |
 | discussion    | Why it works (or didn't), threats to validity (from CRIT-* in `validity` mode), limits, future work.  |
 
 ## Boundaries

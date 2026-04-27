@@ -1,0 +1,170 @@
+{
+  "id": "2405.01535",
+  "authors": [
+    {
+      "_id": "66344a6f925dc6852bfcf78e",
+      "user": {
+        "_id": "6469949654873f0043b09c22",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/6469949654873f0043b09c22/Lk7IJAR16Wa_sGJ2g81AQ.jpeg",
+        "isPro": true,
+        "fullname": "Seungone Kim",
+        "user": "seungone",
+        "type": "user",
+        "name": "seungone"
+      },
+      "name": "Seungone Kim",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-05-03T07:16:19.366Z",
+      "hidden": false
+    },
+    {
+      "_id": "66344a6f925dc6852bfcf78f",
+      "user": {
+        "_id": "6138cc1306dd10833d2db64b",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/6138cc1306dd10833d2db64b/IRX4y-8M4YlzR_8jOwkKp.jpeg",
+        "isPro": false,
+        "fullname": "Juyoung Suk",
+        "user": "juyoungml",
+        "type": "user",
+        "name": "juyoungml"
+      },
+      "name": "Juyoung Suk",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-05-03T07:16:22.822Z",
+      "hidden": false
+    },
+    {
+      "_id": "66344a6f925dc6852bfcf790",
+      "user": {
+        "_id": "61f4283a81c4d30f58140242",
+        "avatarUrl": "/avatars/a1cf1ef1fd442c36ed65c68e51919fed.svg",
+        "isPro": false,
+        "fullname": "Shayne Longpre",
+        "user": "Shayne",
+        "type": "user",
+        "name": "Shayne"
+      },
+      "name": "Shayne Longpre",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2024-05-03T07:22:50.127Z",
+      "hidden": false
+    },
+    {
+      "_id": "66344a6f925dc6852bfcf791",
+      "user": {
+        "_id": "607f666a4ad99100d63ce35c",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/607f666a4ad99100d63ce35c/QxhxnvfeV6efkxwUFHwjI.png",
+        "isPro": false,
+        "fullname": "Bill Yuchen Lin",
+        "user": "yuchenlin",
+        "type": "user",
+        "name": "yuchenlin"
+      },
+      "name": "Bill Yuchen Lin",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2024-05-03T07:23:02.022Z",
+      "hidden": false
+    },
+    {
+      "_id": "66344a6f925dc6852bfcf792",
+      "user": {
+        "_id": "6188cf3293317afcd1c2df7f",
+        "avatarUrl": "/avatars/95621801d5b3f3c1a681f1ad6cc66c6a.svg",
+        "isPro": false,
+        "fullname": "Jay Shin",
+        "user": "jshin49",
+        "type": "user",
+        "name": "jshin49"
+      },
+      "name": "Jamin Shin",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-04-24T12:41:19.901Z",
+      "hidden": false
+    },
+    {
+      "_id": "66344a6f925dc6852bfcf793",
+      "user": {
+        "_id": "63e3f3c59db5da2dc1ef6889",
+        "avatarUrl": "/avatars/f7546f57a5fd69bc99ff1640cc4a4853.svg",
+        "isPro": false,
+        "fullname": "Sean Welleck",
+        "user": "wellecks",
+        "type": "user",
+        "name": "wellecks"
+      },
+      "name": "Sean Welleck",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2024-05-03T07:23:43.029Z",
+      "hidden": false
+    },
+    {
+      "_id": "66344a6f925dc6852bfcf794",
+      "user": {
+        "_id": "60de14638bedd2315529d43f",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1625166923504-noauth.png",
+        "isPro": false,
+        "fullname": "Graham Neubig",
+        "user": "gneubig",
+        "type": "user",
+        "name": "gneubig"
+      },
+      "name": "Graham Neubig",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2024-05-03T07:23:49.331Z",
+      "hidden": false
+    },
+    {
+      "_id": "66344a6f925dc6852bfcf795",
+      "name": "Moontae Lee",
+      "hidden": false
+    },
+    {
+      "_id": "66344a6f925dc6852bfcf796",
+      "name": "Kyungjae Lee",
+      "hidden": false
+    },
+    {
+      "_id": "66344a6f925dc6852bfcf797",
+      "user": {
+        "_id": "621f05ba970615ad5861ceb1",
+        "avatarUrl": "/avatars/7e1902aa71369a524afda9b0a9e88e22.svg",
+        "isPro": false,
+        "fullname": "Minjoon Seo",
+        "user": "minjoon",
+        "type": "user",
+        "name": "minjoon"
+      },
+      "name": "Minjoon Seo",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2024-05-03T07:24:28.206Z",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2024-05-02T17:59:35.000Z",
+  "submittedOnDailyAt": "2024-05-03T00:52:40.033Z",
+  "title": "Prometheus 2: An Open Source Language Model Specialized in Evaluating\n  Other Language Models",
+  "submittedOnDailyBy": {
+    "_id": "60f1abe7544c2adfd699860c",
+    "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1674929746905-60f1abe7544c2adfd699860c.jpeg",
+    "isPro": false,
+    "fullname": "AK",
+    "user": "akhaliq",
+    "type": "user",
+    "name": "akhaliq"
+  },
+  "summary": "Proprietary LMs such as GPT-4 are often employed to assess the quality of\nresponses from various LMs. However, concerns including transparency,\ncontrollability, and affordability strongly motivate the development of\nopen-source LMs specialized in evaluations. On the other hand, existing open\nevaluator LMs exhibit critical shortcomings: 1) they issue scores that\nsignificantly diverge from those assigned by humans, and 2) they lack the\nflexibility to perform both direct assessment and pairwise ranking, the two\nmost prevalent forms of assessment. Additionally, they do not possess the\nability to evaluate based on custom evaluation criteria, focusing instead on\ngeneral attributes like helpfulness and harmlessness. To address these issues,\nwe introduce Prometheus 2, a more powerful evaluator LM than its predecessor\nthat closely mirrors human and GPT-4 judgements. Moreover, it is capable of\nprocessing both direct assessment and pair-wise ranking formats grouped with a\nuser-defined evaluation criteria. On four direct assessment benchmarks and four\npairwise ranking benchmarks, Prometheus 2 scores the highest correlation and\nagreement with humans and proprietary LM judges among all tested open evaluator\nLMs. Our models, code, and data are all publicly available at\nhttps://github.com/prometheus-eval/prometheus-eval.",
+  "upvotes": 124,
+  "discussionId": "66344a70925dc6852bfcf7ac",
+  "ai_summary": "Prometheus 2 is an advanced open-source evaluator LM that aligns closely with human and proprietary LM judgments, supporting both direct assessment and pairwise ranking with customizable criteria.",
+  "ai_keywords": [
+    "LMs",
+    "GPT-4",
+    "open-source LMs",
+    "evaluation",
+    "pairwise ranking",
+    "direct assessment",
+    "custom evaluation criteria",
+    "Prometheus 2"
+  ],
+  "_source": "hf"
+}

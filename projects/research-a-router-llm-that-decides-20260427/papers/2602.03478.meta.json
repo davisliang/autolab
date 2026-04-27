@@ -1,0 +1,14 @@
+{
+  "title": "When Routing Collapses: On the Degenerate Convergence of LLM Routers",
+  "summary": "LLM routing aims to achieve a favorable quality--cost trade-off by dynamically assigning easy queries to smaller models and harder queries to stronger ones. However, across both unimodal and multimodal settings, we uncover a pervasive yet underexplored failure mode in existing routers: as the user's cost budget increases, routers systematically default to the most capable and most expensive model even when cheaper models already suffice. As a result, current routers under-utilize small models, wasting computation and monetary cost and undermining the core promise of routing; we term this phenomenon routing collapse. We attribute routing collapse to an objective--decision mismatch: many routers are trained to predict scalar performance scores, whereas routing decisions ultimately depend on discrete comparisons among candidate models. Consequently, small prediction errors can flip relative orderings and trigger suboptimal selections. To bridge this gap, we propose EquiRouter, a decision-aware router that directly learns model rankings, restoring the role of smaller models and mitigating routing collapse. On RouterBench, EquiRouter reduces cost by about 17\\% at GPT-4-level performance compared to the strongest prior router. Our code is available at https://github.com/AIGNLAI/EquiRouter.",
+  "publishedAt": "2026-02-03T12:51:55Z",
+  "authors": [
+    {
+      "name": "Guannan Lai"
+    },
+    {
+      "name": "Han-Jia Ye"
+    }
+  ],
+  "_source": "arxiv"
+}

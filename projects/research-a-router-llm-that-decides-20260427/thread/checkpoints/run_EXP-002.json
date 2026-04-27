@@ -1,0 +1,8 @@
+{
+  "phase": "run",
+  "target": "EXP-002",
+  "completed_artifact_ids": ["RES-002"],
+  "next_action": "continue_run_or_critique",
+  "completed_at": "2026-04-26T22:10:00Z",
+  "notes": "Sanity gate passed (77.91% loss drop). Selective speculation fails pre-registered 8pp threshold (mean +5.93pp, stddev 1.26). Positive direction vs baseline confirmed across all 3 seeds. Status=fail; no ablation triggered."
+}

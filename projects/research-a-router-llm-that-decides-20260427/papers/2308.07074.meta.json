@@ -1,0 +1,98 @@
+{
+  "id": "2308.07074",
+  "authors": [
+    {
+      "_id": "64dc35a696f0f217e445f280",
+      "user": {
+        "_id": "6453fa96ed6d7fede94408e0",
+        "avatarUrl": "/avatars/e8c9025ef24cec958c87a1008bb54fd7.svg",
+        "isPro": false,
+        "fullname": "Keming Lu",
+        "user": "keminglu",
+        "type": "user",
+        "name": "keminglu"
+      },
+      "name": "Keming Lu",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-05-29T07:29:22.848Z",
+      "hidden": false
+    },
+    {
+      "_id": "64dc35a696f0f217e445f281",
+      "name": "Hongyi Yuan",
+      "hidden": false
+    },
+    {
+      "_id": "64dc35a696f0f217e445f282",
+      "user": {
+        "_id": "5f694b8b5e78cc6b0ed31bd2",
+        "avatarUrl": "/avatars/63f21d30918c34fff9ea592e1039b3f0.svg",
+        "isPro": false,
+        "fullname": "Zheng Yuan",
+        "user": "GanjinZero",
+        "type": "user",
+        "name": "GanjinZero"
+      },
+      "name": "Zheng Yuan",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-08-06T19:49:27.990Z",
+      "hidden": false
+    },
+    {
+      "_id": "64dc35a696f0f217e445f283",
+      "user": {
+        "_id": "649a52e5de0fb7f3f499e583",
+        "avatarUrl": "/avatars/25f6106fa168ae57ad5cd8ef55c70d31.svg",
+        "isPro": false,
+        "fullname": "Runji Lin",
+        "user": "RunjiLin",
+        "type": "user",
+        "name": "RunjiLin"
+      },
+      "name": "Runji Lin",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-12-10T11:17:46.743Z",
+      "hidden": false
+    },
+    {
+      "_id": "64dc35a696f0f217e445f284",
+      "name": "Junyang Lin",
+      "hidden": false
+    },
+    {
+      "_id": "64dc35a696f0f217e445f285",
+      "name": "Chuanqi Tan",
+      "hidden": false
+    },
+    {
+      "_id": "64dc35a696f0f217e445f286",
+      "name": "Chang Zhou",
+      "hidden": false
+    },
+    {
+      "_id": "64dc35a696f0f217e445f287",
+      "name": "Jingren Zhou",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-08-14T11:16:28.000Z",
+  "title": "#InsTag: Instruction Tagging for Analyzing Supervised Fine-tuning of\n  Large Language Models",
+  "summary": "Foundation language models obtain the instruction-following ability through\nsupervised fine-tuning (SFT). Diversity and complexity are considered critical\nfactors of a successful SFT dataset, while their definitions remain obscure and\nlack quantitative analyses. In this work, we propose InsTag, an open-set\nfine-grained tagger, to tag samples within SFT datasets based on semantics and\nintentions and define instruction diversity and complexity regarding tags. We\nobtain 6.6K tags to describe comprehensive user queries. Then we analyze\npopular open-sourced SFT datasets and find that the model ability grows with\nmore diverse and complex data. Based on this observation, we propose a data\nselector based on InsTag to select 6K diverse and complex samples from\nopen-source datasets and fine-tune models on InsTag-selected data. The\nresulting models, TagLM, outperform open-source models based on considerably\nlarger SFT data evaluated by MT-Bench, echoing the importance of query\ndiversity and complexity. We open-source InsTag in\nhttps://github.com/OFA-Sys/InsTag.",
+  "upvotes": 0,
+  "discussionId": "64dc35a696f0f217e445f2a6",
+  "githubRepo": "https://github.com/ofa-sys/instag",
+  "githubRepoAddedBy": "auto",
+  "ai_summary": "InsTag, an open-set fine-grained tagger, enhances instruction-following ability by selecting diverse and complex samples for supervised fine-tuning, outperforming models trained on larger datasets.",
+  "ai_keywords": [
+    "supervised fine-tuning",
+    "InsTag",
+    "fine-grained tagger",
+    "instruction diversity",
+    "instruction complexity",
+    "data selector",
+    "TagLM",
+    "MT-Bench"
+  ],
+  "githubStars": 285,
+  "_source": "hf"
+}

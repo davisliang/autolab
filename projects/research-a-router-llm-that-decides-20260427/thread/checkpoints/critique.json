@@ -1,0 +1,14 @@
+{
+  "phase": "critique",
+  "completed_artifact_ids": [
+    "CRIT-007",
+    "CRIT-016",
+    "CRIT-017",
+    "CRIT-018",
+    "CRIT-019",
+    "CRIT-020",
+    "CRIT-021"
+  ],
+  "next_action": "write",
+  "completed_at": "2026-04-27T05:44:43+00:00"
+}

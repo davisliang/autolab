@@ -1,0 +1,20 @@
+{
+  "title": "Benchmark Problems for CEC2021 Competition on Evolutionary Transfer Multiobjectve Optimization",
+  "summary": "Evolutionary transfer multiobjective optimization (ETMO) has been becoming a hot research topic in the field of evolutionary computation, which is based on the fact that knowledge learning and transfer across the related optimization exercises can improve the efficiency of others. Besides, the potential for transfer optimization is deemed invaluable from the standpoint of human-like problem-solving capabilities where knowledge gather and reuse are instinctive. To promote the research on ETMO, benchmark problems are of great importance to ETMO algorithm analysis, which helps designers or practitioners to understand the merit and demerit better of ETMO algorithms. Therefore, a total number of 40 benchmark functions are proposed in this report, covering diverse types and properties in the case of knowledge transfer, such as various formulation models, various PS geometries and PF shapes, large-scale of variables, dynamically changed environment, and so on. All the benchmark functions have been implemented in JAVA code, which can be downloaded on the following website: https://github.com/songbai-liu/etmo.",
+  "publishedAt": "2021-10-15T12:03:46Z",
+  "authors": [
+    {
+      "name": "Songbai Liu"
+    },
+    {
+      "name": "Qiuzhen Lin"
+    },
+    {
+      "name": "Kay Chen Tan"
+    },
+    {
+      "name": "Qing Li"
+    }
+  ],
+  "_source": "arxiv"
+}

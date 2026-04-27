@@ -1,0 +1,20 @@
+{
+  "plan_id": "EXP-002",
+  "status": "fail",
+  "metrics": {
+    "cost_savings_pp_vs_feature_router": {"mean": 5.9308, "stddev": 1.2576, "n_seeds": 3},
+    "proposed_savings_pp": {"mean": 23.6816, "stddev": 0.2262, "n_seeds": 3},
+    "baseline_savings_pp": {"mean": 17.7508, "stddev": 1.2785, "n_seeds": 3},
+    "accuracy_delta_vs_sonnet_pp": {"mean": -1.769, "stddev": 0.3502, "n_seeds": 3},
+    "ambiguous_zone_fraction": {"mean": 0.3445, "stddev": 0.1333, "n_seeds": 3}
+  },
+  "seeds": [42, 123, 456],
+  "per_seed": [
+    {"seed": 42, "cost_savings_pp_vs_feature_router": 6.0137, "proposed_savings_pp": 23.4208, "baseline_savings_pp": 17.4071, "accuracy_delta_vs_sonnet_pp": -1.9712, "ambiguous_zone_fraction": 0.2328},
+    {"seed": 123, "cost_savings_pp_vs_feature_router": 7.1448, "proposed_savings_pp": 23.8241, "baseline_savings_pp": 16.6793, "accuracy_delta_vs_sonnet_pp": -1.9712, "ambiguous_zone_fraction": 0.492},
+    {"seed": 456, "cost_savings_pp_vs_feature_router": 4.6338, "proposed_savings_pp": 23.7998, "baseline_savings_pp": 19.166, "accuracy_delta_vs_sonnet_pp": -1.3647, "ambiguous_zone_fraction": 0.3086}
+  ],
+  "hypothesis_threshold_pp": 8.0,
+  "hypothesis_result": "FAIL: mean delta 5.93pp < threshold 8.0pp",
+  "notes": "Selective speculation consistently positive (+5.93pp mean) vs pure input-feature router, but falls short of pre-registered 8pp threshold. Structural overhead eliminated for hard zone (~50% of queries go direct-to-Sonnet), but the ambiguous zone remains expensive. Accuracy constraint is met (mean -1.77pp, within 2pp tolerance). The mechanism shows promise but the margin is insufficient."
+}

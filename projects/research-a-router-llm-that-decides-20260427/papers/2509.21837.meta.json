@@ -1,0 +1,17 @@
+{
+  "title": "Semantic Agreement Enables Efficient Open-Ended LLM Cascades",
+  "summary": "Cascade systems route computational requests to smaller models when possible and defer to larger models only when necessary, offering a promising approach to balance cost and quality in LLM deployment. However, they face a fundamental challenge in open-ended text generation: determining output reliability when generation quality lies on a continuous spectrum, often with multiple valid responses. To address this, we propose semantic agreement -- meaning-level consensus between ensemble outputs -- as a training-free signal for reliable deferral. We show that when diverse model outputs agree semantically, their consensus is a stronger reliability signal than token-level confidence. Evaluated from 500M to 70B-parameter models, we find that semantic cascades match or surpass target-model quality at 40% of the cost and reduce latency by up to 60%. Our method requires no model internals, works across black-box APIs, and remains robust to model updates, making it a practical baseline for real-world LLM deployment.",
+  "publishedAt": "2025-09-26T03:51:28Z",
+  "authors": [
+    {
+      "name": "Duncan Soiffer"
+    },
+    {
+      "name": "Steven Kolawole"
+    },
+    {
+      "name": "Virginia Smith"
+    }
+  ],
+  "_source": "arxiv"
+}

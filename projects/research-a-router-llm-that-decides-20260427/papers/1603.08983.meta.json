@@ -1,0 +1,33 @@
+{
+  "id": "1603.08983",
+  "authors": [
+    {
+      "_id": "6411c77e6b75ddced3890813",
+      "name": "Alex Graves",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2016-03-29T22:09:00.000Z",
+  "title": "Adaptive Computation Time for Recurrent Neural Networks",
+  "summary": "This paper introduces Adaptive Computation Time (ACT), an algorithm that\nallows recurrent neural networks to learn how many computational steps to take\nbetween receiving an input and emitting an output. ACT requires minimal changes\nto the network architecture, is deterministic and differentiable, and does not\nadd any noise to the parameter gradients. Experimental results are provided for\nfour synthetic problems: determining the parity of binary vectors, applying\nbinary logic operations, adding integers, and sorting real numbers. Overall,\nperformance is dramatically improved by the use of ACT, which successfully\nadapts the number of computational steps to the requirements of the problem. We\nalso present character-level language modelling results on the Hutter prize\nWikipedia dataset. In this case ACT does not yield large gains in performance;\nhowever it does provide intriguing insight into the structure of the data, with\nmore computation allocated to harder-to-predict transitions, such as spaces\nbetween words and ends of sentences. This suggests that ACT or other adaptive\ncomputation methods could provide a generic method for inferring segment\nboundaries in sequence data.",
+  "upvotes": 0,
+  "discussionId": "641192353ea54b1aa7e2f288",
+  "githubRepo": "https://github.com/ceyzaguirre4/adaptive_computation",
+  "githubRepoAddedBy": "auto",
+  "ai_summary": "Adaptive Computation Time (ACT) enables recurrent neural networks to dynamically adjust the number of computational steps for tasks like parity determination, binary logic, integer addition, sorting, and character-level language modeling.",
+  "ai_keywords": [
+    "Adaptive Computation Time",
+    "ACT",
+    "recurrent neural networks",
+    "computational steps",
+    "parity determination",
+    "binary logic operations",
+    "integer addition",
+    "sorting real numbers",
+    "Hutter prize Wikipedia dataset",
+    "segment boundaries",
+    "sequence data"
+  ],
+  "githubStars": 4,
+  "_source": "hf"
+}

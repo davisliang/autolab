@@ -1,0 +1,45 @@
+---
+{
+  "id": "LIT-HYP005-b",
+  "type": "LitFinding",
+  "created_at": "2026-04-27T06:30:10+00:00",
+  "parent_ids": ["HYP-005"],
+  "author": "literature-scout",
+  "summary": "STEER validates binary 2-tier routing as strong baseline: stepwise confidence routing achieves +20% accuracy and 48% fewer FLOPs vs always-large on AIME; does not test 3-tier extension",
+  "body_path": "thoughts/LIT-HYP005-b.md",
+  "arxiv_id": "2511.06190",
+  "title": "Confidence-Guided Stepwise Model Routing for Cost-Efficient Reasoning",
+  "relevance": 0.72,
+  "key_claims": [
+    "Binary 2-tier stepwise routing achieves +20% accuracy with 48% fewer FLOPs vs always-large on AIME — validates 2-tier as strong cost-quality tradeoff.",
+    "Small model logit confidence is a domain-agnostic routing signal (no training required), achieving ≥ trained router baselines on math, multi-hop QA, and planning.",
+    "Competitive or enhanced accuracy on 8 diverse benchmarks (AIME, AMC, GPQA, etc.) while reducing costs — confirms 2-tier routing is a strong baseline HYP-005 must beat.",
+    "STEER does NOT extend to a 3-tier routing variant — directly creating the open question HYP-005 addresses: does adding a 3rd tier improve over this validated 2-tier baseline?"
+  ],
+  "paper_path": "papers/2511.06190.md"
+}
+---
+
+## Summary
+
+STEER (Confidence-Guided Stepwise Model Routing for Cost-Efficient Reasoning) proposes a domain-agnostic framework for fine-grained, step-level routing between a small model and a large model. At each reasoning step, the small model's logit confidence is computed before generating the step; if confidence falls below a threshold, the large model handles that step.
+
+## Key Findings Relevant to HYP-005
+
+### Binary 2-tier Routing is a Strong Baseline
+STEER achieves competitive or better performance than trained external router baselines on 8 diverse benchmarks:
+- AIME: +20% accuracy, 48% fewer FLOPs vs always-large
+- AMC, GPQA, HotpotQA, ALFWorld: competitive accuracy at significantly lower cost
+- No training required — zero-shot approach
+
+This establishes the binary (weak/strong) routing pair as a powerful, validated baseline. For HYP-005's hypothesis to hold, 3-tier routing must improve over this 2-tier STEER-style baseline by ≥3pp on MMLU at matched cost.
+
+### Confidence as a Routing Signal
+STEER uses the logit confidence of the small model as a domain-agnostic routing signal. This is directly analogous to HYP-005's difficulty assessment. Key observation: even a simple confidence threshold routes well, suggesting that query difficulty is a learnable signal.
+
+### 3-Tier Extension Not Tested
+STEER is strictly binary (small → large). It does not test whether adding a 3rd tier (e.g., a "medium" model like Sonnet) between the small and large improves performance. The extension would require:
+1. A 3-class confidence threshold (route to Haiku/Sonnet/Opus)
+2. Analysis of whether intermediate calls improve cost-quality tradeoff
+
+This is precisely what HYP-005 proposes to measure. STEER's strength as a binary baseline makes HYP-005's empirical test meaningful — beating STEER by ≥3pp would be a non-trivial result.

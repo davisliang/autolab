@@ -1,0 +1,123 @@
+{
+  "id": "2205.01068",
+  "authors": [
+    {
+      "_id": "6411c77e6b75ddced38906c0",
+      "name": "Susan Zhang",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906c1",
+      "name": "Stephen Roller",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906c2",
+      "name": "Naman Goyal",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906c3",
+      "name": "Mikel Artetxe",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906c4",
+      "name": "Moya Chen",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906c5",
+      "name": "Shuohui Chen",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906c6",
+      "name": "Christopher Dewan",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906c7",
+      "name": "Mona Diab",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906c8",
+      "name": "Xian Li",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906c9",
+      "user": {
+        "_id": "61df349e34b589fbaf2e93c4",
+        "avatarUrl": "/avatars/9dd7776d3b610d78e40c2e178ab2f112.svg",
+        "isPro": false,
+        "fullname": "Victoria Lin",
+        "user": "VictoriaLinML",
+        "type": "user",
+        "name": "VictoriaLinML"
+      },
+      "name": "Xi Victoria Lin",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-02-06T15:05:35.928Z",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906ca",
+      "name": "Todor Mihaylov",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906cb",
+      "name": "Myle Ott",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906cc",
+      "name": "Sam Shleifer",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906cd",
+      "name": "Kurt Shuster",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906ce",
+      "name": "Daniel Simig",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906cf",
+      "name": "Punit Singh Koura",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906d0",
+      "name": "Anjali Sridhar",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906d1",
+      "name": "Tianlu Wang",
+      "hidden": false
+    },
+    {
+      "_id": "6411c77e6b75ddced38906d2",
+      "name": "Luke Zettlemoyer",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2022-05-02T17:49:50.000Z",
+  "title": "OPT: Open Pre-trained Transformer Language Models",
+  "summary": "Large language models, which are often trained for hundreds of thousands of\ncompute days, have shown remarkable capabilities for zero- and few-shot\nlearning. Given their computational cost, these models are difficult to\nreplicate without significant capital. For the few that are available through\nAPIs, no access is granted to the full model weights, making them difficult to\nstudy. We present Open Pre-trained Transformers (OPT), a suite of decoder-only\npre-trained transformers ranging from 125M to 175B parameters, which we aim to\nfully and responsibly share with interested researchers. We show that OPT-175B\nis comparable to GPT-3, while requiring only 1/7th the carbon footprint to\ndevelop. We are also releasing our logbook detailing the infrastructure\nchallenges we faced, along with code for experimenting with all of the released\nmodels.",
+  "upvotes": 2,
+  "discussionId": "641192353ea54b1aa7e2f1f4",
+  "ai_summary": "Open Pre-trained Transformers (OPT), a suite of decoder-only pre-trained transformers, offer high capabilities at a lower carbon footprint compared to similar models, and are intended for full sharing with researchers.",
+  "ai_keywords": [
+    "decoder-only pre-trained transformers",
+    "carbon footprint",
+    "logbook"
+  ],
+  "_source": "hf"
+}

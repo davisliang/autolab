@@ -1,0 +1,91 @@
+{
+  "id": "2310.05869",
+  "authors": [
+    {
+      "_id": "6552a1fb1a60bb531b702e00",
+      "user": {
+        "_id": "6563e5bb7061c2cbda39bb98",
+        "avatarUrl": "/avatars/be9fce9a03c258f3a205f3616530874d.svg",
+        "isPro": false,
+        "fullname": "Insu Han",
+        "user": "insuhan",
+        "type": "user",
+        "name": "insuhan"
+      },
+      "name": "Insu Han",
+      "status": "extracted_confirmed",
+      "statusLastChangedAt": "2023-11-27T00:42:19.177Z",
+      "hidden": false
+    },
+    {
+      "_id": "6552a1fb1a60bb531b702e01",
+      "name": "Rajesh Jayaram",
+      "hidden": false
+    },
+    {
+      "_id": "6552a1fb1a60bb531b702e02",
+      "user": {
+        "_id": "652d4155f14b3a0fda975851",
+        "avatarUrl": "/avatars/58e5c95c694f13c3460c6fe9b652b6c8.svg",
+        "isPro": false,
+        "fullname": "amin karbasi",
+        "user": "aminkarbasi",
+        "type": "user",
+        "name": "aminkarbasi"
+      },
+      "name": "Amin Karbasi",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-08-11T06:46:33.124Z",
+      "hidden": false
+    },
+    {
+      "_id": "6552a1fb1a60bb531b702e03",
+      "name": "Vahab Mirrokni",
+      "hidden": false
+    },
+    {
+      "_id": "6552a1fb1a60bb531b702e04",
+      "name": "David P. Woodruff",
+      "hidden": false
+    },
+    {
+      "_id": "6552a1fb1a60bb531b702e05",
+      "user": {
+        "_id": "6756f028bb1d50918a346330",
+        "avatarUrl": "/avatars/097b47a72bf8931b50b5971bb4202766.svg",
+        "isPro": false,
+        "fullname": "Amir Zandieh",
+        "user": "amirzed512",
+        "type": "user",
+        "name": "amirzed512"
+      },
+      "name": "Amir Zandieh",
+      "status": "extracted_pending",
+      "statusLastChangedAt": "2024-12-09T13:27:31.974Z",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-10-09T17:05:25.000Z",
+  "title": "HyperAttention: Long-context Attention in Near-Linear Time",
+  "summary": "We present an approximate attention mechanism named HyperAttention to address\nthe computational challenges posed by the growing complexity of long contexts\nused in Large Language Models (LLMs). Recent work suggests that in the\nworst-case scenario, quadratic time is necessary unless the entries of the\nattention matrix are bounded or the matrix has low stable rank. We introduce\ntwo parameters which measure: (1) the max column norm in the normalized\nattention matrix, and (2) the ratio of row norms in the unnormalized attention\nmatrix after detecting and removing large entries. We use these fine-grained\nparameters to capture the hardness of the problem. Despite previous lower\nbounds, we are able to achieve a linear time sampling algorithm even when the\nmatrix has unbounded entries or a large stable rank, provided the above\nparameters are small. HyperAttention features a modular design that easily\naccommodates integration of other fast low-level implementations, particularly\nFlashAttention. Empirically, employing Locality Sensitive Hashing (LSH) to\nidentify large entries, HyperAttention outperforms existing methods, giving\nsignificant speed improvements compared to state-of-the-art solutions like\nFlashAttention. We validate the empirical performance of HyperAttention on a\nvariety of different long-context length datasets. For example, HyperAttention\nmakes the inference time of ChatGLM2 50\\% faster on 32k context length while\nperplexity increases from 5.6 to 6.3. On larger context length, e.g., 131k,\nwith causal masking, HyperAttention offers 5-fold speedup on a single attention\nlayer.",
+  "upvotes": 2,
+  "discussionId": "6552a1fb1a60bb531b702e27",
+  "ai_summary": "HyperAttention, an approximate attention mechanism, improves inference efficiency in Large Language Models by addressing computational challenges associated with long contexts without sacrificing much performance.",
+  "ai_keywords": [
+    "approximate attention mechanism",
+    "HyperAttention",
+    "large contexts",
+    "Large Language Models (LLMs)",
+    "quadratic time",
+    "attention matrix",
+    "column norm",
+    "row norms",
+    "linear time sampling",
+    "FlashAttention",
+    "Locality Sensitive Hashing (LSH)",
+    "ChatGLM2",
+    "perplexity",
+    "causal masking"
+  ],
+  "_source": "hf"
+}

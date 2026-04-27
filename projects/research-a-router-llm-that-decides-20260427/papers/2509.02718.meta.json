@@ -1,0 +1,31 @@
+{
+  "id": "2509.02718",
+  "authors": [
+    {
+      "_id": "6941b7035d5b2dc10527471f",
+      "name": "Fangzhou Wu",
+      "hidden": false
+    },
+    {
+      "_id": "6941b7035d5b2dc105274720",
+      "name": "Sandeep Silwal",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2025-09-02T18:15:03.000Z",
+  "title": "Efficient Training-Free Online Routing for High-Volume Multi-LLM Serving",
+  "summary": "Increasing demand for Large Language Models (LLMs) services imposes substantial deployment and computation costs on providers. LLM routing offers a cost-efficient solution by directing queries to the optimal LLM based on model and query features. However, existing works primarily focus on offline scenarios and struggle to adapt to online settings with high query volume and constrained token budgets. In this work, we introduce the first training-free algorithm for online routing scenarios. Our algorithm leverages approximate nearest neighbor search to efficiently estimate query features and performs a one-time optimization over a small set of initial queries to learn a routing strategy that guides future routing. We provide theoretical guarantees demonstrating that our algorithm achieves a competitive ratio of 1 - o(1) under natural assumptions, which is further validated by extensive experiments across 3 benchmark datasets and 8 baselines, showing an average improvement of 3.55times in overall performance, 1.85times in cost efficiency, and nearly 4.25times in throughput. Our code is available at https://github.com/fzwark/PORT.",
+  "upvotes": 0,
+  "discussionId": "6941b7045d5b2dc105274721",
+  "githubRepo": "https://github.com/fzwark/PORT",
+  "githubRepoAddedBy": "auto",
+  "ai_summary": "An online, training-free algorithm for LLM routing uses approximate nearest neighbor search to improve performance, cost efficiency, and throughput compared to baselines.",
+  "ai_keywords": [
+    "Large Language Models",
+    "LLM routing",
+    "approximate nearest neighbor search",
+    "competitive ratio"
+  ],
+  "githubStars": 6,
+  "_source": "hf"
+}

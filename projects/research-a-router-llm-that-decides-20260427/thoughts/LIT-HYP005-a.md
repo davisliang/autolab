@@ -1,0 +1,42 @@
+---
+{
+  "id": "LIT-HYP005-a",
+  "type": "LitFinding",
+  "created_at": "2026-04-27T06:30:00+00:00",
+  "parent_ids": ["HYP-005"],
+  "author": "literature-scout",
+  "summary": "ZOOTER proves complementary potential of multi-LLM pool: oracle routing over 6 same-size models outperforms best single model on 44% of subtasks; heterogeneous expertise zones exist even within same model size",
+  "body_path": "thoughts/LIT-HYP005-a.md",
+  "arxiv_id": "2311.08692",
+  "title": "Routing to the Expert: Efficient Reward-guided Ensemble of Large Language Models",
+  "relevance": 0.65,
+  "key_claims": [
+    "Oracle routing over 6 same-size LLMs (13B each) outperforms best single model on all 26 benchmark subtasks — complementary potential proven empirically.",
+    "ZOOTER (86M ranker distilling reward signals) achieves 44% top-1 rate across subtasks vs 31% for best-single-model-always (BMA).",
+    "Heterogeneous expertise zones exist even among same-size models with different training objectives (WizardMath, WizardCoder, etc.) — expertise zones are a robust phenomenon.",
+    "Implication for HYP-005: if same-size models have non-empty disjoint expertise zones, then models of different capability tiers (Haiku/Sonnet/Opus) have even larger disjoint zones; the Sonnet-only zone is non-empty."
+  ],
+  "paper_path": "papers/2311.08692.md"
+}
+---
+
+## Summary
+
+ZOOTER is a reward-guided routing method that routes queries to the LLM with latent expertise among 6 same-size candidate LLMs (all 13B parameters). Rather than always calling the best-on-average model, ZOOTER distills reward signals from a reward model ranking to train a 86M parameter routing classifier.
+
+## Key Findings Relevant to HYP-005
+
+### Complementary Potential Proven
+The core motivation of ZOOTER is the "complementary potential assumption": each LLM in a pool has a non-empty subset of queries for which it outperforms all others. This is empirically confirmed: oracle routing (always picking the best model for each query) achieves rank 1.0 across all subtasks, significantly outperforming any single model.
+
+### Heterogeneous Expertise Among Same-Size Models
+Among 6 same-size (13B) LLMs with different training objectives (WizardLM, WizardCoder, WizardMath, Vicuna, OpenChat, Llama-2-Chat), expertise zones are sufficiently distinct that:
+- Oracle routing outperforms even the strongest model on all 26 evaluation subtasks
+- ZOOTER achieves 44% top-1 rate across subtasks vs BMA's 31%
+- MT-Bench performance: ZOOTER (7.11) vs BMA (6.72) — +0.39 point improvement
+
+### Implications for HYP-005's Sonnet Zone
+If models of the SAME SIZE with different training recipes have distinct expertise zones, then models in a capability HIERARCHY (Haiku/Sonnet/Opus) with 15x cost difference must have even larger disjoint zones. The "Sonnet-only zone" (queries Haiku fails, Sonnet succeeds, Opus needed for others) is structurally analogous to ZOOTER's domain-specific expertise, but amplified by capability differences.
+
+### Gap with HYP-005
+ZOOTER uses same-size models and focuses on domain routing, not difficulty-tier routing. It does NOT compare a 3-tier hierarchy vs a 2-tier hierarchy. The specific empirical question of whether 3-tier Pareto-dominates 2-tier by ≥3pp on MMLU remains unresolved.

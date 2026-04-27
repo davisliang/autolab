@@ -1,0 +1,47 @@
+{
+  "id": "2004.12832",
+  "authors": [
+    {
+      "_id": "6411c7806b75ddced3890e9d",
+      "user": {
+        "_id": "5f764762f1e7ef6e919a1e0f",
+        "avatarUrl": "/avatars/9445f6efa3f78a870e338988d9ce5573.svg",
+        "isPro": false,
+        "fullname": "Omar Khattab",
+        "user": "okhattab",
+        "type": "user",
+        "name": "okhattab"
+      },
+      "name": "Omar Khattab",
+      "status": "extracted_confirmed",
+      "statusLastChangedAt": "2023-07-19T06:17:52.931Z",
+      "hidden": false
+    },
+    {
+      "_id": "6411c7806b75ddced3890e9e",
+      "name": "Matei Zaharia",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2020-04-27T14:21:03.000Z",
+  "title": "ColBERT: Efficient and Effective Passage Search via Contextualized Late\n  Interaction over BERT",
+  "summary": "Recent progress in Natural Language Understanding (NLU) is driving fast-paced\nadvances in Information Retrieval (IR), largely owed to fine-tuning deep\nlanguage models (LMs) for document ranking. While remarkably effective, the\nranking models based on these LMs increase computational cost by orders of\nmagnitude over prior approaches, particularly as they must feed each\nquery-document pair through a massive neural network to compute a single\nrelevance score. To tackle this, we present ColBERT, a novel ranking model that\nadapts deep LMs (in particular, BERT) for efficient retrieval. ColBERT\nintroduces a late interaction architecture that independently encodes the query\nand the document using BERT and then employs a cheap yet powerful interaction\nstep that models their fine-grained similarity. By delaying and yet retaining\nthis fine-granular interaction, ColBERT can leverage the expressiveness of deep\nLMs while simultaneously gaining the ability to pre-compute document\nrepresentations offline, considerably speeding up query processing. Beyond\nreducing the cost of re-ranking the documents retrieved by a traditional model,\nColBERT's pruning-friendly interaction mechanism enables leveraging\nvector-similarity indexes for end-to-end retrieval directly from a large\ndocument collection. We extensively evaluate ColBERT using two recent passage\nsearch datasets. Results show that ColBERT's effectiveness is competitive with\nexisting BERT-based models (and outperforms every non-BERT baseline), while\nexecuting two orders-of-magnitude faster and requiring four orders-of-magnitude\nfewer FLOPs per query.",
+  "upvotes": 5,
+  "discussionId": "641192373ea54b1aa7e2f4e9",
+  "ai_summary": "ColBERT is a novel ranking model that enhances deep language models for efficient information retrieval, achieving competitive effectiveness with faster query processing and reduced computational cost compared to BERT-based models.",
+  "ai_keywords": [
+    "deep language models",
+    "LMs",
+    "document ranking",
+    "ColBERT",
+    "BERT",
+    "late interaction architecture",
+    "neural network",
+    "relevance score",
+    "document representations",
+    "vector-similarity indexes",
+    "passage search",
+    "FLOPs"
+  ],
+  "_source": "hf"
+}

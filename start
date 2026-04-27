@@ -3,6 +3,8 @@
 #
 # Usage:
 #   ./start --idea "investigate whether layer-wise LRs help small MLPs on MNIST"
+#   ./start --idea-file idea.txt              # avoid shell quoting headaches for long ideas
+#   cat idea.txt | ./start --idea-stdin       # pipe the idea via stdin
 #   ./start --idea "..." --benchmark mnist
 #   ./start --idea "..." --watchdog            # hands-off mode
 #   ./start --idea "..." --single-step         # run only the seed phase, then exit
@@ -13,6 +15,8 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_DIR"
 
 IDEA=""
+IDEA_FILE=""
+IDEA_STDIN=0
 PROJECT_ID=""
 WATCHDOG=0
 PASS_ARGS=()
@@ -21,8 +25,12 @@ usage() {
   cat <<EOF
 Usage: ./start --idea "<seed idea>" [options]
 
-Required:
-  --idea <text>          One-line research idea to seed the run
+Idea source (one of):
+  --idea <text>          Seed idea on the command line. Wrap in DOUBLE QUOTES;
+                         avoid embedded apostrophes/quotes — they break shell
+                         parsing and split the idea into multiple args.
+  --idea-file <path>     Read seed idea from a file (recommended for long text).
+  --idea-stdin           Read seed idea from stdin (e.g. cat idea.txt | ./start --idea-stdin).
 
 Optional:
   --project-id <id>      Override auto-generated <slug>-<YYYYMMDD>
@@ -38,6 +46,14 @@ while (( $# > 0 )); do
     --idea)
       IDEA="${2:-}"
       shift 2
+      ;;
+    --idea-file)
+      IDEA_FILE="${2:-}"
+      shift 2
+      ;;
+    --idea-stdin)
+      IDEA_STDIN=1
+      shift
       ;;
     --project-id)
       PROJECT_ID="${2:-}"
@@ -58,11 +74,54 @@ while (( $# > 0 )); do
   esac
 done
 
-if [[ -z "$IDEA" ]]; then
-  echo "ERROR: --idea is required" >&2
-  echo
+# Resolve idea source. Exactly one of --idea / --idea-file / --idea-stdin must be set.
+sources_set=0
+[[ -n "$IDEA" ]] && sources_set=$((sources_set + 1))
+[[ -n "$IDEA_FILE" ]] && sources_set=$((sources_set + 1))
+(( IDEA_STDIN )) && sources_set=$((sources_set + 1))
+
+if (( sources_set == 0 )); then
+  echo "ERROR: one of --idea / --idea-file / --idea-stdin is required" >&2
+  echo >&2
   usage >&2
   exit 2
+fi
+if (( sources_set > 1 )); then
+  echo "ERROR: pass only one of --idea / --idea-file / --idea-stdin" >&2
+  exit 2
+fi
+
+if [[ -n "$IDEA_FILE" ]]; then
+  if [[ ! -f "$IDEA_FILE" ]]; then
+    echo "ERROR: --idea-file '$IDEA_FILE' not found" >&2
+    exit 2
+  fi
+  IDEA="$(< "$IDEA_FILE")"
+elif (( IDEA_STDIN )); then
+  IDEA="$(cat)"
+fi
+
+# Collapse any internal newlines/runs of whitespace so the idea fits on one line.
+IDEA="$(printf '%s' "$IDEA" | tr -s '[:space:]' ' ')"
+IDEA="${IDEA# }"
+IDEA="${IDEA% }"
+
+if [[ -z "$IDEA" ]]; then
+  echo "ERROR: idea is empty after trimming whitespace" >&2
+  exit 2
+fi
+
+# Catch the most common shell-quoting bug: extra unrecognized positional args.
+# These are usually fragments of an idea that broke across shell quotes.
+if (( ${#PASS_ARGS[@]} > 0 )); then
+  for a in "${PASS_ARGS[@]}"; do
+    if [[ "$a" != --* && "$a" != -[a-zA-Z] ]]; then
+      echo "ERROR: unrecognized positional argument '$a'." >&2
+      echo "       This usually means your --idea string was split by a stray quote." >&2
+      echo "       Tip: use --idea-file <path> or --idea-stdin to avoid shell quoting issues." >&2
+      exit 2
+    fi
+  done
 fi
 
 if [[ -f "$REPO_DIR/.env" ]]; then

@@ -696,19 +696,57 @@ def phase_write() -> list[str]:
         + [r["id"] for r in by_type(thread, "ExperimentResult")]
         + [r["id"] for r in by_type(thread, "Critique") if r.get("mode") == "validity"]
     )
+    # Pre-render the deterministic results tables once. The paper-writer is
+    # instructed to paste them verbatim into the experiments section, and to
+    # use them as a numerical reference for abstract/discussion. This guarantees
+    # the prose is anchored to the same numbers as result.json on disk.
+    results_tables = _format_results_tables()
     new_ids: list[str] = []
     for sec in sections:
-        prompt = (
-            f"Phase: write\n"
-            f"Invoke skill: paper-writer\n"
-            f"section={sec}\n"
-            f"version=1\n"
-            f"cite_pool={','.join(cite_pool) or '(none)'}\n"
-            f"relevant_artifacts={relevant}\n\n"
-            f"Per the paper-writer skill, produce one DraftSection. "
-            f"Write the section body to thoughts/<DRAFT-id>.md and append to drafts/citations.bib. "
-            f"End with the stdout contract."
+        prompt_parts = [
+            f"Phase: write",
+            f"Invoke skill: paper-writer",
+            f"section={sec}",
+            f"version=1",
+            f"cite_pool={','.join(cite_pool) or '(none)'}",
+            f"relevant_artifacts={relevant}",
+            "",
+        ]
+        if results_tables and sec == "experiments":
+            prompt_parts.extend([
+                "## Pre-rendered results tables (deterministic — paste VERBATIM)",
+                "",
+                "The orchestrator has rendered the canonical results tables from each "
+                "experiments/<EXP-id>/result.json. Paste the entire block below "
+                "VERBATIM into your experiments section body, then write your prose "
+                "AROUND it — sanity-gate notes, qualitative analysis, ablation discussion, "
+                "threats to validity. Do NOT retype the numbers in prose form. "
+                "Do NOT modify, summarize, or reformat the tables. Place the block at the "
+                "start of your section (before the prose) so readers can skim outcomes first.",
+                "",
+                "===== BEGIN PRE-RENDERED TABLES (paste verbatim) =====",
+                results_tables,
+                "===== END PRE-RENDERED TABLES =====",
+                "",
+            ])
+        elif results_tables and sec in ("abstract", "discussion"):
+            prompt_parts.extend([
+                "## Reference data (use these numbers — do NOT paste verbatim)",
+                "",
+                "Below are the canonical results tables for accurate numerical reference. "
+                "When stating headline results in prose, use these exact numbers. The full "
+                "tables will appear in the Experiments section; you do not need to "
+                "reproduce them here.",
+                "",
+                results_tables,
+                "",
+            ])
+        prompt_parts.append(
+            "Per the paper-writer skill, produce one DraftSection. "
+            "Write the section body to thoughts/<DRAFT-id>.md and append to drafts/citations.bib. "
+            "End with the stdout contract."
         )
+        prompt = "\n".join(prompt_parts)
         call_claude("write", "paper-writer", "opus", prompt, timeout_s=1800)
         refresh_indexes()
         latest = [
@@ -749,12 +787,70 @@ def _read_result_json(plan_id: str) -> dict | None:
         return None
 
 
-def _format_results_tables() -> str:
-    """Generate a markdown block of results tables comparing proposed vs baseline
-    for every ExperimentResult that has a corresponding result.json on disk.
+def _is_stat_dict(v) -> bool:
+    return isinstance(v, dict) and isinstance(v.get("mean"), (int, float))
 
-    Output: a summary table (one row per experiment) + per-experiment detail tables
-    (one row per metric, with mean ± stddev for both conditions and Δ).
+
+def _detect_proposed_baseline_pairs(metrics: dict) -> list[tuple[str, str, str]]:
+    """Find proposed/baseline metric pairs by name convention.
+
+    Looks for: `proposed_X` paired with `baseline_X` (or X_proposed/X_baseline).
+    Returns [(base_name, proposed_key, baseline_key), ...].
+    """
+    pairs = []
+    seen = set()
+    for k, v in metrics.items():
+        if not _is_stat_dict(v):
+            continue
+        for prefix in ("proposed_", "baseline_"):
+            if k.startswith(prefix):
+                base = k[len(prefix):]
+                other_prefix = "baseline_" if prefix == "proposed_" else "proposed_"
+                other = other_prefix + base
+                if other in metrics and _is_stat_dict(metrics[other]):
+                    pkey = "proposed_" + base
+                    bkey = "baseline_" + base
+                    if base not in seen:
+                        pairs.append((base, pkey, bkey))
+                        seen.add(base)
+        for suffix in ("_proposed", "_baseline"):
+            if k.endswith(suffix):
+                base = k[: -len(suffix)]
+                other_suffix = "_baseline" if suffix == "_proposed" else "_proposed"
+                other = base + other_suffix
+                if other in metrics and _is_stat_dict(metrics[other]) and base not in seen:
+                    pairs.append((base, base + "_proposed", base + "_baseline"))
+                    seen.add(base)
+    return pairs
+
+
+def _pick_summary_metric(metrics: dict, pred_metric: str) -> str | None:
+    """Choose one metric to show in the summary row. Priority:
+    predicted metric > delta-like name > first stat metric."""
+    if pred_metric and pred_metric in metrics and _is_stat_dict(metrics[pred_metric]):
+        return pred_metric
+    delta_tokens = ("_vs_", "delta_", "_delta", "savings", "reduction", "improvement", "lift")
+    for k, v in metrics.items():
+        if _is_stat_dict(v) and any(t in k.lower() for t in delta_tokens):
+            return k
+    for k, v in metrics.items():
+        if _is_stat_dict(v):
+            return k
+    return None
+
+
+def _format_results_tables() -> str:
+    """Generate a markdown block of results tables for every ExperimentResult.
+
+    Robust to multiple result.json schemas:
+    - Canonical nested: metrics.proposed.<m> / metrics.baseline.<m>
+    - Flat with naming convention: proposed_X / baseline_X paired up
+    - Flat with explicit deltas: cost_savings_pp_vs_X, etc. — shown as-is
+
+    Always emits:
+      * A summary table (one row per experiment) — picks a "main metric"
+      * Per-experiment detail blocks with: notes, pairwise table (when pairs
+        detected), and a flat all-metrics table.
     """
     thread = read_thread()
     plans = {p["id"]: p for p in by_type(thread, "ExperimentPlan")}
@@ -769,77 +865,136 @@ def _format_results_tables() -> str:
     for res in results:
         plan_id = res.get("plan_id")
         plan = plans.get(plan_id, {})
-        rj = _read_result_json(plan_id)
-        if not rj:
+        rj = _read_result_json(plan_id) or {}
+        # Pull metrics from either result.json on disk or the artifact's metrics field.
+        metrics = rj.get("metrics") or {}
+        if not metrics:
+            artifact_m = res.get("metrics")
+            if isinstance(artifact_m, str):
+                try:
+                    artifact_m = json.loads(artifact_m)
+                except json.JSONDecodeError:
+                    artifact_m = None
+            if isinstance(artifact_m, dict):
+                metrics = artifact_m
+        if not isinstance(metrics, dict) or not metrics:
             continue
-        metrics = rj.get("metrics", {})
-        proposed = metrics.get("proposed", {}) or {}
-        baseline = metrics.get("baseline", {}) or {}
-        if not proposed and not baseline:
+
+        # Detect schema: nested (proposed/baseline keys with sub-dicts) vs flat
+        nested = (
+            isinstance(metrics.get("proposed"), dict)
+            and isinstance(metrics.get("baseline"), dict)
+            and any(_is_stat_dict(v) for v in metrics.get("proposed", {}).values())
+        )
+        if nested:
+            proposed = metrics["proposed"]
+            baseline = metrics["baseline"]
+            flat = {**{f"proposed_{k}": v for k, v in proposed.items()},
+                    **{f"baseline_{k}": v for k, v in baseline.items()}}
+            pairs = [(k, f"proposed_{k}", f"baseline_{k}") for k in proposed if k in baseline]
+        else:
+            flat = {k: v for k, v in metrics.items() if _is_stat_dict(v)}
+            pairs = _detect_proposed_baseline_pairs(flat)
+
+        if not flat:
             continue
 
         # Linked Hypothesis (first HYP- parent of the plan)
-        hyp_id = next(
-            (p for p in (plan.get("parent_ids") or []) if p.startswith("HYP-")),
-            None,
-        )
+        hyp_id = next((p for p in (plan.get("parent_ids") or []) if p.startswith("HYP-")), None)
         hyp = hyps.get(hyp_id, {}) if hyp_id else {}
         pred_metric = hyp.get("prediction_metric", "") or ""
-        pred_threshold = hyp.get("prediction_threshold", "")
-        pred_direction = hyp.get("prediction_direction", "")
+        pred_threshold = (
+            hyp.get("prediction_threshold")
+            or rj.get("hypothesis_threshold")
+            or rj.get("hypothesis_threshold_pp")
+            or rj.get("hypothesis_threshold_pct")
+        )
+        pred_direction = hyp.get("prediction_direction", "") or rj.get("threshold_direction", "")
 
-        status = (res.get("status") or "?").lower()
-        marker = {"pass": "**✓ pass**", "fail": "✗ fail", "crash": "⚠ crash"}.get(status, f"? {status}")
+        status = (res.get("status") or rj.get("status") or "?").lower()
+        marker = {"pass": "**✓ pass**", "fail": "✗ fail", "crash": "⚠ crash"}.get(
+            status, f"? {status}"
+        )
         is_ablation = " *(ablation)*" if plan.get("is_ablation") else ""
 
-        # Summary row
-        if pred_metric and pred_metric in proposed:
-            p_mean = proposed[pred_metric].get("mean")
-            b_mean = baseline.get(pred_metric, {}).get("mean")
-            delta = (p_mean - b_mean) if (p_mean is not None and b_mean is not None) else None
+        # ----- Summary row -----
+        sm = _pick_summary_metric(flat, pred_metric)
+        if sm:
+            m = flat[sm]
+            mean_str = _fmt_num(m.get("mean"))
+            stddev_str = _fmt_num(m.get("stddev") or 0, 2)
+            thr_str = ""
+            if pred_threshold is not None:
+                op = "≥" if (str(pred_direction).lower() in ("greater", "higher", "up", "+")) else \
+                     "≤" if (str(pred_direction).lower() in ("less", "lower", "down", "-")) else "vs"
+                thr_str = f" (target {op}{_fmt_num(pred_threshold)})"
             hyp_short = (hyp.get("summary", "") or "")[:50].replace("|", "\\|")
             summary_rows.append(
                 f"| `{plan_id}`{is_ablation} | `{hyp_id or '—'}` {hyp_short} | "
-                f"`{pred_metric}` | {_fmt_num(b_mean)} | {_fmt_num(p_mean)} | "
-                f"{(_fmt_num(delta) if delta is None else f'{delta:+.4g}')} | {marker} |"
+                f"`{sm}` | {mean_str} ± {stddev_str}{thr_str} | {marker} |"
             )
 
-        # Detail block
-        all_metrics = sorted(set(proposed.keys()) | set(baseline.keys()))
-        rows = []
-        for m in all_metrics:
-            b = baseline.get(m, {}) or {}
-            p = proposed.get(m, {}) or {}
-            b_str = (
-                f"{_fmt_num(b.get('mean'))} ± {_fmt_num(b.get('stddev'), 2)}"
-                if b else "—"
-            )
-            p_str = (
-                f"{_fmt_num(p.get('mean'))} ± {_fmt_num(p.get('stddev'), 2)}"
-                if p else "—"
-            )
-            n = p.get("n_seeds") or b.get("n_seeds") or 0
-            d = None
-            if b and p and b.get("mean") is not None and p.get("mean") is not None:
-                d = p["mean"] - b["mean"]
-            d_str = f"{d:+.4g}" if d is not None else "—"
-            tag = " ←" if m == pred_metric else ""
-            rows.append(f"| `{m}`{tag} | {b_str} | {p_str} | {d_str} | {n} |")
-
-        threshold_note = ""
-        if pred_metric:
-            threshold_note = (
-                f"_Hypothesis prediction: `{pred_metric}` "
-                f"{pred_direction} threshold `{pred_threshold}` — {marker}_\n\n"
+        # ----- Pairwise table -----
+        pair_rows = []
+        for base, p_key, b_key in pairs:
+            p = flat.get(p_key, {})
+            b = flat.get(b_key, {})
+            if not (_is_stat_dict(p) and _is_stat_dict(b)):
+                continue
+            d = p["mean"] - b["mean"]
+            n = p.get("n_seeds") or b.get("n_seeds") or "?"
+            pair_rows.append(
+                f"| `{base}` | {_fmt_num(b['mean'])} ± {_fmt_num(b.get('stddev', 0), 2)} | "
+                f"{_fmt_num(p['mean'])} ± {_fmt_num(p.get('stddev', 0), 2)} | {d:+.4g} | {n} |"
             )
 
-        detail_blocks.append(
-            f"#### `{plan_id}`{is_ablation} → {(hyp.get('summary','')[:120] if hyp_id else '(no linked hypothesis)')}\n\n"
-            f"{threshold_note}"
-            f"| Metric | Baseline (mean ± std) | Proposed (mean ± std) | Δ | Seeds |\n"
-            f"|--------|----------------------|----------------------|---|-------|\n"
-            + "\n".join(rows)
-        )
+        # ----- Flat all-metrics table -----
+        flat_rows = []
+        # Drop pair members from the flat list (they appear in the pairwise table already)
+        paired_keys = set()
+        for _, pk, bk in pairs:
+            paired_keys.add(pk)
+            paired_keys.add(bk)
+        for k in sorted(flat.keys()):
+            if k in paired_keys:
+                continue
+            m = flat[k]
+            tag = " ←" if k == pred_metric else ""
+            flat_rows.append(
+                f"| `{k}`{tag} | {_fmt_num(m.get('mean'))} ± {_fmt_num(m.get('stddev', 0), 2)} | {m.get('n_seeds', '?')} |"
+            )
+
+        # ----- Notes -----
+        notes = rj.get("notes") or rj.get("hypothesis_result") or ""
+
+        # ----- Block assembly -----
+        parts = [
+            f"#### `{plan_id}`{is_ablation} → "
+            f"{(hyp.get('summary','')[:140] if hyp_id else '(no linked hypothesis)')}\n"
+        ]
+        if pred_metric or pred_threshold is not None:
+            thr_part = f" {pred_direction or ''} {_fmt_num(pred_threshold)}".strip() if pred_threshold is not None else ""
+            parts.append(f"_Prediction: `{pred_metric or '?'}`{(' ' + thr_part) if thr_part else ''} — {marker}_\n")
+        else:
+            parts.append(f"_Status: {marker}_\n")
+        if notes:
+            parts.append(f"**Notes:** {notes}\n")
+        if pair_rows:
+            parts.append(
+                "##### Proposed vs Baseline\n\n"
+                "| Metric | Baseline | Proposed | Δ | Seeds |\n"
+                "|--------|----------|----------|---|-------|\n"
+                + "\n".join(pair_rows) + "\n"
+            )
+        if flat_rows:
+            heading = "##### Other Metrics" if pair_rows else "##### Metrics"
+            parts.append(
+                f"{heading}\n\n"
+                "| Metric | Mean ± StdDev | Seeds |\n"
+                "|--------|---------------|-------|\n"
+                + "\n".join(flat_rows) + "\n"
+            )
+        detail_blocks.append("\n".join(parts))
 
     if not summary_rows and not detail_blocks:
         return ""
@@ -847,15 +1002,12 @@ def _format_results_tables() -> str:
     out = ["### Results Summary\n"]
     if summary_rows:
         out.append(
-            "| Plan | Hypothesis | Predicted Metric | Baseline | Proposed | Δ | Status |\n"
-            "|------|------------|------------------|----------|----------|---|--------|\n"
-            + "\n".join(summary_rows)
-            + "\n"
+            "| Plan | Hypothesis | Main Metric | Result | Status |\n"
+            "|------|------------|-------------|--------|--------|\n"
+            + "\n".join(summary_rows) + "\n"
         )
-    else:
-        out.append("_(no predicted-metric rows available)_\n")
     if detail_blocks:
-        out.append("\n### Per-Experiment Detail\n\n" + "\n\n".join(detail_blocks) + "\n")
+        out.append("\n### Per-Experiment Detail\n\n" + "\n\n".join(detail_blocks))
     return "\n".join(out)
 
 
@@ -879,19 +1031,31 @@ def phase_final() -> list[str]:
     results_tables = _format_results_tables()
     for key, header in order:
         out.append(header)
-        # Inject auto-generated results tables at the top of the Experiments
-        # section so the reader can skim outcomes before the prose.
-        if key == "experiments" and results_tables:
-            out.append(results_tables)
         sec = sections.get(key)
-        if not sec:
+        body_text = ""
+        if sec:
+            body_path = project_dir() / sec.get("body_path", "")
+            if body_path.exists():
+                text = body_path.read_text()
+                parts = text.split("---\n", 2)
+                body_text = parts[-1].strip() if len(parts) >= 3 else text.strip()
+        # Safety net: if paper-writer was supposed to paste the tables into the
+        # experiments section but didn't, inject them at assembly time so the
+        # final paper is never missing them.
+        if (
+            key == "experiments"
+            and results_tables
+            and "### Results Summary" not in body_text
+        ):
+            log_line(
+                "final: experiments section body lacks tables; "
+                "injecting auto-rendered fallback"
+            )
+            out.append(results_tables)
+        if body_text:
+            out.append(body_text)
+        else:
             out.append("_(missing)_\n")
-            continue
-        body_path = project_dir() / sec.get("body_path", "")
-        if body_path.exists():
-            text = body_path.read_text()
-            parts = text.split("---\n", 2)
-            out.append(parts[-1].strip() if len(parts) >= 3 else text.strip())
         out.append("")
     final_path = drafts / "paper-vFINAL.md"
     final_path.write_text("\n".join(out) + "\n")

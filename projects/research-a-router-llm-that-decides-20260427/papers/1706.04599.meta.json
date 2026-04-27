@@ -1,0 +1,43 @@
+{
+  "id": "1706.04599",
+  "authors": [
+    {
+      "_id": "64c13cd5cac5f9ba52b8b56d",
+      "name": "Chuan Guo",
+      "hidden": false
+    },
+    {
+      "_id": "64c13cd5cac5f9ba52b8b56e",
+      "name": "Geoff Pleiss",
+      "hidden": false
+    },
+    {
+      "_id": "64c13cd5cac5f9ba52b8b56f",
+      "name": "Yu Sun",
+      "hidden": false
+    },
+    {
+      "_id": "64c13cd5cac5f9ba52b8b570",
+      "name": "Kilian Q. Weinberger",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2017-06-14T17:33:50.000Z",
+  "title": "On Calibration of Modern Neural Networks",
+  "summary": "Confidence calibration -- the problem of predicting probability estimates\nrepresentative of the true correctness likelihood -- is important for\nclassification models in many applications. We discover that modern neural\nnetworks, unlike those from a decade ago, are poorly calibrated. Through\nextensive experiments, we observe that depth, width, weight decay, and Batch\nNormalization are important factors influencing calibration. We evaluate the\nperformance of various post-processing calibration methods on state-of-the-art\narchitectures with image and document classification datasets. Our analysis and\nexperiments not only offer insights into neural network learning, but also\nprovide a simple and straightforward recipe for practical settings: on most\ndatasets, temperature scaling -- a single-parameter variant of Platt Scaling --\nis surprisingly effective at calibrating predictions.",
+  "upvotes": 0,
+  "discussionId": "64c13cd50be2af363e1486b1",
+  "ai_summary": "Modern neural networks exhibit poor probability calibration, and temperature scaling is effective across various datasets and architectures.",
+  "ai_keywords": [
+    "confidence calibration",
+    "probability estimates",
+    "neural networks",
+    "depth",
+    "width",
+    "weight decay",
+    "BatchNormalization",
+    "Platt Scaling",
+    "temperature scaling"
+  ],
+  "_source": "hf"
+}

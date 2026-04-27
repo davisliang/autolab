@@ -1,0 +1,82 @@
+{
+  "id": "2309.17249",
+  "authors": [
+    {
+      "_id": "65d74116c2ba68fcaf7afb2f",
+      "user": {
+        "_id": "62b279e92375526ae51a537b",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/62b279e92375526ae51a537b/U2DxDscDjQ6kWh-jMn0IG.jpeg",
+        "isPro": false,
+        "fullname": "Han Zhou",
+        "user": "hzhouml",
+        "type": "user",
+        "name": "hzhouml"
+      },
+      "name": "Han Zhou",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-02-22T22:27:11.656Z",
+      "hidden": false
+    },
+    {
+      "_id": "65d74116c2ba68fcaf7afb30",
+      "user": {
+        "_id": "65bf213f8467e2a3d6374d4b",
+        "avatarUrl": "/avatars/0194cdba95d7a4c01fbbdd505e384a3d.svg",
+        "isPro": false,
+        "fullname": "Xingchen Wan",
+        "user": "masonxw",
+        "type": "user",
+        "name": "masonxw"
+      },
+      "name": "Xingchen Wan",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-04-13T19:29:16.835Z",
+      "hidden": false
+    },
+    {
+      "_id": "65d74116c2ba68fcaf7afb31",
+      "name": "Lev Proleev",
+      "hidden": false
+    },
+    {
+      "_id": "65d74116c2ba68fcaf7afb32",
+      "name": "Diana Mincu",
+      "hidden": false
+    },
+    {
+      "_id": "65d74116c2ba68fcaf7afb33",
+      "name": "Jilin Chen",
+      "hidden": false
+    },
+    {
+      "_id": "65d74116c2ba68fcaf7afb34",
+      "name": "Katherine Heller",
+      "hidden": false
+    },
+    {
+      "_id": "65d74116c2ba68fcaf7afb35",
+      "name": "Subhrajit Roy",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-09-29T13:55:45.000Z",
+  "title": "Batch Calibration: Rethinking Calibration for In-Context Learning and\n  Prompt Engineering",
+  "summary": "Prompting and in-context learning (ICL) have become efficient learning\nparadigms for large language models (LLMs). However, LLMs suffer from prompt\nbrittleness and various bias factors in the prompt, including but not limited\nto the formatting, the choice verbalizers, and the ICL examples. To address\nthis problem that results in unexpected performance degradation, calibration\nmethods have been developed to mitigate the effects of these biases while\nrecovering LLM performance. In this work, we first conduct a systematic\nanalysis of the existing calibration methods, where we both provide a unified\nview and reveal the failure cases. Inspired by these analyses, we propose Batch\nCalibration (BC), a simple yet intuitive method that controls the contextual\nbias from the batched input, unifies various prior approaches, and effectively\naddresses the aforementioned issues. BC is zero-shot, inference-only, and\nincurs negligible additional costs. In the few-shot setup, we further extend BC\nto allow it to learn the contextual bias from labeled data. We validate the\neffectiveness of BC with PaLM 2-(S, M, L) and CLIP models and demonstrate\nstate-of-the-art performance over previous calibration baselines across more\nthan 10 natural language understanding and image classification tasks.",
+  "upvotes": 1,
+  "discussionId": "65d74117c2ba68fcaf7afb82",
+  "ai_summary": "Batch Calibration (BC) improves large language model performance by mitigating prompt brittleness and bias, outperforming previous methods across various tasks.",
+  "ai_keywords": [
+    "prompting",
+    "in-context learning (ICL)",
+    "large language models (LLMs)",
+    "prompt brittleness",
+    "bias factors",
+    "calibration methods",
+    "Batch Calibration (BC)",
+    "contextual bias",
+    "zero-shot",
+    "inference-only",
+    "few-shot setup"
+  ],
+  "_source": "hf"
+}

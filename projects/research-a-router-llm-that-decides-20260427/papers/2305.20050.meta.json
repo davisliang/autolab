@@ -1,0 +1,76 @@
+{
+  "id": "2305.20050",
+  "authors": [
+    {
+      "_id": "64780655bb7681ad6713a540",
+      "name": "Hunter Lightman",
+      "hidden": false
+    },
+    {
+      "_id": "64780655bb7681ad6713a541",
+      "name": "Vineet Kosaraju",
+      "hidden": false
+    },
+    {
+      "_id": "64780655bb7681ad6713a542",
+      "name": "Yura Burda",
+      "hidden": false
+    },
+    {
+      "_id": "64780655bb7681ad6713a543",
+      "name": "Harri Edwards",
+      "hidden": false
+    },
+    {
+      "_id": "64780655bb7681ad6713a544",
+      "name": "Bowen Baker",
+      "hidden": false
+    },
+    {
+      "_id": "64780655bb7681ad6713a545",
+      "name": "Teddy Lee",
+      "hidden": false
+    },
+    {
+      "_id": "64780655bb7681ad6713a546",
+      "name": "Jan Leike",
+      "hidden": false
+    },
+    {
+      "_id": "64780655bb7681ad6713a547",
+      "name": "John Schulman",
+      "hidden": false
+    },
+    {
+      "_id": "64780655bb7681ad6713a548",
+      "name": "Ilya Sutskever",
+      "hidden": false
+    },
+    {
+      "_id": "64780655bb7681ad6713a549",
+      "name": "Karl Cobbe",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-05-31T17:24:00.000Z",
+  "title": "Let's Verify Step by Step",
+  "summary": "In recent years, large language models have greatly improved in their ability\nto perform complex multi-step reasoning. However, even state-of-the-art models\nstill regularly produce logical mistakes. To train more reliable models, we can\nturn either to outcome supervision, which provides feedback for a final result,\nor process supervision, which provides feedback for each intermediate reasoning\nstep. Given the importance of training reliable models, and given the high cost\nof human feedback, it is important to carefully compare the both methods.\nRecent work has already begun this comparison, but many questions still remain.\nWe conduct our own investigation, finding that process supervision\nsignificantly outperforms outcome supervision for training models to solve\nproblems from the challenging MATH dataset. Our process-supervised model solves\n78% of problems from a representative subset of the MATH test set.\nAdditionally, we show that active learning significantly improves the efficacy\nof process supervision. To support related research, we also release PRM800K,\nthe complete dataset of 800,000 step-level human feedback labels used to train\nour best reward model.",
+  "upvotes": 11,
+  "discussionId": "64780659bb7681ad6713a597",
+  "githubRepo": "https://github.com/openai/prm800k",
+  "githubRepoAddedBy": "auto",
+  "ai_summary": "Process supervision outperforms outcome supervision for training large language models on complex reasoning tasks, particularly with active learning, as demonstrated on the MATH dataset.",
+  "ai_keywords": [
+    "large language models",
+    "multi-step reasoning",
+    "logical mistakes",
+    "outcome supervision",
+    "process supervision",
+    "MATH dataset",
+    "active learning",
+    "reward model",
+    "step-level human feedback labels"
+  ],
+  "githubStars": 2120,
+  "_source": "hf"
+}

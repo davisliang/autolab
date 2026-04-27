@@ -1,0 +1,17 @@
+{
+  "title": "Entropy and Emergence of Topological Dynamical Systems",
+  "summary": "A topological dynamical system $(X,f)$ induces two natural systems, one is on the probability measure spaces and other one is on the hyperspace.\n  We introduce a concept for these two spaces, which is called entropy order, and prove that it coincides with topological entropy of $(X,f)$. We also consider the entropy order of an invariant measure and a variational principle is established.",
+  "publishedAt": "2020-05-04T14:59:27Z",
+  "authors": [
+    {
+      "name": "Yong Ji"
+    },
+    {
+      "name": "Ercai Chen"
+    },
+    {
+      "name": "Xiaoyao Zhou"
+    }
+  ],
+  "_source": "arxiv"
+}

@@ -1,0 +1,119 @@
+{
+  "id": "2309.04564",
+  "authors": [
+    {
+      "_id": "64ffc6723587d3ebfd8041be",
+      "name": "Max Marion",
+      "statusLastChangedAt": "2023-09-12T11:02:21.259Z",
+      "hidden": false
+    },
+    {
+      "_id": "64ffc6723587d3ebfd8041bf",
+      "user": {
+        "_id": "60d35d7ad7b174177faabd5b",
+        "avatarUrl": "/avatars/4e5403b9d4a845a2d21e8217dc3c16d2.svg",
+        "isPro": false,
+        "fullname": "Ahmet \u00dcst\u00fcn",
+        "user": "ahmetu",
+        "type": "user",
+        "name": "ahmetu"
+      },
+      "name": "Ahmet \u00dcst\u00fcn",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-12T11:02:36.732Z",
+      "hidden": false
+    },
+    {
+      "_id": "64ffc6723587d3ebfd8041c0",
+      "user": {
+        "_id": "62740039e2be275e63b783e1",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/62740039e2be275e63b783e1/Ft9kE-JS4LPubVUiAgrv0.jpeg",
+        "isPro": false,
+        "fullname": "Luiza Pozzobon",
+        "user": "luizapzbn",
+        "type": "user",
+        "name": "luizapzbn"
+      },
+      "name": "Luiza Pozzobon",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-12T11:02:49.169Z",
+      "hidden": false
+    },
+    {
+      "_id": "64ffc6723587d3ebfd8041c1",
+      "user": {
+        "_id": "618d96c9b8de35a67a79d288",
+        "avatarUrl": "/avatars/3fbda3277052b5a2d34f84330c440e69.svg",
+        "isPro": false,
+        "fullname": "Alex Wang",
+        "user": "w4ngatang",
+        "type": "user",
+        "name": "w4ngatang"
+      },
+      "name": "Alex Wang",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2023-10-22T19:34:45.263Z",
+      "hidden": false
+    },
+    {
+      "_id": "64ffc6723587d3ebfd8041c2",
+      "user": {
+        "_id": "6441042d5d600fb0951a5f99",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/6441042d5d600fb0951a5f99/4CbOaYcEz99BtVAQvnGTn.jpeg",
+        "isPro": false,
+        "fullname": "Marzieh Fadaee",
+        "user": "MarziehFadaee",
+        "type": "user",
+        "name": "MarziehFadaee"
+      },
+      "name": "Marzieh Fadaee",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-03-21T12:06:26.345Z",
+      "hidden": false
+    },
+    {
+      "_id": "64ffc6723587d3ebfd8041c3",
+      "user": {
+        "_id": "63434eb76f59b79da07dbddf",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/63434eb76f59b79da07dbddf/BEwmVjqPNYlqmutXG0G6e.jpeg",
+        "isPro": false,
+        "fullname": "Sara Hooker",
+        "user": "sarahooker",
+        "type": "user",
+        "name": "sarahooker"
+      },
+      "name": "Sara Hooker",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-09-12T11:03:01.922Z",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-09-08T19:34:05.000Z",
+  "submittedOnDailyAt": "2023-09-12T00:31:23.164Z",
+  "title": "When Less is More: Investigating Data Pruning for Pretraining LLMs at\n  Scale",
+  "submittedOnDailyBy": {
+    "_id": "60f1abe7544c2adfd699860c",
+    "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1674929746905-60f1abe7544c2adfd699860c.jpeg",
+    "isPro": false,
+    "fullname": "AK",
+    "user": "akhaliq",
+    "type": "user",
+    "name": "akhaliq"
+  },
+  "summary": "Large volumes of text data have contributed significantly to the development\nof large language models (LLMs) in recent years. This data is typically\nacquired by scraping the internet, leading to pretraining datasets comprised of\nnoisy web text. To date, efforts to prune these datasets down to a higher\nquality subset have relied on hand-crafted heuristics encoded as rule-based\nfilters. In this work, we take a wider view and explore scalable estimates of\ndata quality that can be used to systematically measure the quality of\npretraining data. We perform a rigorous comparison at scale of the simple data\nquality estimator of perplexity, as well as more sophisticated and\ncomputationally intensive estimates of the Error L2-Norm and memorization.\nThese metrics are used to rank and prune pretraining corpora, and we\nsubsequently compare LLMs trained on these pruned datasets. Surprisingly, we\nfind that the simple technique of perplexity outperforms our more\ncomputationally expensive scoring methods. We improve over our no-pruning\nbaseline while training on as little as 30% of the original training dataset.\nOur work sets the foundation for unexplored strategies in automatically\ncurating high quality corpora and suggests the majority of pretraining data can\nbe removed while retaining performance.",
+  "upvotes": 17,
+  "discussionId": "64ffc6733587d3ebfd8041ec",
+  "ai_summary": "Perplexity outperforms more complex methods for data quality estimation in pruning large language model training datasets, resulting in performance improvement with reduced data.",
+  "ai_keywords": [
+    "large language models (LLMs)",
+    "pretraining datasets",
+    "noisy web text",
+    "data quality estimator",
+    "perplexity",
+    "Error L2-Norm",
+    "memorization",
+    "LLMs",
+    "pruned datasets"
+  ],
+  "_source": "hf"
+}

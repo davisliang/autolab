@@ -1,0 +1,85 @@
+{
+  "id": "2310.03046",
+  "authors": [
+    {
+      "_id": "651f60545ff73c3cec5678ee",
+      "user": {
+        "_id": "640131b08ba76abe4b71b5d0",
+        "avatarUrl": "/avatars/2288b96a9a0ae8f584768f54e098def1.svg",
+        "isPro": false,
+        "fullname": "Jieyu Zhang",
+        "user": "jieyuz2",
+        "type": "user",
+        "name": "jieyuz2"
+      },
+      "name": "Jieyu Zhang",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-10-09T10:02:53.745Z",
+      "hidden": false
+    },
+    {
+      "_id": "651f60545ff73c3cec5678ef",
+      "name": "Ranjay Krishna",
+      "hidden": false
+    },
+    {
+      "_id": "651f60545ff73c3cec5678f0",
+      "user": {
+        "_id": "6398c705cc8635e998d3c874",
+        "avatarUrl": "/avatars/3f3f56021cd74c561bde118d6ad7439d.svg",
+        "isPro": false,
+        "fullname": "Ahmed Awadallah",
+        "user": "aawadall",
+        "type": "user",
+        "name": "aawadall"
+      },
+      "name": "Ahmed H. Awadallah",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-10-10T08:28:33.399Z",
+      "hidden": false
+    },
+    {
+      "_id": "651f60545ff73c3cec5678f1",
+      "user": {
+        "_id": "640baf807047b6c332a912e1",
+        "avatarUrl": "/avatars/830fd35aff114eedf68c4f9eeb9fe944.svg",
+        "isPro": false,
+        "fullname": "Chi Wang",
+        "user": "sonichi",
+        "type": "user",
+        "name": "sonichi"
+      },
+      "name": "Chi Wang",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-10-10T08:29:15.329Z",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-10-03T22:16:13.000Z",
+  "submittedOnDailyAt": "2023-10-05T23:48:14.787Z",
+  "title": "EcoAssistant: Using LLM Assistant More Affordably and Accurately",
+  "submittedOnDailyBy": {
+    "_id": "60f1abe7544c2adfd699860c",
+    "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1674929746905-60f1abe7544c2adfd699860c.jpeg",
+    "isPro": false,
+    "fullname": "AK",
+    "user": "akhaliq",
+    "type": "user",
+    "name": "akhaliq"
+  },
+  "summary": "Today, users ask Large language models (LLMs) as assistants to answer queries\nthat require external knowledge; they ask about the weather in a specific city,\nabout stock prices, and even about where specific locations are within their\nneighborhood. These queries require the LLM to produce code that invokes\nexternal APIs to answer the user's question, yet LLMs rarely produce correct\ncode on the first try, requiring iterative code refinement upon execution\nresults. In addition, using LLM assistants to support high query volumes can be\nexpensive. In this work, we contribute a framework, EcoAssistant, that enables\nLLMs to answer code-driven queries more affordably and accurately. EcoAssistant\ncontains three components. First, it allows the LLM assistants to converse with\nan automatic code executor to iteratively refine code or to produce answers\nbased on the execution results. Second, we use a hierarchy of LLM assistants,\nwhich attempts to answer the query with weaker, cheaper LLMs before backing off\nto stronger, expensive ones. Third, we retrieve solutions from past successful\nqueries as in-context demonstrations to help subsequent queries. Empirically,\nwe show that EcoAssistant offers distinct advantages for affordability and\naccuracy, surpassing GPT-4 by 10 points of success rate with less than 50% of\nGPT-4's cost.",
+  "upvotes": 6,
+  "discussionId": "651f60565ff73c3cec567936",
+  "githubRepo": "https://github.com/jieyuz2/ecoassistant",
+  "githubRepoAddedBy": "auto",
+  "ai_summary": "EcoAssistant framework enables more affordable and accurate responses from LLMs through iterative code refinement, LLM hierarchy, and solution retrieval.",
+  "ai_keywords": [
+    "Large language models",
+    "LLMs",
+    "automatic code executor",
+    "hierarchical LLMs",
+    "in-context demonstrations"
+  ],
+  "githubStars": 134,
+  "_source": "hf"
+}

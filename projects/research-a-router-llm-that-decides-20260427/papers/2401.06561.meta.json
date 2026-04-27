@@ -1,0 +1,68 @@
+{
+  "id": "2401.06561",
+  "authors": [
+    {
+      "_id": "65bb0e53bdc9c1674cbadb64",
+      "name": "Yuqi Zhang",
+      "hidden": false
+    },
+    {
+      "_id": "65bb0e53bdc9c1674cbadb65",
+      "user": {
+        "_id": "641123b4230ce11b1be68fa1",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/641123b4230ce11b1be68fa1/Xm1gZgK4MRq-LN20ZxxHE.jpeg",
+        "isPro": false,
+        "fullname": "Liang Ding (Hiring https://liamding.cc/hiring.htm)",
+        "user": "alphadl",
+        "type": "user",
+        "name": "alphadl"
+      },
+      "name": "Liang Ding",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2024-08-09T07:49:20.760Z",
+      "hidden": false
+    },
+    {
+      "_id": "65bb0e53bdc9c1674cbadb66",
+      "name": "Lefei Zhang",
+      "hidden": false
+    },
+    {
+      "_id": "65bb0e53bdc9c1674cbadb67",
+      "name": "Dacheng Tao",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2024-01-12T13:15:05.000Z",
+  "title": "Intention Analysis Prompting Makes Large Language Models A Good\n  Jailbreak Defender",
+  "summary": "Aligning large language models (LLMs) with human values, particularly in the\nface of stealthy and complex jailbreaks, presents a formidable challenge. In\nthis study, we present a simple yet highly effective defense strategy, i.e.,\nIntention Analysis Prompting (IAPrompt). The principle behind is to trigger\nLLMs' inherent self-correct and improve ability through a two-stage process: 1)\nessential intention analysis, and 2) policy-aligned response. Notably, IAPrompt\nis an inference-only method, thus could enhance the safety of LLMs without\ncompromising their helpfulness. Extensive experiments on SAP200 and DAN\nbenchmarks across Vicuna, ChatGLM, MPT, DeepSeek, and GPT-3.5 show that\nIAPrompt could consistently and significantly reduce the harmfulness in\nresponse (averagely -46.5% attack success rate) and maintain the general\nhelpfulness. Further analyses present some insights into how our method works.\nTo facilitate reproducibility, We release our code and scripts at:\nhttps://github.com/alphadl/SafeLLM_with_IntentionAnalysis",
+  "upvotes": 1,
+  "discussionId": "65bb0e55bdc9c1674cbadc41",
+  "githubRepo": "https://github.com/alphadl/safellm_with_intentionanalysis",
+  "githubRepoAddedBy": "auto",
+  "ai_summary": "Intention Analysis Prompting (IAPrompt) enhances large language model safety by reducing harmful responses through essential intention analysis and policy-aligned responses, without sacrificing helpfulness.",
+  "ai_keywords": [
+    "large language models",
+    "LLMs",
+    "human values",
+    "jailbreaks",
+    "Intention Analysis Prompting",
+    "IAPrompt",
+    "self-correct and improve",
+    "essential intention analysis",
+    "policy-aligned response",
+    "inference-only method",
+    "SAP200",
+    "DAN benchmarks",
+    "Vicuna",
+    "ChatGLM",
+    "MPT",
+    "DeepSeek",
+    "GPT-3.5",
+    "harmfulness",
+    "attack success rate",
+    "helpfulness"
+  ],
+  "githubStars": 21,
+  "_source": "hf"
+}

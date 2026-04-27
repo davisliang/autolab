@@ -1,0 +1,9 @@
+{
+  "phase": "survey",
+  "hypothesis_id": "HYP-004",
+  "cycle": 3,
+  "completed_artifact_ids": ["LIT-060", "LIT-061", "LIT-062", "LIT-063", "LIT-064"],
+  "papers_fetched": ["2106.00170", "2311.09677", "1705.08500", "2006.01862", "1904.06019"],
+  "next_action": "design experiment for HYP-004",
+  "completed_at": "2026-04-26T00:00:00Z"
+}

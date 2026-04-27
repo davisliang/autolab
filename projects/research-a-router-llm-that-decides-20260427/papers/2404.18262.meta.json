@@ -1,0 +1,35 @@
+{
+  "title": "Generating Situated Reflection Triggers about Alternative Solution Paths: A Case Study of Generative AI for Computer-Supported Collaborative Learning",
+  "summary": "An advantage of Large Language Models (LLMs) is their contextualization capability - providing different responses based on student inputs like solution strategy or prior discussion, to potentially better engage students than standard feedback. We present a design and evaluation of a proof-of-concept LLM application to offer students dynamic and contextualized feedback. Specifically, we augment an Online Programming Exercise bot for a college-level Cloud Computing course with ChatGPT, which offers students contextualized reflection triggers during a collaborative query optimization task in database design. We demonstrate that LLMs can be used to generate highly situated reflection triggers that incorporate details of the collaborative discussion happening in context. We discuss in depth the exploration of the design space of the triggers and their correspondence with the learning objectives as well as the impact on student learning in a pilot study with 34 students.",
+  "publishedAt": "2024-04-28T17:56:14Z",
+  "authors": [
+    {
+      "name": "Atharva Naik"
+    },
+    {
+      "name": "Jessica Ruhan Yin"
+    },
+    {
+      "name": "Anusha Kamath"
+    },
+    {
+      "name": "Qianou Ma"
+    },
+    {
+      "name": "Sherry Tongshuang Wu"
+    },
+    {
+      "name": "Charles Murray"
+    },
+    {
+      "name": "Christopher Bogart"
+    },
+    {
+      "name": "Majd Sakr"
+    },
+    {
+      "name": "Carolyn P. Rose"
+    }
+  ],
+  "_source": "arxiv"
+}

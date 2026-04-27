@@ -1,0 +1,11 @@
+{
+  "title": "Triage: Routing Software Engineering Tasks to Cost-Effective LLM Tiers via Code Quality Signals",
+  "summary": "Context: AI coding agents route every task to a single frontier large language model (LLM), paying premium inference cost even when many tasks are routine.\n  Objectives: We propose Triage, a framework that uses code health metrics -- indicators of software maintainability -- as a routing signal to assign each task to the cheapest model tier whose output passes the same verification gate as the expensive model.\n  Methods: Triage defines three capability tiers (light, standard, heavy -- mirroring, e.g., Haiku, Sonnet, Opus) and routes tasks based on pre-computed code health sub-factors and task metadata. We design an evaluation comparing three routing policies on SWE-bench Lite (300 tasks across three model tiers): heuristic thresholds, a trained ML classifier, and a perfect-hindsight oracle.\n  Results: We analytically derived two falsifiable conditions under which the tier-dependent asymmetry (medium LLMs benefit from clean code while frontier models do not) yields cost-effective routing: the light-tier pass rate on healthy code must exceed the inter-tier cost ratio, and code health must discriminate the required model tier with at least a small effect size ($\\hat{p} \\geq 0.56$).\n  Conclusion: Triage transforms a diagnostic code quality metric into an actionable model-selection signal. We present a rigorous evaluation protocol to test the cost--quality trade-off and identify which code health sub-factors drive routing decisions.",
+  "publishedAt": "2026-04-08T18:34:44Z",
+  "authors": [
+    {
+      "name": "Lech Madeyski"
+    }
+  ],
+  "_source": "arxiv"
+}

@@ -1,0 +1,52 @@
+{
+  "id": "2504.07113",
+  "authors": [
+    {
+      "_id": "682520527fd6f758ef749f5d",
+      "user": {
+        "_id": "64d26ec38527ac1277605c53",
+        "avatarUrl": "/avatars/bc2a80107f1095afc1fa5dad6afe0369.svg",
+        "isPro": false,
+        "fullname": "Aly M. Kassem",
+        "user": "alykassem",
+        "type": "user",
+        "name": "alykassem"
+      },
+      "name": "Aly M. Kassem",
+      "status": "extracted_confirmed",
+      "statusLastChangedAt": "2025-05-14T23:00:32.107Z",
+      "hidden": false
+    },
+    {
+      "_id": "682520527fd6f758ef749f5e",
+      "name": "Bernhard Sch\u00f6lkopf",
+      "hidden": false
+    },
+    {
+      "_id": "682520527fd6f758ef749f5f",
+      "name": "Zhijing Jin",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2025-03-20T19:52:30.000Z",
+  "title": "How Robust Are Router-LLMs? Analysis of the Fragility of LLM Routing\n  Capabilities",
+  "summary": "Large language model (LLM) routing has emerged as a crucial strategy for\nbalancing computational costs with performance by dynamically assigning queries\nto the most appropriate model based on query complexity. Despite recent\nadvances showing that preference-data-based routers can outperform traditional\nmethods, current evaluation benchmarks remain limited. They largely focus on\ngeneral model capabilities while overlooking task-specific behaviors and\ncritical concerns such as privacy, safety, and potential backdoor\nvulnerabilities introduced through preference data. In response, we propose the\nDSC benchmark: Diverse, Simple, and Categorized, an evaluation framework that\ncategorizes router performance across a broad spectrum of query types,\nincluding coding, translation, mathematics, human instructions, general\nknowledge, and LLM jailbreaking. Additionally, it integrates privacy and safety\nassessments to reveal hidden risks. Our experiments on three preference-based\nrouters and two commercial counterparts demonstrate that while these systems\nimprove efficiency, they often make suboptimal, category-driven decisions. For\ninstance, a BERT-based router directs all coding and mathematics queries to the\nmost powerful LLM even when simpler models would suffice, while routing\njailbreaking attempts to weaker models, thereby elevating safety risks.",
+  "upvotes": 1,
+  "discussionId": "682520537fd6f758ef749f92",
+  "ai_summary": "The DSC benchmark evaluates LLM routers across diverse query types and safety metrics, revealing suboptimal routing decisions.",
+  "ai_keywords": [
+    "large language model (LLM) routing",
+    "preference-data-based routers",
+    "DSC benchmark",
+    "coding",
+    "translation",
+    "mathematics",
+    "human instructions",
+    "general knowledge",
+    "LLM jailbreaking",
+    "privacy",
+    "safety",
+    "backdoor vulnerabilities"
+  ],
+  "_source": "hf"
+}

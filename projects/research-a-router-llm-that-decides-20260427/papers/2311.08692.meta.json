@@ -1,0 +1,134 @@
+{
+  "id": "2311.08692",
+  "authors": [
+    {
+      "_id": "6555a962f0cf8603f379f63c",
+      "user": {
+        "_id": "6453fa96ed6d7fede94408e0",
+        "avatarUrl": "/avatars/e8c9025ef24cec958c87a1008bb54fd7.svg",
+        "isPro": false,
+        "fullname": "Keming Lu",
+        "user": "keminglu",
+        "type": "user",
+        "name": "keminglu"
+      },
+      "name": "Keming Lu",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-11-16T08:36:09.260Z",
+      "hidden": false
+    },
+    {
+      "_id": "6555a962f0cf8603f379f63d",
+      "user": {
+        "_id": "64b77b602f5a966b9731b14a",
+        "avatarUrl": "/avatars/cdcf534bd451140dff47286095336535.svg",
+        "isPro": false,
+        "fullname": "Hongyi Yuan",
+        "user": "Yuan1997",
+        "type": "user",
+        "name": "Yuan1997"
+      },
+      "name": "Hongyi Yuan",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-11-16T08:36:24.403Z",
+      "hidden": false
+    },
+    {
+      "_id": "6555a962f0cf8603f379f63e",
+      "name": "Runji Lin",
+      "hidden": false
+    },
+    {
+      "_id": "6555a962f0cf8603f379f63f",
+      "user": {
+        "_id": "620760a26e3b7210c2ff1943",
+        "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/620760a26e3b7210c2ff1943/VC-rKqimF6yxGESNVlPoR.jpeg",
+        "isPro": false,
+        "fullname": "Junyang Lin",
+        "user": "JustinLin610",
+        "type": "user",
+        "name": "JustinLin610"
+      },
+      "name": "Junyang Lin",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-11-16T08:36:41.407Z",
+      "hidden": false
+    },
+    {
+      "_id": "6555a962f0cf8603f379f640",
+      "user": {
+        "_id": "5f694b8b5e78cc6b0ed31bd2",
+        "avatarUrl": "/avatars/63f21d30918c34fff9ea592e1039b3f0.svg",
+        "isPro": false,
+        "fullname": "Zheng Yuan",
+        "user": "GanjinZero",
+        "type": "user",
+        "name": "GanjinZero"
+      },
+      "name": "Zheng Yuan",
+      "status": "claimed_verified",
+      "statusLastChangedAt": "2025-08-06T19:51:21.238Z",
+      "hidden": false
+    },
+    {
+      "_id": "6555a962f0cf8603f379f641",
+      "user": {
+        "_id": "622892774323cef93a956a4a",
+        "avatarUrl": "/avatars/e57ef5c3b0c4289988ccd42f14e54336.svg",
+        "isPro": false,
+        "fullname": "chang zhou",
+        "user": "jiemizc",
+        "type": "user",
+        "name": "jiemizc"
+      },
+      "name": "Chang Zhou",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-11-16T08:37:34.817Z",
+      "hidden": false
+    },
+    {
+      "_id": "6555a962f0cf8603f379f642",
+      "user": {
+        "_id": "602f88f5e8149a962412a667",
+        "avatarUrl": "/avatars/b78f0e583df8e5d5e3365934fe5f4900.svg",
+        "isPro": false,
+        "fullname": "Zhou",
+        "user": "Jingren",
+        "type": "user",
+        "name": "Jingren"
+      },
+      "name": "Jingren Zhou",
+      "status": "admin_assigned",
+      "statusLastChangedAt": "2023-11-16T08:37:45.638Z",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2023-11-15T04:40:43.000Z",
+  "submittedOnDailyAt": "2023-11-16T03:02:19.383Z",
+  "title": "Routing to the Expert: Efficient Reward-guided Ensemble of Large\n  Language Models",
+  "submittedOnDailyBy": {
+    "_id": "60f1abe7544c2adfd699860c",
+    "avatarUrl": "https://cdn-avatars.huggingface.co/v1/production/uploads/1674929746905-60f1abe7544c2adfd699860c.jpeg",
+    "isPro": false,
+    "fullname": "AK",
+    "user": "akhaliq",
+    "type": "user",
+    "name": "akhaliq"
+  },
+  "summary": "The complementary potential of Large Language Models (LLM) assumes\noff-the-shelf LLMs have heterogeneous expertise in a wide range of domains and\ntasks so that an ensemble of LLMs can achieve consistently better performance.\nExisting ensemble methods for LLMs mainly focus on reward model ranking of\noutputs, leading to significant computation overhead. To combat this issue, we\nrevisit the complementary potential of LLMs and further elaborate it by mining\nlatent expertise with off-the-shelf reward models. We propose Zooter, a\nreward-guided routing method distilling rewards on training queries to train a\nrouting function, which can precisely distribute each query to the LLM with\nexpertise about it. We also integrate a tag-based label enhancement to mitigate\nnoise from uncertainty when using rewards as silver supervision. Zooter shows\ncomputation efficiency in inference as it introduces only a minor computation\noverhead of a routing function compared with reward model ranking methods. We\nevaluate Zooter on a comprehensive benchmark collection with 26 subsets on\ndifferent domains and tasks. Zooter outperforms the best single model on\naverage and ranks first on 44% of tasks, even surpassing multiple reward model\nranking methods.",
+  "upvotes": 13,
+  "discussionId": "6555a963f0cf8603f379f650",
+  "ai_summary": "Zooter, a reward-guided routing method for Large Language Models, improves efficiency and performance by precisely directing queries to the most suitable model, outperforming existing ensemble techniques.",
+  "ai_keywords": [
+    "Large Language Models",
+    "ensemble methods",
+    "reward model ranking",
+    "latent expertise",
+    "reward-guided routing",
+    "Zooter",
+    "routing function",
+    "tag-based label enhancement",
+    "silver supervision"
+  ],
+  "_source": "hf"
+}

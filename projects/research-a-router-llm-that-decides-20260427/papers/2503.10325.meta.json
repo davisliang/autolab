@@ -1,0 +1,55 @@
+{
+  "id": "2503.10325",
+  "authors": [
+    {
+      "_id": "69d1ffae2c523d36431faac5",
+      "name": "Luyao Gao",
+      "hidden": false
+    },
+    {
+      "_id": "69d1ffae2c523d36431faac6",
+      "name": "Jianchun Liu",
+      "hidden": false
+    },
+    {
+      "_id": "69d1ffae2c523d36431faac7",
+      "name": "Hongli Xu",
+      "hidden": false
+    },
+    {
+      "_id": "69d1ffae2c523d36431faac8",
+      "name": "Xichong Zhang",
+      "hidden": false
+    },
+    {
+      "_id": "69d1ffae2c523d36431faac9",
+      "name": "Yunming Liao",
+      "hidden": false
+    },
+    {
+      "_id": "69d1ffae2c523d36431faaca",
+      "name": "Liusheng Huang",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2025-05-15T00:00:00.000Z",
+  "title": "Collaborative Speculative Inference for Efficient LLM Inference Serving",
+  "summary": "Speculative inference is a promising paradigm employing small speculative models (SSMs) as drafters to generate draft tokens, which are subsequently verified in parallel by the target large language model (LLM). This approach enhances the efficiency of inference serving by reducing LLM inference latency and costs while preserving generation quality. However, existing speculative methods face critical challenges, including inefficient resource utilization and limited draft acceptance, which constrain their scalability and overall effectiveness. To overcome these obstacles, we present CoSine, a novel speculative inference system that decouples sequential speculative decoding from parallel verification, enabling efficient collaboration among multiple nodes. Specifically, CoSine routes inference requests to specialized drafters based on their expertise and incorporates a confidence-based token fusion mechanism to synthesize outputs from cooperating drafters, ensuring high-quality draft generation. Additionally, CoSine dynamically orchestrates the execution of speculative decoding and verification in a pipelined manner, employing batch scheduling to selectively group requests and adaptive speculation control to minimize idle periods. By optimizing parallel workflows through heterogeneous node collaboration, CoSine balances draft generation and verification throughput in real-time, thereby maximizing resource utilization. Experimental results demonstrate that CoSine achieves superior performance compared to state-of-the-art speculative approaches. Notably, with equivalent resource costs, CoSine achieves up to a 23.2% decrease in latency and a 32.5% increase in throughput compared to baseline methods.",
+  "upvotes": 0,
+  "discussionId": "69d1ffae2c523d36431faacb",
+  "ai_summary": "CoSine is a speculative inference system that improves efficiency by decoupling draft generation from verification and using specialized drafters with confidence-based fusion to reduce latency and increase throughput.",
+  "ai_keywords": [
+    "speculative inference",
+    "speculative models",
+    "draft tokens",
+    "target large language model",
+    "speculative decoding",
+    "parallel verification",
+    "token fusion",
+    "batch scheduling",
+    "adaptive speculation control",
+    "pipelined execution",
+    "heterogeneous node collaboration"
+  ],
+  "_source": "hf"
+}

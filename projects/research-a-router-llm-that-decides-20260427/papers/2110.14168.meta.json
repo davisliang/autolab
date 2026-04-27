@@ -1,0 +1,87 @@
+{
+  "id": "2110.14168",
+  "authors": [
+    {
+      "_id": "6411c7796b75ddced388ea6c",
+      "name": "Karl Cobbe",
+      "hidden": false
+    },
+    {
+      "_id": "6411c7796b75ddced388ea6d",
+      "name": "Vineet Kosaraju",
+      "hidden": false
+    },
+    {
+      "_id": "6411c7796b75ddced388ea6e",
+      "name": "Mohammad Bavarian",
+      "hidden": false
+    },
+    {
+      "_id": "6411c7796b75ddced388ea6f",
+      "name": "Mark Chen",
+      "hidden": false
+    },
+    {
+      "_id": "6411c7796b75ddced388ea70",
+      "name": "Heewoo Jun",
+      "hidden": false
+    },
+    {
+      "_id": "6411c7796b75ddced388ea71",
+      "name": "Lukasz Kaiser",
+      "hidden": false
+    },
+    {
+      "_id": "6411c7796b75ddced388ea72",
+      "name": "Matthias Plappert",
+      "hidden": false
+    },
+    {
+      "_id": "6411c7796b75ddced388ea73",
+      "name": "Jerry Tworek",
+      "hidden": false
+    },
+    {
+      "_id": "6411c7796b75ddced388ea74",
+      "name": "Jacob Hilton",
+      "hidden": false
+    },
+    {
+      "_id": "6411c7796b75ddced388ea75",
+      "name": "Reiichiro Nakano",
+      "hidden": false
+    },
+    {
+      "_id": "6411c7796b75ddced388ea76",
+      "name": "Christopher Hesse",
+      "hidden": false
+    },
+    {
+      "_id": "6411c7796b75ddced388ea77",
+      "name": "John Schulman",
+      "hidden": false
+    }
+  ],
+  "publishedAt": "2021-10-27T04:49:45.000Z",
+  "title": "Training Verifiers to Solve Math Word Problems",
+  "summary": "State-of-the-art language models can match human performance on many tasks,\nbut they still struggle to robustly perform multi-step mathematical reasoning.\nTo diagnose the failures of current models and support research, we introduce\nGSM8K, a dataset of 8.5K high quality linguistically diverse grade school math\nword problems. We find that even the largest transformer models fail to achieve\nhigh test performance, despite the conceptual simplicity of this problem\ndistribution. To increase performance, we propose training verifiers to judge\nthe correctness of model completions. At test time, we generate many candidate\nsolutions and select the one ranked highest by the verifier. We demonstrate\nthat verification significantly improves performance on GSM8K, and we provide\nstrong empirical evidence that verification scales more effectively with\nincreased data than a finetuning baseline.",
+  "upvotes": 7,
+  "discussionId": "6411922f3ea54b1aa7e2ea21",
+  "githubRepo": "https://github.com/openai/grade-school-math",
+  "githubRepoAddedBy": "auto",
+  "ai_summary": "GSM8K, a dataset of grade school math problems, highlights the limitations of state-of-the-art models in multi-step reasoning, with verifiers improving performance more effectively than fine-tuning.",
+  "ai_keywords": [
+    "transformer models",
+    "GSM8K",
+    "verification",
+    "candidate solutions"
+  ],
+  "githubStars": 1421,
+  "organization": {
+    "_id": "609b82e52e11c13c4ac7c3f1",
+    "name": "openai",
+    "fullname": "OpenAI",
+    "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/68783facef79a05727260de3/UPX5RQxiPGA-ZbBmArIKq.png"
+  },
+  "_source": "hf"
+}
