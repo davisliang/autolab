@@ -21,7 +21,7 @@ cd "$REPO_DIR"
 
 # (a) Inline string. Safe for short ideas; avoid embedded apostrophes/quotes
 #     because the shell will split them across argv.
-IDEA="Come up with an improved version of GRPO that has never been implemented before but is motivated by current challenges with it."
+IDEA="Come up with an improved version of DPO (direct preference optimization) that has never been implemented before but is motivated by current challenges with it."
 
 # (b) From a file. Recommended for long, multi-paragraph ideas.
 # IDEA_FILE="$REPO_DIR/my-idea.txt"
@@ -35,11 +35,11 @@ IDEA="Come up with an improved version of GRPO that has never been implemented b
 # ---------------------------------------------------------------------------
 # Cap idea-retreats (re-runs of expand) before giving up on the seed idea.
 # Set to 0 to disable retreating.
-export AUTOLAB_MAX_IDEA_CYCLES="${AUTOLAB_MAX_IDEA_CYCLES:-3}"
+export AUTOLAB_MAX_IDEA_CYCLES="${AUTOLAB_MAX_IDEA_CYCLES:-10}"
 
 # Cap experiment-retreats (re-runs of survey..critique) before falling back
 # to a negative-result paper.
-export AUTOLAB_MAX_CYCLES="${AUTOLAB_MAX_CYCLES:-5}"
+export AUTOLAB_MAX_CYCLES="${AUTOLAB_MAX_CYCLES:-20}"
 
 # Minimum number of hypotheses that must survive `screen` (boredom +
 # novelty) for the run to proceed to `design`. Low values => fewer
@@ -48,7 +48,7 @@ export AUTOLAB_MIN_WILD_HYPOTHESES="${AUTOLAB_MIN_WILD_HYPOTHESES:-2}"
 
 # Orchestrator-level crash retries per ExperimentPlan, on top of the
 # in-skill 2 retries. Total worst-case attempts = 1 + 2 + this value.
-export AUTOLAB_MAX_CRASH_RETRIES="${AUTOLAB_MAX_CRASH_RETRIES:-2}"
+export AUTOLAB_MAX_CRASH_RETRIES="${AUTOLAB_MAX_CRASH_RETRIES:-20}"
 
 # ---------------------------------------------------------------------------
 # 3. Optional CLI flags for scripts/start.
