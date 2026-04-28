@@ -46,6 +46,7 @@ from _paths import (
     thoughts_dir,
     thread_log,
 )
+from _results_tables import format_results_tables as _fmt_tables_impl
 
 PHASES = [
     "seed",
@@ -65,6 +66,38 @@ RETREAT_PHASES = ["survey", "gap-fill", "screen", "design", "run", "critique"]
 
 MAX_CYCLES = int(os.environ.get("AUTOLAB_MAX_CYCLES", "5"))
 MAX_CRASH_RETRIES = int(os.environ.get("AUTOLAB_MAX_CRASH_RETRIES", "2"))
+MAX_IDEA_CYCLES = int(os.environ.get("AUTOLAB_MAX_IDEA_CYCLES", "3"))
+MIN_WILD_HYPOTHESES = int(os.environ.get("AUTOLAB_MIN_WILD_HYPOTHESES", "2"))
+
+WILDNESS_CRITERIA = """## WILDNESS BAR (read carefully)
+
+Every Hypothesis you emit MUST satisfy at least ONE of the following tickets.
+State which ticket(s) it satisfies in the body.
+
+  (W1) Cross-domain transplant from a NON-ML field. Acceptable source fields:
+       neuroscience, biology, physics, control theory, evolutionary theory,
+       economics, linguistics, signal processing, statistics-beyond-ML,
+       chemistry, statistical mechanics. RL→supervised, vision→NLP,
+       optimization→architecture are TOO CLOSE — they do NOT count.
+  (W2) Explicitly contradicts a textbook claim or widely-held assumption.
+       State the textbook claim verbatim, then state your counter-claim.
+  (W3) Measures something nobody has measured for this setup at meaningful
+       scale. State why the measurement was missing (cost? unfashionable?
+       no obvious method?).
+  (W4) Regime swap — what changes when scale, data quality, modality, or
+       compute is 100× or 0.01× the standard? The hypothesis must commit to
+       a numeric prediction in the new regime.
+
+REJECT-YOURSELF examples (do NOT emit these):
+  - "Test if X works on Y" (too obvious; produces a measurement, not insight)
+  - "Try variant of method M" (incrementalism)
+  - "Replicate paper P with smaller model" (replication, not novelty)
+  - "Combine A and B" (without a *mechanistic* reason the combination matters)
+  - Any hypothesis whose result a sharp PhD student would predict in 30 seconds
+
+A hypothesis that fails the wildness bar will be parked at screen. The
+orchestrator will retreat and ask you to try again — wilder.
+"""
 
 
 def now_iso() -> str:
@@ -392,15 +425,21 @@ def phase_expand() -> list[str]:
     if not ideas:
         raise SystemExit("expand: no Idea artifact found; run seed first")
     target = ideas[-1]["id"]
+    state = read_cycle_state()
+    cycle_ctx = cycle_context_block(state)
+    idea_ctx = idea_cycle_context_block(state)
     prompt = (
         f"Phase: expand\n"
         f"Invoke skill: idea-expander (mode=expand)\n"
         f"Target: {target}\n\n"
+        f"{cycle_ctx}{idea_ctx}"
+        f"{WILDNESS_CRITERIA}\n"
         f"Read thread/INDEX.md and thoughts/{target}.md (under the active project root). "
-        f"Per the idea-expander skill, emit 3-5 Hypothesis rows. "
-        f"At least one MUST be a cross-domain transplant. "
-        f"Each MUST include prediction_metric, prediction_threshold, prediction_direction. "
-        f"Use tools/append_artifact.py for emission. End with the stdout contract."
+        f"Per the idea-expander skill, emit 3-5 Hypothesis rows that satisfy the "
+        f"WILDNESS BAR above. At least one MUST be a W1 cross-domain transplant from "
+        f"a non-ML field. Each MUST include prediction_metric, prediction_threshold, "
+        f"prediction_direction, and a body that explicitly names the wildness ticket(s) "
+        f"it satisfies. Use tools/append_artifact.py for emission. End with the stdout contract."
     )
     call_claude("expand", "idea-expander", "sonnet", prompt)
     refresh_indexes()
@@ -445,13 +484,19 @@ def phase_gap_fill() -> list[str]:
     if not ideas:
         raise SystemExit("gap-fill: no Idea")
     target = ideas[-1]["id"]
+    state = read_cycle_state()
+    cycle_ctx = cycle_context_block(state)
+    idea_ctx = idea_cycle_context_block(state)
     prompt = (
         f"Phase: gap-fill\n"
         f"Invoke skill: idea-expander (mode=gap-fill)\n"
         f"Target: {target}\n\n"
+        f"{cycle_ctx}{idea_ctx}"
+        f"{WILDNESS_CRITERIA}\n"
         f"Read thread/INDEX.md, thoughts/{target}.md, and every thoughts/LIT-*.md. "
         f"Per the idea-expander skill (gap-fill mode), identify the question conspicuously absent "
-        f"from the LitFinding set and emit 1-2 Hypothesis rows. End with the stdout contract."
+        f"from the LitFinding set and emit 1-2 Hypothesis rows that satisfy the WILDNESS BAR. "
+        f"End with the stdout contract."
     )
     call_claude("gap-fill", "idea-expander", "sonnet", prompt)
     refresh_indexes()
@@ -475,7 +520,21 @@ def phase_screen() -> list[str]:
             f"Invoke skill: critic (mode=boredom)\n"
             f"Target: {h['id']}\n\n"
             f"Read thoughts/{h['id']}.md and any LitFindings linked via parent_ids. "
-            f"Per the critic skill (boredom mode), emit one Critique. "
+            f"Per the critic skill (boredom mode), emit one Critique.\n"
+            f"\n## Wildness bar (apply STRICTLY in addition to trivial/known/dead-end)\n"
+            f"Mark severity=high if ANY of the following hold:\n"
+            f"  - The hypothesis would be unsurprising to a sharp PhD student in the field "
+            f"(rate it 'dead-end' with concern 'low novelty: outcome predictable').\n"
+            f"  - It is an incremental tweak of a standard method without a mechanistic "
+            f"reason the tweak matters.\n"
+            f"  - It claims to satisfy Wildness Ticket W1 (cross-domain) but the source "
+            f"field is just an adjacent ML subfield (RL, vision, NLP, optimization). "
+            f"Real W1 sources: neuroscience, biology, physics, economics, linguistics, "
+            f"control theory, evolutionary theory.\n"
+            f"  - It is a replication, ablation framed as novelty, or 'combine A and B' "
+            f"without mechanistic justification.\n"
+            f"Calibration target: at most ~1-in-3 hypotheses should survive. Use the "
+            f"strongest argument you can construct against the idea, then judge severity.\n"
             f"End with the stdout contract."
         )
         boredom_jobs.append(
@@ -541,6 +600,37 @@ def surviving_hypotheses() -> list[dict]:
     return [h for h in hyps if h["id"] not in parked]
 
 
+_FRAMEWORK_HINT_CACHE: str | None = None
+
+
+def _framework_hint() -> str:
+    """Return a definitive string the experiment-designer can trust about
+    framework availability on this machine. Cached after first probe."""
+    global _FRAMEWORK_HINT_CACHE
+    if _FRAMEWORK_HINT_CACHE is not None:
+        return _FRAMEWORK_HINT_CACHE
+    try:
+        import mlx.core as mx  # noqa: F401
+        device = str(mx.default_device())
+        _FRAMEWORK_HINT_CACHE = (
+            "## Framework availability (REQUIRED)\n"
+            f"`mlx` is INSTALLED on this machine. Default device: {device}. "
+            "Set `framework=\"mlx\"` in your ExperimentPlan and write the "
+            "code_skeleton using `import mlx.core as mx`, `import mlx.nn as nn`, "
+            "`import mlx.optimizers as optim`. Seed via `mx.random.seed(seed)`. "
+            "Use `torch` ONLY if you need an op MLX genuinely lacks (rare for MLP, "
+            "transformer, CNN, RNN, attention, AdamW, gradient clipping, etc.).\n\n"
+        )
+    except ImportError:
+        _FRAMEWORK_HINT_CACHE = (
+            "## Framework availability\n"
+            "`mlx` is NOT installed on this machine — use `framework=\"torch\"` "
+            "with CPU device. (Note: this run is missing the preferred backend; "
+            "performance will be much slower than MLX on Apple Silicon.)\n\n"
+        )
+    return _FRAMEWORK_HINT_CACHE
+
+
 def phase_design(benchmark: str | None) -> list[str]:
     survivors = surviving_hypotheses()
     if not survivors:
@@ -548,12 +638,14 @@ def phase_design(benchmark: str | None) -> list[str]:
         return []
     bench_note = f" Benchmark hint: {benchmark}." if benchmark else ""
     cycle_ctx = cycle_context_block(read_cycle_state())
+    fw_hint = _framework_hint()
     jobs = []
     for h in survivors:
         prompt = (
             f"Phase: design\n"
             f"Invoke skill: experiment-designer (mode=primary)\n"
             f"Target: {h['id']}\n\n"
+            f"{fw_hint}"
             f"{cycle_ctx}"
             f"Read thoughts/{h['id']}.md. Per the experiment-designer skill, "
             f"emit one ExperimentPlan with seeds (>=3) and baseline_spec.{bench_note} "
@@ -618,6 +710,7 @@ def phase_run() -> list[str]:
             f"Phase: design-ablation\n"
             f"Invoke skill: experiment-designer (mode=ablation)\n"
             f"Target: {pid}\n\n"
+            f"{_framework_hint()}"
             f"Read thoughts/{pid}.md and thoughts/{latest['id']}.md. "
             f"Per the experiment-designer skill (ablation mode), emit one "
             f"ExperimentPlan with is_ablation=true that removes the proposed mechanism. "
@@ -678,14 +771,25 @@ def phase_critique() -> list[str]:
 
 
 def phase_write() -> list[str]:
+    # Section order matches the NeurIPS structural standard documented in
+    # skills/paper-writer/SKILL.md. Outline first (committing the contributions
+    # list); then the front-matter (abstract, intro, related); then the
+    # foundational sections (background, data-models); then method and
+    # experiments; then the closing material (discussion, conclusion, impact,
+    # reproducibility).
     sections = [
         "outline",
         "abstract",
         "introduction",
         "related-work",
+        "background",
+        "data-models",
         "method",
         "experiments",
         "discussion",
+        "conclusion",
+        "broader-impact",
+        "reproducibility",
     ]
     thread = read_thread()
     cite_pool = [r["id"] for r in by_type(thread, "Citation") if r.get("verified")]
@@ -701,6 +805,7 @@ def phase_write() -> list[str]:
     # use them as a numerical reference for abstract/discussion. This guarantees
     # the prose is anchored to the same numbers as result.json on disk.
     results_tables = _format_results_tables()
+    section_brief = _neurips_section_brief()
     new_ids: list[str] = []
     for sec in sections:
         prompt_parts = [
@@ -710,6 +815,28 @@ def phase_write() -> list[str]:
             f"version=1",
             f"cite_pool={','.join(cite_pool) or '(none)'}",
             f"relevant_artifacts={relevant}",
+            "",
+            "## Target structure (NeurIPS standard)",
+            "",
+            "The assembled paper must satisfy a NeurIPS-style structure: Title and "
+            "Abstract; Introduction (with falsifiable contributions list and a "
+            "Figure 1 teaser); Related Work (themed, each cluster ending with "
+            "an explicit positioning sentence); Background and Preliminaries; "
+            "Data and Models (full architecture and dataset spec, with "
+            "consistency check); Method (formal problem statement, pseudocode, "
+            "design-choice rationale, complexity); Experiments (setup, headline "
+            "table/plot, ablations matching the contributions list 1-for-1, "
+            "analysis, robustness with seeds and error bars); Discussion / "
+            "Limitations (specific threats to validity, not boilerplate); "
+            "Conclusion (one paragraph, no new claims); Broader Impact "
+            "(concrete, not boilerplate); Reproducibility Statement; "
+            "References; Appendix. The contributions bullets in the "
+            "Introduction and the headline table in Experiments must tell the "
+            "same story. Full per-section guidance is in "
+            "skills/paper-writer/SKILL.md — read it before writing.",
+            "",
+            f"### This invocation: section={sec}",
+            section_brief.get(sec, ""),
             "",
         ]
         if results_tables and sec == "experiments":
@@ -759,268 +886,119 @@ def phase_write() -> list[str]:
     return new_ids
 
 
-def _fmt_num(v, sig: int = 4) -> str:
-    """Compact numeric formatter: avoids scientific where possible, max sig figs."""
-    if v is None:
-        return "—"
-    try:
-        f = float(v)
-    except (TypeError, ValueError):
-        return str(v)
-    if f == 0:
-        return "0"
-    abs_f = abs(f)
-    if abs_f >= 1000 or abs_f < 0.001:
-        return f"{f:.{sig-1}e}"
-    if abs_f >= 1:
-        return f"{f:.{max(0, sig - len(str(int(abs_f))))}f}"
-    return f"{f:.{sig}f}"
-
-
-def _read_result_json(plan_id: str) -> dict | None:
-    p = experiments_dir() / plan_id / "result.json"
-    if not p.exists():
-        return None
-    try:
-        return json.loads(p.read_text())
-    except (OSError, json.JSONDecodeError):
-        return None
-
-
-def _is_stat_dict(v) -> bool:
-    return isinstance(v, dict) and isinstance(v.get("mean"), (int, float))
-
-
-def _detect_proposed_baseline_pairs(metrics: dict) -> list[tuple[str, str, str]]:
-    """Find proposed/baseline metric pairs by name convention.
-
-    Looks for: `proposed_X` paired with `baseline_X` (or X_proposed/X_baseline).
-    Returns [(base_name, proposed_key, baseline_key), ...].
-    """
-    pairs = []
-    seen = set()
-    for k, v in metrics.items():
-        if not _is_stat_dict(v):
-            continue
-        for prefix in ("proposed_", "baseline_"):
-            if k.startswith(prefix):
-                base = k[len(prefix):]
-                other_prefix = "baseline_" if prefix == "proposed_" else "proposed_"
-                other = other_prefix + base
-                if other in metrics and _is_stat_dict(metrics[other]):
-                    pkey = "proposed_" + base
-                    bkey = "baseline_" + base
-                    if base not in seen:
-                        pairs.append((base, pkey, bkey))
-                        seen.add(base)
-        for suffix in ("_proposed", "_baseline"):
-            if k.endswith(suffix):
-                base = k[: -len(suffix)]
-                other_suffix = "_baseline" if suffix == "_proposed" else "_proposed"
-                other = base + other_suffix
-                if other in metrics and _is_stat_dict(metrics[other]) and base not in seen:
-                    pairs.append((base, base + "_proposed", base + "_baseline"))
-                    seen.add(base)
-    return pairs
-
-
-def _pick_summary_metric(metrics: dict, pred_metric: str) -> str | None:
-    """Choose one metric to show in the summary row. Priority:
-    predicted metric > delta-like name > first stat metric."""
-    if pred_metric and pred_metric in metrics and _is_stat_dict(metrics[pred_metric]):
-        return pred_metric
-    delta_tokens = ("_vs_", "delta_", "_delta", "savings", "reduction", "improvement", "lift")
-    for k, v in metrics.items():
-        if _is_stat_dict(v) and any(t in k.lower() for t in delta_tokens):
-            return k
-    for k, v in metrics.items():
-        if _is_stat_dict(v):
-            return k
-    return None
-
-
 def _format_results_tables() -> str:
-    """Generate a markdown block of results tables for every ExperimentResult.
+    return _fmt_tables_impl(read_thread(), experiments_dir())
 
-    Robust to multiple result.json schemas:
-    - Canonical nested: metrics.proposed.<m> / metrics.baseline.<m>
-    - Flat with naming convention: proposed_X / baseline_X paired up
-    - Flat with explicit deltas: cost_savings_pp_vs_X, etc. — shown as-is
 
-    Always emits:
-      * A summary table (one row per experiment) — picks a "main metric"
-      * Per-experiment detail blocks with: notes, pairwise table (when pairs
-        detected), and a flat all-metrics table.
-    """
-    thread = read_thread()
-    plans = {p["id"]: p for p in by_type(thread, "ExperimentPlan")}
-    results = by_type(thread, "ExperimentResult")
-    hyps = {h["id"]: h for h in by_type(thread, "Hypothesis")}
-    if not results:
-        return ""
-
-    summary_rows: list[str] = []
-    detail_blocks: list[str] = []
-
-    for res in results:
-        plan_id = res.get("plan_id")
-        plan = plans.get(plan_id, {})
-        rj = _read_result_json(plan_id) or {}
-        # Pull metrics from either result.json on disk or the artifact's metrics field.
-        metrics = rj.get("metrics") or {}
-        if not metrics:
-            artifact_m = res.get("metrics")
-            if isinstance(artifact_m, str):
-                try:
-                    artifact_m = json.loads(artifact_m)
-                except json.JSONDecodeError:
-                    artifact_m = None
-            if isinstance(artifact_m, dict):
-                metrics = artifact_m
-        if not isinstance(metrics, dict) or not metrics:
-            continue
-
-        # Detect schema: nested (proposed/baseline keys with sub-dicts) vs flat
-        nested = (
-            isinstance(metrics.get("proposed"), dict)
-            and isinstance(metrics.get("baseline"), dict)
-            and any(_is_stat_dict(v) for v in metrics.get("proposed", {}).values())
-        )
-        if nested:
-            proposed = metrics["proposed"]
-            baseline = metrics["baseline"]
-            flat = {**{f"proposed_{k}": v for k, v in proposed.items()},
-                    **{f"baseline_{k}": v for k, v in baseline.items()}}
-            pairs = [(k, f"proposed_{k}", f"baseline_{k}") for k in proposed if k in baseline]
-        else:
-            flat = {k: v for k, v in metrics.items() if _is_stat_dict(v)}
-            pairs = _detect_proposed_baseline_pairs(flat)
-
-        if not flat:
-            continue
-
-        # Linked Hypothesis (first HYP- parent of the plan)
-        hyp_id = next((p for p in (plan.get("parent_ids") or []) if p.startswith("HYP-")), None)
-        hyp = hyps.get(hyp_id, {}) if hyp_id else {}
-        pred_metric = hyp.get("prediction_metric", "") or ""
-        pred_threshold = (
-            hyp.get("prediction_threshold")
-            or rj.get("hypothesis_threshold")
-            or rj.get("hypothesis_threshold_pp")
-            or rj.get("hypothesis_threshold_pct")
-        )
-        pred_direction = hyp.get("prediction_direction", "") or rj.get("threshold_direction", "")
-
-        status = (res.get("status") or rj.get("status") or "?").lower()
-        marker = {"pass": "**✓ pass**", "fail": "✗ fail", "crash": "⚠ crash"}.get(
-            status, f"? {status}"
-        )
-        is_ablation = " *(ablation)*" if plan.get("is_ablation") else ""
-
-        # ----- Summary row -----
-        sm = _pick_summary_metric(flat, pred_metric)
-        if sm:
-            m = flat[sm]
-            mean_str = _fmt_num(m.get("mean"))
-            stddev_str = _fmt_num(m.get("stddev") or 0, 2)
-            thr_str = ""
-            if pred_threshold is not None:
-                op = "≥" if (str(pred_direction).lower() in ("greater", "higher", "up", "+")) else \
-                     "≤" if (str(pred_direction).lower() in ("less", "lower", "down", "-")) else "vs"
-                thr_str = f" (target {op}{_fmt_num(pred_threshold)})"
-            hyp_short = (hyp.get("summary", "") or "")[:50].replace("|", "\\|")
-            summary_rows.append(
-                f"| `{plan_id}`{is_ablation} | `{hyp_id or '—'}` {hyp_short} | "
-                f"`{sm}` | {mean_str} ± {stddev_str}{thr_str} | {marker} |"
-            )
-
-        # ----- Pairwise table -----
-        pair_rows = []
-        for base, p_key, b_key in pairs:
-            p = flat.get(p_key, {})
-            b = flat.get(b_key, {})
-            if not (_is_stat_dict(p) and _is_stat_dict(b)):
-                continue
-            d = p["mean"] - b["mean"]
-            n = p.get("n_seeds") or b.get("n_seeds") or "?"
-            pair_rows.append(
-                f"| `{base}` | {_fmt_num(b['mean'])} ± {_fmt_num(b.get('stddev', 0), 2)} | "
-                f"{_fmt_num(p['mean'])} ± {_fmt_num(p.get('stddev', 0), 2)} | {d:+.4g} | {n} |"
-            )
-
-        # ----- Flat all-metrics table -----
-        flat_rows = []
-        # Drop pair members from the flat list (they appear in the pairwise table already)
-        paired_keys = set()
-        for _, pk, bk in pairs:
-            paired_keys.add(pk)
-            paired_keys.add(bk)
-        for k in sorted(flat.keys()):
-            if k in paired_keys:
-                continue
-            m = flat[k]
-            tag = " ←" if k == pred_metric else ""
-            flat_rows.append(
-                f"| `{k}`{tag} | {_fmt_num(m.get('mean'))} ± {_fmt_num(m.get('stddev', 0), 2)} | {m.get('n_seeds', '?')} |"
-            )
-
-        # ----- Notes -----
-        notes = rj.get("notes") or rj.get("hypothesis_result") or ""
-
-        # ----- Block assembly -----
-        parts = [
-            f"#### `{plan_id}`{is_ablation} → "
-            f"{(hyp.get('summary','')[:140] if hyp_id else '(no linked hypothesis)')}\n"
-        ]
-        if pred_metric or pred_threshold is not None:
-            thr_part = f" {pred_direction or ''} {_fmt_num(pred_threshold)}".strip() if pred_threshold is not None else ""
-            parts.append(f"_Prediction: `{pred_metric or '?'}`{(' ' + thr_part) if thr_part else ''} — {marker}_\n")
-        else:
-            parts.append(f"_Status: {marker}_\n")
-        if notes:
-            parts.append(f"**Notes:** {notes}\n")
-        if pair_rows:
-            parts.append(
-                "##### Proposed vs Baseline\n\n"
-                "| Metric | Baseline | Proposed | Δ | Seeds |\n"
-                "|--------|----------|----------|---|-------|\n"
-                + "\n".join(pair_rows) + "\n"
-            )
-        if flat_rows:
-            heading = "##### Other Metrics" if pair_rows else "##### Metrics"
-            parts.append(
-                f"{heading}\n\n"
-                "| Metric | Mean ± StdDev | Seeds |\n"
-                "|--------|---------------|-------|\n"
-                + "\n".join(flat_rows) + "\n"
-            )
-        detail_blocks.append("\n".join(parts))
-
-    if not summary_rows and not detail_blocks:
-        return ""
-
-    out = ["### Results Summary\n"]
-    if summary_rows:
-        out.append(
-            "| Plan | Hypothesis | Main Metric | Result | Status |\n"
-            "|------|------------|-------------|--------|--------|\n"
-            + "\n".join(summary_rows) + "\n"
-        )
-    if detail_blocks:
-        out.append("\n### Per-Experiment Detail\n\n" + "\n\n".join(detail_blocks))
-    return "\n".join(out)
+def _neurips_section_brief() -> dict[str, str]:
+    """One-paragraph NeurIPS-quality brief per section, injected into the
+    paper-writer prompt to reinforce the standard at the call site. Full
+    guidance lives in skills/paper-writer/SKILL.md."""
+    return {
+        "outline": (
+            "4–7 bullets covering claim, method, evidence, contribution. "
+            "No prose. The bullets you commit here become the contributions "
+            "list in the introduction."
+        ),
+        "abstract": (
+            "150–250 words. Tight arc: problem → gap in prior work → "
+            "approach → 2–3 headline numbers (use exact values from the "
+            "reference tables) → takeaway. Commit to specific claims, not "
+            "vague gestures. For negative-results work, lead with the "
+            "refutation and quantify the falsified prediction."
+        ),
+        "introduction": (
+            "~1 page. Hook → brief survey of what's been tried and what's "
+            "missing → one-paragraph approach sketch → an explicit "
+            "contributions bullet list of *falsifiable claims* (each bullet "
+            "is something a reviewer could disprove with data, not an "
+            "activity). Mention a Figure 1 teaser even if not yet rendered."
+        ),
+        "related-work": (
+            "Group cited papers by theme. End each thematic paragraph with "
+            "an explicit *Our work differs...* positioning sentence. Bare "
+            "citation lists without positioning are a red flag."
+        ),
+        "background": (
+            "Notation, problem setup, formal definitions, prior results we "
+            "build on. Self-contained for a reader fluent in the area; do "
+            "not re-derive textbook material. May be folded into method if "
+            "notation is standard."
+        ),
+        "data-models": (
+            "Full data spec (sources, sizes, licenses, dates, mixture "
+            "weights, preprocessing pipeline in order, splits, "
+            "decontamination, summary statistics) and full model spec ($L$, "
+            "$d_{\\text{model}}$, $d_{\\text{ff}}$, heads, head dim, KV "
+            "heads, vocab, max seq len, position encoding, norm, "
+            "activation, parameter count table, tokenizer, training "
+            "recipe, compute footprint, checkpoint plans). Justify "
+            "non-default choices. Run a consistency check: every component "
+            "must reappear in method; every dataset must reappear in "
+            "training/eval."
+        ),
+        "method": (
+            "Formal problem statement with locked notation, "
+            "algorithm/architecture with pseudocode or diagram, theoretical "
+            "analysis where applicable (assumptions, theorem statements, "
+            "proof sketch in main text; full proofs to appendix), design "
+            "choices with rationale, complexity analysis. Articulate which "
+            "choices are load-bearing rather than presenting a sequence "
+            "of tricks."
+        ),
+        "experiments": (
+            "Paste the pre-rendered tables verbatim at the top, then write "
+            "prose around them: setup recap, main results discussion, "
+            "ablations matching the contributions list 1-for-1 (N claimed "
+            "ideas → N ablations), analysis (scaling, qualitative, probes, "
+            "failure cases), robustness (seed variance, hyperparameter "
+            "sensitivity, OOD). Error bars or seed counts on every number; "
+            "single-seed RL results get hammered."
+        ),
+        "discussion": (
+            "Specific threats to validity from CRIT-* artifacts "
+            "(distributions not tested, scales not reached, baselines not "
+            "run, assumptions that may not hold), what the ablations "
+            "showed, what's left open. Specific beats generic. For "
+            "negative results, name what would constitute positive "
+            "evidence (scale, task, regime, effect-size recalibration)."
+        ),
+        "conclusion": (
+            "One paragraph (≤ 150 words). Restate the contribution and "
+            "point at future work. No new claims."
+        ),
+        "broader-impact": (
+            "Concrete on dual-use, misuse vectors, and downstream effects "
+            "specific to the contribution, not boilerplate. For pure "
+            "methods papers, argue the impact-mediation chain rather than "
+            "asserting 'limited risk.'"
+        ),
+        "reproducibility": (
+            "Concrete pointers: code path, data path, per-experiment "
+            "hyperparameter tables, pretrain caches, run logs, "
+            "statistical-analysis scripts, pre-registration commit hash. "
+            "Note non-determinism caveats explicitly."
+        ),
+    }
 
 
 def phase_final() -> list[str]:
     drafts = drafts_dir()
     drafts.mkdir(parents=True, exist_ok=True)
+    # NeurIPS-style assembly order. Headers must match what the paper-writer
+    # skill (skills/paper-writer/SKILL.md) is asked to fill in.
     order = [
         ("abstract", "## Abstract"),
         ("introduction", "## 1. Introduction"),
         ("related-work", "## 2. Related Work"),
-        ("method", "## 3. Method"),
-        ("experiments", "## 4. Experiments"),
-        ("discussion", "## 5. Discussion"),
+        ("background", "## 3. Background and Preliminaries"),
+        ("data-models", "## 4. Data and Models"),
+        ("method", "## 5. Method"),
+        ("experiments", "## 6. Experiments"),
+        ("discussion", "## 7. Discussion and Limitations"),
+        ("conclusion", "## 8. Conclusion"),
+        ("broader-impact", "## 9. Broader Impact Statement"),
+        ("reproducibility", "## 10. Reproducibility Statement"),
     ]
     sections = {r["section"]: r for r in by_type(read_thread(), "DraftSection")}
     title = "Autolab Generated Paper"
@@ -1126,18 +1104,28 @@ def cycle_state_path() -> Path:
 
 
 def read_cycle_state() -> dict:
-    """{ current: int, history: [{cycle, ended_at, failed_plan_ids, failed_hyp_ids, summary}], crash_retries: {plan_id: int} }"""
+    """Combined cycle state for both experiment and idea retreat loops.
+
+    Schema:
+      current        — experiment cycle (1-indexed), incremented on post-critique retreat
+      history        — list of experiment-cycle endings: cycle, ended_at, failed_plan_ids, failed_hyp_ids, summary
+      crash_retries  — { plan_id: count } orchestrator-level crash retries used
+      idea_cycle     — idea cycle (1-indexed), incremented on post-screen wildness retreat
+      idea_history   — list of idea-cycle endings: idea_cycle, ended_at, n_survivors, parked_hyp_ids
+    """
     p = cycle_state_path()
     if not p.exists():
-        return {"current": 1, "history": [], "crash_retries": {}}
+        return {"current": 1, "history": [], "crash_retries": {}, "idea_cycle": 1, "idea_history": []}
     try:
         s = json.loads(p.read_text())
         s.setdefault("current", 1)
         s.setdefault("history", [])
         s.setdefault("crash_retries", {})
+        s.setdefault("idea_cycle", 1)
+        s.setdefault("idea_history", [])
         return s
     except json.JSONDecodeError:
-        return {"current": 1, "history": [], "crash_retries": {}}
+        return {"current": 1, "history": [], "crash_retries": {}, "idea_cycle": 1, "idea_history": []}
 
 
 def write_cycle_state(state: dict):
@@ -1178,56 +1166,83 @@ def _experiment_results_after(boundary_iso: str | None) -> list[dict]:
     return [r for r in results if (r.get("created_at") or r.get("ts") or "") > boundary_iso]
 
 
-def cycle_retreat_check() -> str | None:
-    """Decide whether to retreat after the just-completed `critique` phase.
+def _retreat(
+    *,
+    counter_key: str,        # "current" | "idea_cycle"
+    history_key: str,        # "history" | "idea_history"
+    max_cycles: int,
+    target_phase: str,       # phase to return on retreat
+    wipe_from: str,          # phase to wipe checkpoints from
+    label: str,              # log-line prefix
+    decide,                  # state -> (advance: bool, history_entry: dict | None)
+) -> str | None:
+    """Generic retreat: shared cap check + history append + counter bump + checkpoint wipe.
 
-    Returns the phase name to retreat to ("survey") if conditions met, else None.
+    `decide` inspects state/thread and returns:
+      (True, _)        — no retreat; decide() logged its own reason.
+      (False, entry)   — retreat; entry's `_log_extra` (if any) is appended to the
+                         auto-generated retreat log line, then stripped before persist.
     """
     state = read_cycle_state()
-    cycle = state["current"]
-    if MAX_CYCLES > 0 and cycle >= MAX_CYCLES:
-        log_line(f"retreat: at MAX_CYCLES={MAX_CYCLES}, advancing to write")
+    cycle = state.get(counter_key, 1)
+    if max_cycles > 0 and cycle >= max_cycles:
+        log_line(f"{label}: at MAX={max_cycles}; advancing past {target_phase}")
         return None
-    # Look at results emitted since the previous cycle's retreat (or all results
-    # if this is cycle 1). The boundary is the previous cycle's ended_at marker.
-    prev_boundary = state["history"][-1]["ended_at"] if state["history"] else None
-    results = _experiment_results_after(prev_boundary)
-    # Ignore ablation results — we care about whether the *primary* hypothesis test passed.
-    primary = [r for r in results if not r.get("is_ablation", False)]
-    if not primary:
-        log_line("retreat: no primary ExperimentResults found; not retreating")
+    advance, entry = decide(state)
+    if advance:
         return None
-    has_pass = any(r.get("status") == "pass" for r in primary)
-    if has_pass:
-        log_line(f"retreat: cycle {cycle} has pass result(s); advancing to write")
-        return None
-    # No positive result. Park the failed hypotheses so subagents don't reuse them,
-    # record the cycle, and retreat to survey.
-    failed_plan_ids = [r.get("plan_id") for r in primary if r.get("plan_id")]
-    failed_hyp_ids = []
-    plans_by_id = {p["id"]: p for p in by_type(read_thread(), "ExperimentPlan")}
-    for pid in failed_plan_ids:
-        plan = plans_by_id.get(pid, {})
-        for parent in plan.get("parent_ids") or []:
-            if parent.startswith("HYP-") and parent not in failed_hyp_ids:
-                failed_hyp_ids.append(parent)
-    park_hypotheses(failed_hyp_ids, reason=f"cycle {cycle}: experiments did not produce a positive result")
-    state["history"].append({
-        "cycle": cycle,
-        "ended_at": now_iso(),
-        "failed_plan_ids": failed_plan_ids,
-        "failed_hyp_ids": failed_hyp_ids,
-        "summary": f"{len(primary)} primary experiment(s), 0 pass",
-    })
-    state["current"] = cycle + 1
+    entry = dict(entry or {})
+    extra = entry.pop("_log_extra", "")
+    state[history_key].append({**entry, counter_key: cycle, "ended_at": now_iso()})
+    state[counter_key] = cycle + 1
     write_cycle_state(state)
-    _wipe_checkpoints_from("survey")
+    _wipe_checkpoints_from(wipe_from)
     log_line(
-        f"retreat: cycle {cycle} → cycle {cycle+1}; "
-        f"parked {len(failed_hyp_ids)} HYPs ({failed_hyp_ids}); "
-        f"wiped checkpoints from survey onward"
+        f"{label}: cycle {cycle} → {cycle+1}; wiped from {wipe_from}"
+        + (f"; {extra}" if extra else "")
     )
-    return "survey"
+    return target_phase
+
+
+def cycle_retreat_check() -> str | None:
+    """Retreat after `critique` if no primary experiment passed."""
+    def decide(state):
+        cycle = state["current"]
+        prev = state["history"][-1]["ended_at"] if state["history"] else None
+        results = _experiment_results_after(prev)
+        primary = [r for r in results if not r.get("is_ablation", False)]
+        if not primary:
+            log_line("retreat: no primary ExperimentResults found; not retreating")
+            return True, None
+        if any(r.get("status") == "pass" for r in primary):
+            log_line(f"retreat: cycle {cycle} has pass result(s); advancing to write")
+            return True, None
+        plans_by_id = {p["id"]: p for p in by_type(read_thread(), "ExperimentPlan")}
+        failed_plan_ids = [r.get("plan_id") for r in primary if r.get("plan_id")]
+        failed_hyp_ids: list[str] = []
+        for pid in failed_plan_ids:
+            for parent in (plans_by_id.get(pid, {}).get("parent_ids") or []):
+                if parent.startswith("HYP-") and parent not in failed_hyp_ids:
+                    failed_hyp_ids.append(parent)
+        park_hypotheses(
+            failed_hyp_ids,
+            reason=f"cycle {cycle}: experiments did not produce a positive result",
+        )
+        return False, {
+            "failed_plan_ids": failed_plan_ids,
+            "failed_hyp_ids": failed_hyp_ids,
+            "summary": f"{len(primary)} primary experiment(s), 0 pass",
+            "_log_extra": f"parked {len(failed_hyp_ids)} HYPs ({failed_hyp_ids})",
+        }
+    return _retreat(
+        counter_key="current",
+        history_key="history",
+        max_cycles=MAX_CYCLES,
+        target_phase="survey",
+        wipe_from="survey",
+        label="retreat",
+        decide=decide,
+    )
 
 
 def park_hypotheses(hyp_ids: list[str], reason: str):
@@ -1305,12 +1320,77 @@ def cycle_context_block(state: dict) -> str:
     )
 
 
+def idea_cycle_context_block(state: dict) -> str:
+    """Prompt prefix injected into expand/gap-fill when idea_cycle > 1."""
+    icycle = state.get("idea_cycle", 1)
+    history = state.get("idea_history", [])
+    if icycle <= 1 or not history:
+        return ""
+    last = history[-1]
+    parked = last.get("parked_hyp_ids", [])
+    return (
+        f"\n## IDEA-CYCLE RETREAT CONTEXT (idea cycle {icycle} of up to {MAX_IDEA_CYCLES})\n"
+        f"Previous batch produced only {last.get('n_survivors', 0)} hypotheses that "
+        f"cleared the wildness bar. The boring ones were PARKED in ideas/parking_lot.md "
+        f"with reasons. DO NOT regenerate variations of: {parked}.\n"
+        f"The new batch must be substantially WILDER. Push hard into Wildness Tickets "
+        f"W1 (NON-ML cross-domain) and W2 (textbook contradiction). If your draft "
+        f"hypothesis would not surprise a sharp PhD student, throw it out and try "
+        f"again BEFORE emitting.\n"
+    )
+
+
+def idea_retreat_check() -> str | None:
+    """Retreat after `screen` if too few hypotheses cleared the wildness bar."""
+    def decide(state):
+        n = len(surviving_hypotheses())
+        if n >= MIN_WILD_HYPOTHESES:
+            log_line(f"idea-retreat: {n} survivor(s) ≥ {MIN_WILD_HYPOTHESES}; advancing to design")
+            return True, None
+        thread = read_thread()
+        hyps = {h["id"]: h for h in by_type(thread, "Hypothesis")}
+        parked: list[str] = []
+        for crit in by_type(thread, "Critique"):
+            if (
+                crit.get("severity") == "high"
+                and crit.get("mode") == "boredom"
+                and crit.get("target_id", "").startswith("HYP-")
+                and crit["target_id"] in hyps
+                and crit["target_id"] not in parked
+            ):
+                parked.append(crit["target_id"])
+        return False, {
+            "n_survivors": n,
+            "parked_hyp_ids": parked,
+            "_log_extra": (
+                f"only {n} wild survivor(s) (need ≥ {MIN_WILD_HYPOTHESES}); "
+                f"parked {len(parked)} HYPs ({parked})"
+            ),
+        }
+    return _retreat(
+        counter_key="idea_cycle",
+        history_key="idea_history",
+        max_cycles=MAX_IDEA_CYCLES,
+        target_phase="expand",
+        wipe_from="expand",
+        label="idea-retreat",
+        decide=decide,
+    )
+
+
 def next_phase_to_run(args) -> str | None:
     cp = latest_checkpoint()
     if cp is None:
         return "seed" if args.idea else None
     cur = cp.get("phase", "seed")
-    # Retreat hook: after critique, decide whether to loop back to survey.
+    # Idea-retreat hook: after screen, if too few hypotheses cleared the wildness
+    # bar, loop back to expand for a wilder batch.
+    if cur == "screen":
+        retreat = idea_retreat_check()
+        if retreat:
+            return retreat
+    # Experiment-retreat hook: after critique, if no positive result, loop back
+    # to survey for new hypotheses.
     if cur == "critique":
         retreat = cycle_retreat_check()
         if retreat:

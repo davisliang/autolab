@@ -25,7 +25,7 @@ For a target `Hypothesis`, produce one minimal `ExperimentPlan` that can validat
 A single `ExperimentPlan` artifact via `tools/append_artifact.py`. Required fields:
 - `hypothesis_id` — the HYP id this tests
 - `dataset` — string (e.g. `"mnist"`, `"cifar10"`, `"shakespeare-char"`, `"sst2"`)
-- `framework` — `"mlx"` (preferred on Apple Silicon) | `"torch"` (CPU fallback)
+- `framework` — **`"mlx"` is the default and strongly preferred** (Apple Silicon GPU + Neural Engine, ~5-10× faster than torch CPU). Use `"torch"` ONLY if (a) the orchestrator's prompt explicitly says `mlx unavailable`, or (b) you need a specific op that MLX genuinely lacks (rare for MLP / small transformer / CNN work — check `mlx.core` and `mlx.nn` first).
 - `model_spec` — JSON object describing architecture (e.g. `{"type":"mlp","depths":[64,32],"activation":"relu"}`)
 - `metrics` — JSON list of metric names matching the hypothesis's `prediction_metric` plus any auxiliaries
 - `seeds` — JSON list of ≥3 distinct integers (e.g. `[0, 1, 2]`)
@@ -48,8 +48,9 @@ A single `ExperimentPlan` artifact via `tools/append_artifact.py`. Required fiel
 1. Read the target Hypothesis. Note `prediction_metric`, `prediction_threshold`, `prediction_direction`.
 2. Pick the smallest dataset/model that can plausibly reveal the predicted effect (default: a tracked benchmark — MNIST MLP, tiny-shakespeare char-LM, or CIFAR10 small CNN).
 3. Decide framework:
-   - Default to `mlx` (Apple Silicon native).
-   - Use `torch` if MLX lacks a required op or the experiment is purely CPU-friendly tabular work.
+   - **Default to `mlx`.** It's installed and runs on the Apple Silicon GPU. Use `import mlx.core as mx` and `import mlx.nn as nn` (and `import mlx.optimizers as optim`). Seed via `mx.random.seed(seed)`.
+   - Switch to `torch` ONLY if the orchestrator's prompt says `mlx unavailable`, OR you've checked `mlx.core` / `mlx.nn` and the op you need genuinely isn't there. Don't switch out of habit — MLX covers MLP, transformer, CNN, RNN, attention, layernorm, dropout, AdamW, gradient clipping, mixed precision, etc.
+   - **Never use torch CUDA.** Apple Silicon has no CUDA; if you must use torch, it's CPU-only.
 4. Specify a baseline with matched compute. The baseline is whatever the hypothesis is implicitly compared against (uniform LR vs per-layer LR, etc.). The baseline's compute_budget_minutes must equal the proposed run's.
 5. Decide seeds: at least 3 distinct ints. More if the predicted effect is small (e.g. 5 seeds for a 0.1pp prediction).
 6. Estimate compute: total wall time ≈ seeds × (proposed minutes) + seeds × (baseline minutes). Must fit in `compute_budget_minutes ≤ 30`. If it doesn't, scale the model down.

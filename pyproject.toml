@@ -14,12 +14,13 @@ dependencies = [
     "sentence-transformers>=5.4.1",
     "datasets>=4.8.4",
     "weasyprint>=68.1",
+    # MLX is the preferred framework for ExperimentPlans on Apple Silicon
+    # (unified memory, GPU + Neural Engine). Marker scopes the install so
+    # non-Apple-Silicon machines don't fail uv sync.
+    "mlx>=0.30.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
 ]
 
 [project.optional-dependencies]
-mlx = [
-    "mlx>=0.30.0",
-]
 torch = [
     "torch>=2.4.0",
 ]

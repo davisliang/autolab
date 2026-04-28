@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -37,6 +38,10 @@ PHASES = [
     "seed", "expand", "survey", "gap-fill", "screen",
     "design", "run", "critique", "write", "final",
 ]
+
+# Static dashboard HTML lives next to this file. Read on each request so editing
+# the file shows up after a browser refresh — no server restart needed.
+STATIC_INDEX = Path(__file__).resolve().parent / "dashboard_static" / "index.html"
 
 
 def safe_read(p: Path, max_bytes: int = 200_000) -> str:
@@ -295,6 +300,115 @@ def live_status(pid: str) -> dict:
     }
 
 
+def _truncate(s, n: int = 320) -> str:
+    s = str(s) if s is not None else ""
+    return s if len(s) <= n else s[: n - 1].rstrip() + "…"
+
+
+def event_decision_summary(ev: dict) -> str:
+    """Build a few-sentence summary showing what the model decided/produced.
+
+    Pulls from type-specific fields the subagent emitted (status, severity,
+    mode, concerns, prediction_*, claim, notes, etc.), not just `summary`.
+    """
+    t = ev.get("type", "") or ""
+    summary = ev.get("summary") or ""
+
+    if t == "Idea":
+        framing = ev.get("framing") or ""
+        oq = ev.get("open_questions") or []
+        parts = [_truncate(summary, 280)]
+        if framing and framing != summary:
+            parts.append(f"Framing: {_truncate(framing, 240)}")
+        if isinstance(oq, list) and oq:
+            parts.append("Open questions: " + "; ".join(_truncate(q, 80) for q in oq[:3]))
+        return "\n".join(p for p in parts if p)
+
+    if t == "Hypothesis":
+        claim = ev.get("claim") or summary
+        metric = ev.get("prediction_metric") or ""
+        thr = ev.get("prediction_threshold")
+        direction = ev.get("prediction_direction") or ""
+        parts = [f"**Claim:** {_truncate(claim, 280)}"]
+        if metric:
+            thr_str = "" if thr in (None, "") else f" threshold {thr}"
+            parts.append(f"**Predicts:** `{metric}` {direction}{thr_str}".strip())
+        wt = ev.get("wildness_tickets") or ev.get("wildness_ticket")
+        if wt:
+            parts.append(f"**Wildness:** {wt}")
+        return "\n".join(parts)
+
+    if t == "LitFinding":
+        finding = ev.get("finding") or summary
+        arxiv = ev.get("arxiv_id") or ""
+        head = f"[{arxiv}] " if arxiv else ""
+        return head + _truncate(finding, 320)
+
+    if t == "Critique":
+        mode = ev.get("mode") or "?"
+        severity = ev.get("severity") or "?"
+        target = ev.get("target_id") or ""
+        concerns = ev.get("concerns") or []
+        if isinstance(concerns, str):
+            try:
+                concerns = json.loads(concerns)
+            except json.JSONDecodeError:
+                concerns = [concerns]
+        if not isinstance(concerns, list):
+            concerns = [str(concerns)]
+        bullets = "; ".join(_truncate(c, 120) for c in concerns[:4])
+        fix = ev.get("proposed_fix") or ""
+        parts = [f"**[{mode}, severity={severity}]** target=`{target}`"]
+        if bullets:
+            parts.append(f"Concerns: {bullets}")
+        if fix:
+            parts.append(f"Proposed fix: {_truncate(fix, 200)}")
+        return "\n".join(parts)
+
+    if t == "ExperimentPlan":
+        budget = ev.get("compute_budget_minutes")
+        seeds = ev.get("seeds") or []
+        ablation = ev.get("is_ablation", False)
+        head_bits = []
+        if ablation:
+            head_bits.append("ABLATION")
+        if seeds:
+            head_bits.append(f"seeds={seeds}")
+        if budget:
+            head_bits.append(f"budget={budget}min")
+        head = " · ".join(head_bits)
+        out = f"**[{head}]**\n" if head else ""
+        return out + _truncate(summary, 320)
+
+    if t == "ExperimentResult":
+        status = ev.get("status") or "?"
+        plan_id = ev.get("plan_id") or ""
+        notes = ev.get("notes") or ""
+        marker = {"pass": "✓ pass", "fail": "✗ fail", "crash": "⚠ crash"}.get(status, status)
+        parts = [f"**{marker}** for `{plan_id}`"]
+        if summary and summary != notes:
+            parts.append(_truncate(summary, 240))
+        if notes:
+            parts.append(_truncate(notes, 480))
+        return "\n".join(parts)
+
+    if t == "Citation":
+        verified = bool(ev.get("verified"))
+        target = ev.get("target_id") or "?"
+        arxiv = ev.get("arxiv_id") or ""
+        mark = "✓ verified" if verified else "✗ unverified"
+        return f"{mark} citation for `{target}`" + (f" — arxiv:{arxiv}" if arxiv else "")
+
+    if t == "DraftSection":
+        sec = ev.get("section") or "?"
+        ver = ev.get("version") or "?"
+        bp = ev.get("body_path") or ""
+        return f"`{sec}` v{ver}" + (f" → {bp}" if bp else "")
+
+    # Unknown type: just trust summary
+    return _truncate(summary, 320)
+
+
 def parse_thread_events(pid: str, n: int = 80) -> list[dict]:
     p = thread_log(pid)
     if not p.exists():
@@ -314,6 +428,7 @@ def parse_thread_events(pid: str, n: int = 80) -> list[dict]:
                 "type": ev.get("type"),
                 "author": ev.get("author"),
                 "summary": (ev.get("summary") or "")[:240],
+                "decision": event_decision_summary(ev),
                 "ts": ev.get("ts") or ev.get("created_at"),
                 "parent_ids": ev.get("parent_ids") or [],
             })
@@ -365,15 +480,134 @@ def project_summary(pid: str) -> dict:
         "last_activity_ts": last_log_ts,
         "cycle": cy.get("current", 1),
         "n_retreats": len(cy.get("history", [])),
+        "idea_cycle": cy.get("idea_cycle", 1),
+        "n_idea_retreats": len(cy.get("idea_history", [])),
     }
 
 
-def project_detail(pid: str, log_lines: int = 400) -> dict:
+def _load_full_thread(pid: str) -> list[dict]:
+    """Read every record from thread/log.jsonl with full fields."""
+    p = thread_log(pid)
+    if not p.exists():
+        return []
+    out: list[dict] = []
+    with p.open() as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                out.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    return out
+
+
+def active_work(pid: str) -> dict:
+    """Compute what's still 'alive' — Hypotheses not parked by screen/critique
+    and ExperimentPlans whose latest result isn't terminal (pass/fail or
+    crash-with-retries-exhausted). Used by the dashboard's Active Work panel."""
+    thread = _load_full_thread(pid)
+    by_type = lambda t: [r for r in thread if r.get("type") == t]
+
+    hyps = by_type("Hypothesis")
+    plans = by_type("ExperimentPlan")
+    results = by_type("ExperimentResult")
+    crits = by_type("Critique")
+
+    # Parked = high-severity boredom or validity critique
+    parked: set[str] = set()
+    for c in crits:
+        if c.get("severity") == "high" and c.get("mode") in ("boredom", "validity"):
+            t = c.get("target_id", "") or ""
+            if t.startswith("HYP-"):
+                parked.add(t)
+
+    # Plan -> [parent HYP-* ids]
+    hyp_for_plan: dict[str, str] = {}
+    plans_for_hyp: dict[str, list[str]] = {}
+    for p in plans:
+        hyp = next((q for q in (p.get("parent_ids") or []) if q.startswith("HYP-")), None)
+        if hyp:
+            hyp_for_plan[p["id"]] = hyp
+            plans_for_hyp.setdefault(hyp, []).append(p["id"])
+
+    # Latest result per plan (last in chronological order wins)
+    latest_for_plan: dict[str, dict] = {}
+    for r in results:
+        pid_ = r.get("plan_id")
+        if pid_:
+            latest_for_plan[pid_] = r
+
+    cy = read_cycles(pid)
+    crash_retries = cy.get("crash_retries") or {}
+    max_crash = int(os.environ.get("AUTOLAB_MAX_CRASH_RETRIES", "2"))
+
+    def plan_status(plan_id: str) -> str:
+        latest = latest_for_plan.get(plan_id)
+        if not latest:
+            return "pending run"
+        s = (latest.get("status") or "").lower()
+        if s == "crash":
+            used = crash_retries.get(plan_id, 0)
+            if used >= max_crash:
+                return f"crash · retries {used}/{max_crash} exhausted"
+            return f"crash · retry {used}/{max_crash}"
+        return s or "?"
+
+    def is_terminal(plan_id: str) -> bool:
+        latest = latest_for_plan.get(plan_id)
+        if not latest:
+            return False
+        s = (latest.get("status") or "").lower()
+        if s in ("pass", "fail"):
+            return True
+        if s == "crash" and crash_retries.get(plan_id, 0) >= max_crash:
+            return True
+        return False
+
+    alive_hyps = []
+    for h in hyps:
+        if h["id"] in parked:
+            continue
+        plan_ids = plans_for_hyp.get(h["id"], [])
+        if not plan_ids:
+            status = "pending design"
+        else:
+            status = " · ".join(plan_status(pid_) for pid_ in plan_ids)
+        alive_hyps.append({
+            "id": h["id"],
+            "claim": (h.get("claim") or h.get("summary") or "")[:240],
+            "prediction_metric": h.get("prediction_metric", "") or "",
+            "prediction_threshold": h.get("prediction_threshold"),
+            "prediction_direction": h.get("prediction_direction", "") or "",
+            "wildness": h.get("wildness_tickets") or h.get("wildness_ticket") or "",
+            "plan_ids": plan_ids,
+            "status": status,
+        })
+
+    active_plans = []
+    for p in plans:
+        if is_terminal(p["id"]):
+            continue
+        active_plans.append({
+            "id": p["id"],
+            "summary": (p.get("summary") or "")[:240],
+            "is_ablation": bool(p.get("is_ablation")),
+            "compute_budget_minutes": p.get("compute_budget_minutes"),
+            "seeds": p.get("seeds") or [],
+            "status": plan_status(p["id"]),
+            "hyp_id": hyp_for_plan.get(p["id"]),
+        })
+
+    return {"hypotheses": alive_hyps, "plans": active_plans}
+
+
+def project_detail(pid: str) -> dict:
     return {
         **project_summary(pid),
         "checkpoints": list_checkpoints(pid),
         "ledger": parse_ledger(cost_ledger(pid)),
-        "recent_log": tail_lines(orchestrator_log(pid), log_lines),
         "thoughts": list_thoughts(pid),
         "drafts": list_drafts(pid),
         "experiments": list_experiments(pid),
@@ -381,6 +615,7 @@ def project_detail(pid: str, log_lines: int = 400) -> dict:
         "papers_index": safe_read(papers_index(pid), 30_000),
         "live": live_status(pid),
         "thread_events": parse_thread_events(pid, 100),
+        "active": active_work(pid),
     }
 
 
@@ -422,475 +657,6 @@ def read_draft_full(pid: str, filename: str) -> dict:
     return {"name": safe, "content": safe_read(p, 500_000)}
 
 
-INDEX_HTML = """<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>autolab dashboard</title>
-<style>
-  :root { color-scheme: dark; }
-  * { box-sizing: border-box; }
-  body { background:#0e1116; color:#cfd6e4; font:13px/1.45 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; margin:0; }
-  header { padding:10px 18px; background:#161b22; border-bottom:1px solid #2a313c; display:flex; align-items:center; gap:14px; }
-  header h1 { font-size:14px; margin:0; color:#7dd3fc; font-weight:600; letter-spacing:.5px; }
-  header .meta { color:#8b95a7; font-size:12px; }
-  main { display:grid; grid-template-columns: 300px 1fr; height: calc(100vh - 41px); }
-  #projects { border-right:1px solid #2a313c; padding:10px; overflow-y:auto; }
-  #detail { padding:14px 22px; overflow-y:auto; }
-  .proj { padding:8px 10px; border-radius:6px; cursor:pointer; margin-bottom:4px; }
-  .proj:hover { background:#1a2030; }
-  .proj.active { background:#1d2742; border:1px solid #2f3e63; }
-  .proj .id { font-weight:600; color:#dde3ef; word-break: break-all; font-size:12px; }
-  .proj .sub { font-size:11px; color:#7c8699; margin-top:2px; }
-  .phases { display:flex; gap:4px; margin:14px 0; flex-wrap:wrap; }
-  .phase { padding:4px 10px; border-radius:14px; background:#1a2030; color:#7c8699; font-size:11px; border:1px solid #2a313c; }
-  .phase.done { background:#143123; color:#86efac; border-color:#1e5235; }
-  .phase.active { background:#3a2a14; color:#fbbf24; border-color:#7a5018; animation: pulse 1.5s infinite; }
-  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
-  h2 { font-size:13px; color:#7dd3fc; margin:18px 0 8px; text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
-  h2 .ctl { float:right; font-size:11px; color:#8b95a7; font-weight:400; text-transform:none; letter-spacing:0; cursor:pointer; }
-  h2 .ctl:hover { color:#7dd3fc; }
-  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  .card { background:#161b22; border:1px solid #2a313c; border-radius:6px; padding:10px 12px; }
-  .stat { font-size:18px; color:#dde3ef; }
-  .stat .lbl { font-size:11px; color:#7c8699; text-transform:uppercase; letter-spacing:.5px; }
-  /* Default scrollable boxes */
-  pre { background:#0a0e14; border:1px solid #2a313c; border-radius:4px; padding:10px; overflow:auto; max-height:360px; white-space:pre-wrap; word-break:break-word; font:11px/1.5 ui-monospace,Menlo,monospace; color:#bdc4d3; margin:0; }
-  pre.tall { max-height:540px; }
-  pre.short { max-height:240px; }
-  .scrollbox { max-height:420px; overflow-y:auto; padding-right:4px; }
-  table { width:100%; border-collapse:collapse; font-size:12px; }
-  th, td { text-align:left; padding:4px 8px; border-bottom:1px solid #1d242e; }
-  th { color:#7c8699; font-weight:500; font-size:11px; text-transform:uppercase; }
-  /* Thought card: clickable, expandable */
-  .thought { background:#161b22; border:1px solid #2a313c; border-radius:6px; padding:8px 10px; margin-bottom:6px; cursor:pointer; transition:background .12s; }
-  .thought:hover { background:#1a2030; border-color:#3a4658; }
-  .thought .id { color:#7dd3fc; font-weight:600; font-size:11px; font-family:ui-monospace,Menlo,monospace; }
-  .thought .title { color:#dde3ef; margin-top:2px; font-weight:500; }
-  .thought .sum { color:#8b95a7; font-size:11px; margin-top:3px; line-height:1.5; }
-  .thought.expanded { background:#1a2030; border-color:#3a4658; }
-  .thought.expanded .sum { display:none; }
-  .thought-full { margin-top:8px; max-height:420px; overflow-y:auto; background:#0a0e14; border:1px solid #2a313c; border-radius:4px; padding:10px; font:11px/1.55 ui-monospace,Menlo,monospace; color:#bdc4d3; white-space:pre-wrap; word-break:break-word; }
-  .thought-full.loading { color:#5b667a; font-style:italic; }
-  /* Thread event row */
-  .ev { padding:5px 8px; border-bottom:1px solid #1d242e; display:grid; grid-template-columns: 70px 64px 1fr; gap:8px; align-items:start; font-size:11px; }
-  .ev:last-child { border-bottom:none; }
-  .ev .ts { color:#5b667a; font-family:ui-monospace,Menlo,monospace; }
-  .ev .id { color:#7dd3fc; font-family:ui-monospace,Menlo,monospace; font-weight:600; }
-  .ev .body { color:#bdc4d3; }
-  .ev .body .type { color:#fbbf24; font-weight:600; margin-right:4px; }
-  .ev .body .author { color:#8b95a7; font-size:10px; }
-  /* Token histogram */
-  .hist { display:flex; flex-direction:column; gap:8px; padding:4px 0; }
-  .hrow { display:grid; grid-template-columns: 80px 1fr; gap:10px; align-items:center; }
-  .hlbl { color:#7c8699; font-size:11px; text-transform:uppercase; letter-spacing:.5px; font-weight:500; }
-  .hbars { display:flex; flex-direction:column; gap:3px; }
-  .hpair { display:grid; grid-template-columns: 1fr 180px; gap:8px; align-items:center; }
-  .htrack { background:#0a0e14; border-radius:2px; height:12px; overflow:hidden; display:flex; }
-  .hbar { height:100%; min-width:0; transition: width .25s; }
-  .hbar.fresh  { background: #f97316; }            /* orange = uncached input */
-  .hbar.create { background: #facc15; }            /* yellow = cache write   */
-  .hbar.read   { background: linear-gradient(90deg,#1e5235,#86efac); } /* green = cache hit */
-  .hbar.out    { background: linear-gradient(90deg,#1c3a5c,#7dd3fc); }
-  .hcnt { font-size:10px; color:#8b95a7; font-family:ui-monospace,Menlo,monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .hcnt .tag { display:inline-block; width:24px; color:#5b667a; }
-  .legend { display:flex; gap:14px; font-size:10px; color:#8b95a7; padding:0 0 6px 90px; }
-  .legend .swatch { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
-  /* Live status banner — single-line, expandable */
-  .live-banner { background:linear-gradient(90deg,#1d2742,#161b22); border:1px solid #2f3e63; border-radius:6px; padding:8px 12px; margin-bottom:14px; user-select:none; }
-  .live-banner.idle { background:#161b22; border-color:#2a313c; }
-  .live-banner.expandable { cursor:pointer; }
-  .live-banner.expandable:hover { background:linear-gradient(90deg,#243154,#1a2030); }
-  .live-banner .banner-row { color:#fbbf24; font-weight:500; font-size:12px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
-  .live-banner.idle .banner-row { color:#8b95a7; font-weight:400; }
-  .live-banner .expand-hint { color:#5b667a; font-size:10px; font-weight:400; }
-  .live-banner .banner-detail { display:none; margin-top:8px; flex-direction:column; gap:4px; }
-  .live-banner.open .banner-detail { display:flex; }
-  .live-banner .call { display:flex; gap:10px; font-size:11px; padding:4px 8px; background:#0a0e14; border-radius:4px; }
-  .live-banner .call .skill { color:#7dd3fc; font-weight:600; min-width:140px; }
-  .live-banner .call .model { color:#86efac; }
-  .live-banner .call .age { color:#8b95a7; margin-left:auto; }
-  /* One-line stat strip in place of cards */
-  .statstrip { padding:10px 12px; background:#161b22; border:1px solid #2a313c; border-radius:6px; color:#dde3ef; font-size:13px; display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin-bottom:4px; }
-  .statstrip .item b { color:#7dd3fc; font-weight:600; font-variant-numeric:tabular-nums; }
-  .statstrip .item .lbl { color:#7c8699; font-size:11px; text-transform:uppercase; letter-spacing:.5px; margin-left:6px; }
-  .statstrip .sep { color:#3a4658; }
-  /* Collapsible H2: parking lot, papers index, etc. */
-  h2.collapsible { cursor:pointer; user-select:none; }
-  h2.collapsible:hover { color:#bae6fd; }
-  h2.collapsible .caret { display:inline-block; width:14px; color:#5b667a; font-weight:400; }
-  .empty { color:#5b667a; font-style:italic; padding:6px 0; }
-  .status { display:inline-block; width:8px; height:8px; border-radius:50%; background:#5b667a; margin-right:6px; }
-  .status.live { background:#86efac; box-shadow:0 0 6px #86efac; }
-  .status.stale { background:#fbbf24; }
-  .toggle { font-size:11px; color:#7dd3fc; cursor:pointer; user-select:none; }
-  .toggle input { vertical-align:middle; margin-right:4px; }
-</style>
-</head>
-<body>
-<header>
-  <h1>autolab</h1>
-  <span class="meta" id="updated">—</span>
-  <label class="toggle"><input type="checkbox" id="follow" checked> follow tail</label>
-  <label class="toggle"><input type="checkbox" id="autorefresh" checked> auto-refresh 3s</label>
-</header>
-<main>
-  <aside id="projects"><div class="empty">loading…</div></aside>
-  <section id="detail"><div class="empty">select a project</div></section>
-</main>
-<script>
-let activeId = null;
-const expandedThoughts = new Map(); // id -> content
-let timer = null;
-function fmtTok(x){ return (x||0).toLocaleString(); }
-function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function fmtAgo(ts){
-  if (!ts) return '—';
-  let s;
-  if (typeof ts === 'string') s = Math.floor((Date.now() - new Date(ts).getTime())/1000);
-  else s = Math.floor(Date.now()/1000 - ts);
-  if (!isFinite(s) || s < 0) return '—';
-  if (s < 60) return s + 's ago';
-  if (s < 3600) return Math.floor(s/60) + 'm ago';
-  if (s < 86400) return Math.floor(s/3600) + 'h ago';
-  return Math.floor(s/86400) + 'd ago';
-}
-function liveDot(ts){
-  if (!ts) return '<span class="status"></span>';
-  const s = Date.now()/1000 - ts;
-  if (s < 120) return '<span class="status live"></span>';
-  if (s < 1800) return '<span class="status stale"></span>';
-  return '<span class="status"></span>';
-}
-async function loadProjects(){
-  const r = await fetch('/api/projects'); const data = await r.json();
-  const el = document.getElementById('projects');
-  if (!data.projects.length){ el.innerHTML = '<div class="empty">no projects yet — run ./start --idea "..."</div>'; return; }
-  el.innerHTML = data.projects.map(p => `
-    <div class="proj ${p.id===activeId?'active':''}" data-id="${p.id}">
-      <div class="id">${liveDot(p.last_activity_ts)}${escHtml(p.id)}</div>
-      <div class="sub">${escHtml(p.current_phase||'—')} · ${fmtTok((p.total_in_tokens||0)+(p.total_out_tokens||0))} tok · ${p.n_calls} calls · ${fmtAgo(p.last_activity_ts)}</div>
-    </div>`).join('');
-  el.querySelectorAll('.proj').forEach(d => d.addEventListener('click', () => {
-    if (activeId !== d.dataset.id){ activeId = d.dataset.id; expandedThoughts.clear(); }
-    loadDetail(); loadProjects();
-  }));
-  if (!activeId && data.projects.length){ activeId = data.projects[0].id; loadDetail(); loadProjects(); }
-}
-// Persisted across re-renders: whether the live banner detail is open
-let bannerOpen = false;
-function liveBanner(live, cycle, nRetreats){
-  const running = live.running_phase;
-  const idle = !running && live.inflight_calls.length === 0;
-  const callsCount = live.inflight_calls.length;
-  const cycleStr = cycle && cycle > 1
-    ? ` · cycle ${cycle}` + (nRetreats ? ` (${nRetreats} retreat${nRetreats>1?'s':''})` : '')
-    : '';
-  const callsStr = callsCount ? ` · ${callsCount} call${callsCount>1?'s':''} in flight` : '';
-  const phaseAgo = live.phase_started_at ? ` · started ${fmtAgo(live.phase_started_at)}` : '';
-  const lastLog = live.last_event_ts ? ` · last log ${fmtAgo(live.last_event_ts)}` : '';
-  const summary = running
-    ? `▶ ${escHtml(running)}${cycleStr}${callsStr}${phaseAgo}`
-    : `◼ idle${cycleStr}${lastLog}`;
-  const expandable = callsCount > 0;
-  const detail = expandable
-    ? '<div class="banner-detail">' + live.inflight_calls.map(c =>
-        `<div class="call"><span class="skill">${escHtml(c.skill)}</span> <span>phase=${escHtml(c.phase)}</span> <span class="model">${escHtml(c.model)}</span> <span class="age">started ${fmtAgo(c.started_at)}</span></div>`
-      ).join('') + '</div>'
-    : '';
-  const cls = (idle?'idle ':'') + (expandable?'expandable ':'') + (expandable && bannerOpen ? 'open':'');
-  const hint = expandable ? `<span class="expand-hint">${bannerOpen?'▾':'▸'} ${callsCount} call${callsCount>1?'s':''}</span>` : '';
-  return `<div class="live-banner ${cls}" id="liveBanner">
-    <div class="banner-row">
-      <span>${summary}</span>
-      ${hint}
-    </div>
-    ${detail}
-  </div>`;
-}
-
-// Collapsed sections — track by stable key so state survives re-renders.
-const collapsedSections = new Set(['parking', 'papersIndex']); // collapsed by default
-function applyCollapsibles(){
-  document.querySelectorAll('h2.collapsible').forEach(h => {
-    const k = h.dataset.key;
-    const target = document.getElementById(k);
-    const collapsed = collapsedSections.has(k);
-    const caret = h.querySelector('.caret');
-    if (caret) caret.textContent = collapsed ? '▸' : '▾';
-    if (target) target.style.display = collapsed ? 'none' : '';
-    h.onclick = () => {
-      if (collapsedSections.has(k)) collapsedSections.delete(k);
-      else collapsedSections.add(k);
-      applyCollapsibles();
-    };
-  });
-}
-
-// Drafts: click a row to expand its contents inline (text), or open a new tab (binary).
-const expandedDrafts = new Map();  // name -> content | '__loading__' | {binary, raw_url, size}
-async function loadDraftFull(name){
-  if (!activeId) return;
-  if (expandedDrafts.has(name)) return;
-  expandedDrafts.set(name, '__loading__');
-  renderDrafts(window.__lastDetail.drafts);
-  const r = await fetch('/api/project/' + encodeURIComponent(activeId) + '/draft/' + encodeURIComponent(name));
-  const j = await r.json();
-  if (j.binary){
-    // binary: open in new tab, don't keep expanded
-    expandedDrafts.delete(name);
-    window.open(j.raw_url, '_blank', 'noopener');
-    renderDrafts(window.__lastDetail.drafts);
-    return;
-  }
-  expandedDrafts.set(name, j.content || j.error || '(empty)');
-  renderDrafts(window.__lastDetail.drafts);
-}
-function renderDrafts(drafts, prevExpandedScroll){
-  const wrap = document.getElementById('drafts');
-  if (!wrap) return;
-  if (!drafts.length){ wrap.innerHTML = '<div class="empty">none yet — paper renders here after the write phase</div>'; return; }
-  wrap.innerHTML = drafts.map(f => {
-    const exp = expandedDrafts.get(f.name);
-    const isExp = expandedDrafts.has(f.name);
-    let fullHtml = '';
-    if (isExp){
-      if (exp === '__loading__') fullHtml = '<div class="thought-full loading">loading…</div>';
-      else fullHtml = `<div class="thought-full">${escHtml(exp)}</div>`;
-    }
-    return `<div class="thought ${isExp?'expanded':''}" data-name="${escHtml(f.name)}">
-      <div class="title">${escHtml(f.name)}</div>
-      <div class="sum">${(f.size/1024).toFixed(1)} KB · ${fmtAgo(f.mtime)}</div>
-      ${fullHtml}
-    </div>`;
-  }).join('');
-  wrap.querySelectorAll('.thought').forEach(el => el.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    const name = el.dataset.name;
-    if (expandedDrafts.has(name)){ expandedDrafts.delete(name); renderDrafts(drafts); }
-    else { loadDraftFull(name); }
-  }));
-  if (prevExpandedScroll){
-    Object.entries(prevExpandedScroll).forEach(([name, top]) => {
-      if (top > 4){
-        const card = wrap.querySelector('.thought[data-name="' + CSS.escape(name) + '"] .thought-full');
-        if (card) card.scrollTop = top;
-      }
-    });
-  }
-}
-function pctOf(part, total){ return total > 0 ? (part/total*100).toFixed(1) : '0.0'; }
-function tokenHistogram(byBucket){
-  const keys = Object.keys(byBucket);
-  if (!keys.length) return '<div class="empty">no calls yet</div>';
-  let max = 0;
-  keys.forEach(k => { max = Math.max(max, byBucket[k].in_tokens||0, byBucket[k].out_tokens||0); });
-  if (max === 0) max = 1;
-  const legend = `<div class="legend">
-    <span><span class="swatch" style="background:#f97316"></span>fresh in</span>
-    <span><span class="swatch" style="background:#facc15"></span>cache write</span>
-    <span><span class="swatch" style="background:linear-gradient(90deg,#1e5235,#86efac)"></span>cache hit</span>
-    <span><span class="swatch" style="background:linear-gradient(90deg,#1c3a5c,#7dd3fc)"></span>output</span>
-  </div>`;
-  const rows = keys.map(k => {
-    const v = byBucket[k];
-    const fresh = v.fresh_in || 0;
-    const cc = v.cache_create || 0;
-    const cr = v.cache_read || 0;
-    const inTotal = v.in_tokens || (fresh + cc + cr);
-    const out = v.out_tokens || 0;
-    // Each segment's width is proportional to the global max (so phases are comparable),
-    // and segments stack within the input bar.
-    const freshPct = (fresh / max * 100).toFixed(2);
-    const ccPct    = (cc    / max * 100).toFixed(2);
-    const crPct    = (cr    / max * 100).toFixed(2);
-    const outPct   = (out   / max * 100).toFixed(2);
-    const hitPct = pctOf(cr, inTotal);
-    return `<div class="hrow">
-      <div class="hlbl">${escHtml(k)}</div>
-      <div class="hbars">
-        <div class="hpair">
-          <div class="htrack">
-            <div class="hbar fresh"  style="width:${freshPct}%" title="fresh ${fmtTok(fresh)}"></div>
-            <div class="hbar create" style="width:${ccPct}%"    title="cache write ${fmtTok(cc)}"></div>
-            <div class="hbar read"   style="width:${crPct}%"    title="cache hit ${fmtTok(cr)}"></div>
-          </div>
-          <span class="hcnt"><span class="tag">in</span>${fmtTok(inTotal)} · ${hitPct}% hit</span>
-        </div>
-        <div class="hpair">
-          <div class="htrack"><div class="hbar out" style="width:${outPct}%"></div></div>
-          <span class="hcnt"><span class="tag">out</span>${fmtTok(out)}</span>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-  return legend + '<div class="hist">' + rows + '</div>';
-}
-function threadEventsHtml(events){
-  if (!events.length) return '<div class="empty">no thread events yet</div>';
-  return events.map(e => {
-    const ts = e.ts ? String(e.ts).slice(11,19) : '';
-    return `<div class="ev"><span class="ts">${escHtml(ts)}</span><span class="id">${escHtml(e.id||'')}</span><span class="body"><span class="type">${escHtml(e.type||'')}</span>${escHtml(e.summary||'')} ${e.author?'<span class="author">— '+escHtml(e.author)+'</span>':''}</span></div>`;
-  }).join('');
-}
-async function loadThoughtFull(tid){
-  if (!activeId) return;
-  if (expandedThoughts.has(tid)) return; // cached
-  expandedThoughts.set(tid, '__loading__');
-  renderThoughts(window.__lastDetail.thoughts);
-  const r = await fetch('/api/project/' + encodeURIComponent(activeId) + '/thought/' + encodeURIComponent(tid));
-  const j = await r.json();
-  expandedThoughts.set(tid, j.content || j.error || '(empty)');
-  renderThoughts(window.__lastDetail.thoughts);
-}
-function renderThoughts(thoughts, prevExpandedScroll){
-  const wrap = document.getElementById('thoughts');
-  if (!wrap) return;
-  if (!thoughts.length){ wrap.innerHTML = '<div class="empty">none yet</div>'; return; }
-  wrap.innerHTML = thoughts.map(t => {
-    const exp = expandedThoughts.get(t.id);
-    const isExp = expandedThoughts.has(t.id);
-    let fullHtml = '';
-    if (isExp){
-      if (exp === '__loading__') fullHtml = '<div class="thought-full loading">loading…</div>';
-      else fullHtml = `<div class="thought-full">${escHtml(exp)}</div>`;
-    }
-    return `<div class="thought ${isExp?'expanded':''}" data-id="${escHtml(t.id)}">
-      <div class="id">${escHtml(t.id)}</div>
-      <div class="title">${escHtml(t.title)}</div>
-      <div class="sum">${escHtml(t.summary||'')}</div>
-      ${fullHtml}
-    </div>`;
-  }).join('');
-  wrap.querySelectorAll('.thought').forEach(el => el.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    const tid = el.dataset.id;
-    if (expandedThoughts.has(tid)){ expandedThoughts.delete(tid); renderThoughts(thoughts); }
-    else { loadThoughtFull(tid); }
-  }));
-  // Restore scroll on individual expanded thought panes
-  if (prevExpandedScroll){
-    Object.entries(prevExpandedScroll).forEach(([id, top]) => {
-      if (top > 4){
-        const card = wrap.querySelector('.thought[data-id="' + CSS.escape(id) + '"] .thought-full');
-        if (card) card.scrollTop = top;
-      }
-    });
-  }
-}
-async function loadDetail(){
-  if (!activeId) return;
-  const r = await fetch('/api/project/' + encodeURIComponent(activeId) + '?log_lines=400');
-  const d = await r.json();
-  window.__lastDetail = d;
-  const phaseHtml = d.all_phases.map(ph => {
-    const done = d.completed_phases.includes(ph);
-    const active = ph === d.current_phase && !done;
-    return `<span class="phase ${done?'done':''} ${active?'active':''}">${ph}</span>`;
-  }).join('');
-  const histHtml = tokenHistogram(d.ledger.by_phase);
-  const histByModelHtml = tokenHistogram(d.ledger.by_model || {});
-  const recentRows = (d.ledger.rows||[]).slice(-15).reverse().map(r => {
-    const fresh = r.fresh_in||0, cc = r.cache_create||0, cr = r.cache_read||0;
-    const hit = r.input_tokens > 0 ? (cr/r.input_tokens*100).toFixed(0)+'%' : '—';
-    return `<tr><td>${escHtml(r.ts.slice(11,19))}</td><td>${escHtml(r.phase)}</td><td>${escHtml(r.skill)}</td><td>${escHtml(r.model)}</td><td>${fmtTok(fresh)}</td><td>${fmtTok(cc)}</td><td>${fmtTok(cr)}</td><td>${hit}</td><td>${fmtTok(r.output_tokens)}</td></tr>`;
-  }).join('');
-  const experiments = d.experiments.length ? d.experiments.map(e => `<div>${escHtml(e.name)} · ${fmtAgo(e.mtime)}</div>`).join('') : '<div class="empty">none yet</div>';
-  const logText = (d.recent_log||[]).join('\\n');
-  const detail = document.getElementById('detail');
-  // Snapshot scroll positions of inner panes so user reading isn't yanked.
-  // Rule: if scrollTop > 4, user has scrolled — preserve. If at top, natural top stays.
-  const prevLogScroll = (function(){ const el = document.getElementById('log'); return el ? {top: el.scrollTop, atBottom: el.scrollHeight - el.scrollTop - el.clientHeight < 20} : null; })();
-  const prevThoughtsScroll = (function(){ const el = document.getElementById('thoughts'); return el ? el.scrollTop : 0; })();
-  const prevThreadScroll = (function(){ const el = document.getElementById('threadEvents'); return el ? el.scrollTop : 0; })();
-  const prevExpandedScroll = {};
-  document.querySelectorAll('#thoughts .thought-full').forEach(el => {
-    const card = el.closest('.thought');
-    if (card && card.dataset.id) prevExpandedScroll[card.dataset.id] = el.scrollTop;
-  });
-  const prevExpandedDraftScroll = {};
-  document.querySelectorAll('#drafts .thought-full').forEach(el => {
-    const card = el.closest('.thought');
-    if (card && card.dataset.name) prevExpandedDraftScroll[card.dataset.name] = el.scrollTop;
-  });
-  detail.innerHTML = `
-    <h2>${escHtml(d.id)}</h2>
-    ${liveBanner(d.live, d.cycle, d.n_retreats)}
-    <div class="phases">${phaseHtml}</div>
-    <div class="statstrip">
-      <span class="item"><b>${fmtTok(d.ledger.total_in_tokens)}</b><span class="lbl">in</span></span>
-      <span class="sep">·</span>
-      <span class="item"><b>${fmtTok(d.ledger.total_out_tokens)}</b><span class="lbl">out</span></span>
-      <span class="sep">·</span>
-      <span class="item"><b>${(d.ledger.cache_hit_ratio*100).toFixed(1)}%</b><span class="lbl">cache hit</span></span>
-      <span class="sep">·</span>
-      <span class="item"><b>${d.n_calls}</b><span class="lbl">calls</span></span>
-    </div>
-    <h2>orchestrator log <span class="ctl">${(d.recent_log||[]).length} lines</span></h2>
-    <pre id="log" class="tall">${escHtml(logText)}</pre>
-    <h2>thread events <span class="ctl">${(d.thread_events||[]).length} shown</span></h2>
-    <div id="threadEvents" class="scrollbox card" style="padding:0">${threadEventsHtml(d.thread_events||[])}</div>
-    <div class="grid2">
-      <div>
-        <h2>thoughts <span class="ctl">${d.thoughts.length} · click to expand</span></h2>
-        <div class="scrollbox" id="thoughts"></div>
-      </div>
-      <div>
-        <h2>tokens by phase</h2>
-        <div class="scrollbox short">${histHtml}</div>
-        <h2>tokens by model</h2>
-        <div class="scrollbox short" id="histByModel">${histByModelHtml}</div>
-        <h2>recent calls</h2>
-        <div class="scrollbox short"><table><thead><tr><th>time</th><th>phase</th><th>skill</th><th>model</th><th>fresh</th><th>cache wr</th><th>cache rd</th><th>hit</th><th>out</th></tr></thead><tbody>${recentRows || '<tr><td colspan=9 class="empty">none</td></tr>'}</tbody></table></div>
-      </div>
-    </div>
-    <div class="grid2">
-      <div>
-        <h2>drafts <span class="ctl">${d.drafts.length} · click to preview</span></h2>
-        <div class="scrollbox short" id="drafts"></div>
-      </div>
-      <div><h2>experiments</h2><div class="scrollbox short">${experiments}</div></div>
-    </div>
-    <h2 class="collapsible" data-key="parking"><span class="caret">▸</span> parking lot</h2>
-    <pre id="parking">${escHtml(d.parking_lot||'(empty)')}</pre>
-    <h2 class="collapsible" data-key="papersIndex"><span class="caret">▸</span> papers index</h2>
-    <pre id="papersIndex">${escHtml(d.papers_index||'(empty)')}</pre>
-  `;
-  renderThoughts(d.thoughts || [], prevExpandedScroll);
-  renderDrafts(d.drafts || [], prevExpandedDraftScroll);
-  applyCollapsibles();
-  // Wire live-banner click-to-expand
-  const lb = document.getElementById('liveBanner');
-  if (lb && lb.classList.contains('expandable')){
-    lb.addEventListener('click', () => {
-      bannerOpen = !bannerOpen;
-      lb.classList.toggle('open', bannerOpen);
-      const hint = lb.querySelector('.expand-hint');
-      if (hint) hint.textContent = (bannerOpen ? '▾' : '▸') + hint.textContent.slice(1);
-    });
-  }
-  // Log: follow-tail OR preserve scroll
-  const logEl = document.getElementById('log');
-  if (logEl){
-    if (document.getElementById('follow').checked) logEl.scrollTop = logEl.scrollHeight;
-    else if (prevLogScroll) logEl.scrollTop = prevLogScroll.top;
-  }
-  // Thoughts/thread events: preserve scroll if user moved off the top
-  const thoughtsEl = document.getElementById('thoughts');
-  if (thoughtsEl && prevThoughtsScroll > 4) thoughtsEl.scrollTop = prevThoughtsScroll;
-  const threadEl = document.getElementById('threadEvents');
-  if (threadEl && prevThreadScroll > 4) threadEl.scrollTop = prevThreadScroll;
-  document.getElementById('updated').textContent = 'updated ' + new Date().toLocaleTimeString();
-}
-async function tick(){ await loadProjects(); await loadDetail(); }
-function startTimer(){ if (timer) return; timer = setInterval(tick, 3000); }
-function stopTimer(){ if (timer){ clearInterval(timer); timer = null; } }
-document.getElementById('autorefresh').addEventListener('change', e => { e.target.checked ? startTimer() : stopTimer(); });
-tick(); startTimer();
-</script>
-</body>
-</html>
-"""
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -926,7 +692,9 @@ class Handler(BaseHTTPRequestHandler):
         path = url.path
         try:
             if path == "/" or path == "/index.html":
-                return self._html(INDEX_HTML)
+                if not STATIC_INDEX.exists():
+                    return self._html(f"<h1>500</h1><p>missing {STATIC_INDEX}</p>")
+                return self._html(STATIC_INDEX.read_text(encoding="utf-8"))
             if path == "/api/projects":
                 projects = [project_summary(p) for p in list_projects()]
                 projects.sort(key=lambda x: x.get("last_activity_ts") or 0, reverse=True)
@@ -962,9 +730,7 @@ class Handler(BaseHTTPRequestHandler):
                 if pid not in list_projects():
                     return self._json({"error": "not_found", "id": pid}, code=404)
                 if len(parts) == 1:
-                    qs = parse_qs(url.query)
-                    log_n = int(qs.get("log_lines", ["400"])[0])
-                    return self._json(project_detail(pid, log_lines=log_n))
+                    return self._json(project_detail(pid))
                 if len(parts) >= 2 and parts[1] == "thought":
                     if len(parts) < 3 or not parts[2]:
                         return self._json({"error": "missing_id"}, code=400)

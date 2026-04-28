@@ -40,12 +40,30 @@ The orchestrator's prompt names one of:
 
 `sonnet-4-6`
 
+## Wildness bar (applies in BOTH modes)
+
+The orchestrator may inject a "WILDNESS BAR" block into your prompt. Every Hypothesis you emit MUST satisfy at least one Wildness Ticket and name it in the body:
+
+- **W1 — NON-ML cross-domain transplant.** Source must be neuroscience, biology, physics, control theory, evolutionary theory, economics, linguistics, signal processing, statistics-beyond-ML, chemistry, or statistical mechanics. RL→supervised, vision→NLP, optimization→architecture do **NOT** count — they are too close.
+- **W2 — Contradicts a textbook claim or widely-held assumption.** State the textbook claim verbatim, then state your counter-claim.
+- **W3 — Measures something nobody has measured at meaningful scale.** Say why the measurement was missing.
+- **W4 — Regime swap.** Predict what changes when scale, data quality, modality, or compute is 100× or 0.01× the standard.
+
+**Reject-yourself examples** (do NOT emit these, no matter how clean the prediction):
+- "Test if X works on Y" (just a measurement, no insight)
+- "Try variant of method M" (incrementalism)
+- "Replicate paper P with smaller model" (replication, not novelty)
+- "Combine A and B" without a *mechanistic* reason the combination matters
+- Anything a sharp PhD student would predict the outcome of in 30 seconds
+
+If the orchestrator retreats with an "IDEA-CYCLE RETREAT CONTEXT" block, the previous batch was judged boring. Read the parking-lot reasons and propose substantially wilder ideas — not minor variations.
+
 ## Procedure (mode=expand)
 
 1. Read the seed `Idea`. Identify: dataset, model class, claim space, compute regime.
-2. Generate 3 in-domain hypotheses by varying ONE axis at a time (architecture, optimizer, data, regularization).
-3. **Mandatory cross-domain transplant**: generate at least 1 hypothesis that imports a technique from an *adjacent but distinct* subfield (e.g., RL → supervised, vision → NLP, optimization → architecture, neuroscience → ML, statistics → ML). State the source field explicitly in the body.
-4. For each hypothesis, write a one-sentence `claim`, a numeric `prediction_metric/threshold/direction`, and a 2-3 sentence rationale referencing IDEA-<id> by reference (no requoting).
+2. Generate 3 in-domain hypotheses, each satisfying at least one Wildness Ticket (W2/W3/W4 are the most achievable in-domain).
+3. **Mandatory W1 ticket**: generate at least 1 hypothesis that imports a technique from a NON-ML field (per the list above). State the source field and the mechanistic analogy explicitly in the body.
+4. For each hypothesis, write a one-sentence `claim`, a numeric `prediction_metric/threshold/direction`, name the wildness ticket(s) it satisfies, and a 2-3 sentence rationale referencing IDEA-<id> by reference (no requoting).
 5. Verify each prediction is locally testable in <30 minutes on Apple Silicon. If not, scale down or drop.
 6. Emit each via `tools/append_artifact.py --type Hypothesis --parent IDEA-<id> --summary "<claim>" --field prediction_metric=<m> --field prediction_threshold=<n> --field prediction_direction=<dir>`. The tool prints the new id; capture it.
 

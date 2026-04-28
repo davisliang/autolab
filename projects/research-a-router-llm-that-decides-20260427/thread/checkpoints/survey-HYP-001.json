@@ -1,9 +1,0 @@
-{
-  "phase": "survey",
-  "cycle": 2,
-  "hypothesis_id": "HYP-001",
-  "completed_artifact_ids": ["LIT-032", "LIT-033", "LIT-034", "LIT-035", "LIT-036"],
-  "prior_cycle_artifacts": ["LIT-006", "LIT-008", "LIT-009", "LIT-010", "LIT-012"],
-  "next_action": "proceed to gap-fill or design phase for HYP-001",
-  "completed_at": "2026-04-27T12:35:00Z"
-}
