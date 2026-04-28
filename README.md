@@ -112,7 +112,6 @@ projects/<id>/
 │   └── repro.sh             # executable: recreates the run from scratch
 ├── drafts/
 │   ├── paper-vFINAL.md      # assembled paper with auto-injected results tables
-│   ├── paper-vFINAL.pdf     # produced if pandoc + a TeX engine are installed
 │   └── citations.bib        # verified citations only
 ├── ideas/parking_lot.md     # parked HYPs (failed boredom/validity or experiment retreat)
 └── logs/
@@ -150,7 +149,7 @@ Auto-refreshes every 3s. No DB; reads directly from `projects/<id>/`. Shows:
 - **Thread events** — feed of typed artifact emissions with per-type decision summaries (claim + prediction for HYP, status + notes for RES, severity + concerns for CRIT, …).
 - **Token histograms** — per-phase and per-model, with stacked input bars (fresh / cache write / cache hit) and output bars.
 - **Recent calls** — last 15 `claude -p` invocations with cache breakdown.
-- **Drafts** — click `paper-vFINAL.md` to preview inline; PDF opens in a new browser tab.
+- **Drafts** — click `paper-vFINAL.md` to preview inline.
 - **Thoughts**, **parking lot**, **papers index** — collapsed by default; click to expand.
 
 ## Configuration
@@ -167,23 +166,12 @@ All env vars are optional.
 
 Stop conditions are now: `final.json` checkpoint exists, `STOP` file at repo root, or you Ctrl+C. There is no dollar budget cap.
 
-## Output: paper rendering
+## Output: paper
 
-`phase_final` writes `drafts/paper-vFINAL.md` and attempts a PDF render. The PDF step picks the first available engine: `xelatex` → `pdflatex` → `wkhtmltopdf` → `weasyprint`. Without any engine the markdown is still produced and the run does not fail.
-
-To install pandoc + xelatex once:
+`phase_final` writes `drafts/paper-vFINAL.md`. Re-assemble it without re-running the orchestrator:
 
 ```bash
-brew install pandoc basictex                              # macOS
-eval "$(/usr/libexec/path_helper)"
-sudo tlmgr update --self && sudo tlmgr install collection-fontsrecommended
-```
-
-To render or re-render a paper without re-running the orchestrator:
-
-```bash
-uv run python tools/finalize.py --project <id>             # md + pdf
-uv run python tools/finalize.py --project <id> --pdf-only  # pdf only
+uv run python tools/finalize.py --project <id>
 ```
 
 ## Setup

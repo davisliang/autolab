@@ -23,7 +23,6 @@ import argparse
 import concurrent.futures
 import json
 import os
-import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -1038,65 +1037,7 @@ def phase_final() -> list[str]:
     final_path = drafts / "paper-vFINAL.md"
     final_path.write_text("\n".join(out) + "\n")
     log_line(f"final: wrote {final_path}")
-    pdf_path = drafts / "paper-vFINAL.pdf"
-    bib_path = drafts / "citations.bib"
-    err = render_pdf(final_path, bib_path, pdf_path)
-    out_paths = [str(final_path)]
-    if err:
-        log_line(f"final: PDF skipped — {err}")
-    else:
-        log_line(f"final: wrote {pdf_path}")
-        out_paths.append(str(pdf_path))
-    return out_paths
-
-
-def render_pdf(md_path: Path, bib_path: Path, out_path: Path) -> str | None:
-    """Render `md_path` to `out_path` via pandoc. Returns None on success,
-    or a human-readable error string. Never raises."""
-    if not md_path.exists():
-        return f"source markdown missing: {md_path}"
-    if not shutil.which("pandoc"):
-        return (
-            "pandoc not installed. Install with `brew install pandoc basictex` "
-            "(macOS) or `apt install pandoc texlive-xetex` (Linux). "
-            "The .md is the canonical artifact; PDF is a convenience render."
-        )
-    cmd = [
-        "pandoc",
-        str(md_path),
-        "-o", str(out_path),
-        "--citeproc",
-        "--standalone",
-        "-V", "geometry:margin=1in",
-        "-V", "fontsize=11pt",
-        "-V", "linkcolor:blue",
-        "-V", "colorlinks=true",
-    ]
-    if bib_path.exists():
-        cmd += ["--bibliography", str(bib_path)]
-    # Prefer xelatex if present (better unicode); else let pandoc auto-pick.
-    if shutil.which("xelatex"):
-        cmd += ["--pdf-engine", "xelatex"]
-    elif shutil.which("pdflatex"):
-        cmd += ["--pdf-engine", "pdflatex"]
-    elif shutil.which("wkhtmltopdf"):
-        cmd += ["--pdf-engine", "wkhtmltopdf"]
-    elif shutil.which("weasyprint"):
-        cmd += ["--pdf-engine", "weasyprint"]
-    else:
-        return (
-            "no PDF engine found. Install one: `brew install basictex` (xelatex), "
-            "`brew install --cask wkhtmltopdf`, or `pip install weasyprint`."
-        )
-    try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
-    except subprocess.TimeoutExpired:
-        return "pandoc timed out (>180s)"
-    except FileNotFoundError as e:
-        return f"pandoc invocation failed: {e}"
-    if r.returncode != 0:
-        return f"pandoc rc={r.returncode}: {(r.stderr or r.stdout).strip()[:400]}"
-    return None
+    return [str(final_path)]
 
 
 def cycle_state_path() -> Path:
