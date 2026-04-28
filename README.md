@@ -32,34 +32,99 @@ Autonomous research-loop. Point it at a one-line idea, walk away, come back to a
 └── README.md                 # this file
 ```
 
-## Quick start
+## Quickstart
+
+### 1. Prerequisites
+
+- **Python 3.11+** (3.11–3.13 are tested).
+- **[uv](https://docs.astral.sh/uv/)** for dependency management. On macOS: `brew install uv`.
+- **[Claude Code](https://claude.com/product/claude-code)** CLI on `$PATH`. Run `claude login` in a regular terminal once — the orchestrator inherits the on-disk OAuth credentials. (Subscription auth works out of the box; an `ANTHROPIC_API_KEY` is **not** required and will be stripped from the subprocess env.)
+- **Apple Silicon optional**: MLX is installed on M-series Macs by default and used for experiment runs. On other hosts, `uv sync --extra torch` enables PyTorch CPU as the fallback.
+
+### 2. Install
 
 ```bash
-# new project — argv quoting
-scripts/start --idea "investigate whether layer-wise learning rates help small MLPs on MNIST"
+git clone <this-repo> autolab
+cd autolab
+uv sync                       # core deps
+uv sync --group dev           # also install pytest / black / ruff / pre-commit
+uv run pre-commit install     # wire up git hooks (optional, recommended)
+```
 
-# new project — long ideas without shell-quoting headaches
-scripts/start --idea-file my-idea.txt
-scripts/start --idea-stdin <<'EOF'
-... multi-line idea, apostrophes/quotes fine ...
-EOF
+Smoke-check the install:
 
-# pick up where it left off
-scripts/resume                                  # interactive picker
-scripts/resume --project <id>                   # by id
-scripts/resume --project <id> --hypothesis "user-supplied claim"
-scripts/resume --project <id> --resume-from-bank   # pop next parked HYP
-scripts/resume --list                           # print the project table
+```bash
+uv run pytest                 # 49 tests, < 1s
+```
 
-# live progress dashboard (separate terminal)
+### 3. First run via `example.sh`
+
+[`example.sh`](example.sh) is the recommended onramp — it shows every CLI flag and tunable env var in one place. Copy it, edit the seed idea and any knobs you want to override, then run:
+
+```bash
+$EDITOR example.sh            # change IDEA="..." and any AUTOLAB_* defaults
+bash example.sh
+```
+
+The script will:
+1. Create a fresh project directory under `projects/<slug>-<YYYYMMDD>/`.
+2. Print the env var values it will use.
+3. `exec` into `scripts/start`, which drives the full phase pipeline (`seed → expand → survey → gap-fill → screen → design → run → critique → write → final`).
+
+While it runs, watch progress in another terminal:
+
+```bash
 uv run python -m autolab.dashboard.server          # http://127.0.0.1:8765
 ```
 
-For a fully-worked invocation that exposes every tunable env var and CLI
-flag, see [`example.sh`](example.sh) at the repo root — copy it, edit the
-seed idea + knobs, and run with `bash example.sh`.
+When it finishes (~15–30 min for the default settings), the deliverable lives at:
 
-To stop a running orchestrator: Ctrl+C its terminal, or `touch STOP` at the repo root, or `pkill -f autolab.orchestrator`.
+```
+projects/<your-slug>-<date>/drafts/paper-vFINAL.md
+```
+
+with verified citations in `citations.bib`, per-experiment `result.json`, and a reproducibility shell at `experiments/<EXP-id>/repro.sh`.
+
+### 4. Stopping and resuming
+
+```bash
+# stop a running orchestrator (any of these works)
+Ctrl+C                                          # in its terminal
+touch STOP                                      # graceful, at the next phase boundary
+pkill -f autolab.orchestrator                   # nuclear
+
+# resume an existing project
+scripts/resume                                  # interactive picker
+scripts/resume --project <id>                   # by id
+scripts/resume --list                           # print the projects table
+scripts/resume --project <id> --resume-from-bank   # pop next parked HYP from ideas/parking_lot.md
+```
+
+### 5. Direct invocation (advanced)
+
+If you'd rather skip the `example.sh` wrapper, call `scripts/start` directly:
+
+```bash
+# inline argv (short ideas only — avoid embedded apostrophes/quotes)
+scripts/start --idea "investigate whether layer-wise learning rates help small MLPs on MNIST"
+
+# from a file (recommended for long, multi-paragraph ideas)
+scripts/start --idea-file my-idea.txt
+
+# from stdin
+scripts/start --idea-stdin <<'EOF'
+multi-line idea, apostrophes/quotes fine
+EOF
+
+# also seed an extra Hypothesis on resume
+scripts/resume --project <id> --hypothesis "user-supplied claim"
+```
+
+Tunable env vars (full list in [Configuration](#configuration)) — set them inline or in `example.sh`:
+
+```bash
+AUTOLAB_MAX_CYCLES=10 AUTOLAB_MIN_WILD_HYPOTHESES=3 scripts/start --idea "..."
+```
 
 ## Architecture
 
@@ -208,12 +273,7 @@ Stop conditions: `final.json` checkpoint exists, `STOP` file at repo root, or yo
 uv run python -m autolab.finalize --project <id>
 ```
 
-## Setup
-
-```bash
-cd /Users/davis/Documents/code/autolab
-uv sync
-```
+## Framework and auth details
 
 **Framework.** On Apple Silicon, MLX is installed by default and runs experiments on the unified-memory GPU + Neural Engine. The `experiment-designer` skill is wired to use `framework="mlx"` and the orchestrator injects a runtime probe of `mlx.default_device()` into each design prompt so the LLM knows MLX is available without inferring it. On non-Apple-Silicon hosts MLX is silently skipped (PEP 508 marker on the dep) and the designer falls back to PyTorch CPU. To opt into PyTorch as well: `uv sync --extra torch`.
 
@@ -221,13 +281,7 @@ uv sync
 
 ## Development
 
-### Install dev dependencies
-
-The dev tools (pytest, black, ruff, pre-commit) live in the `dev` dependency group:
-
-```bash
-uv sync --group dev
-```
+The dev tools (pytest, black, ruff, pre-commit) live in the `dev` dependency group — see [Quickstart §2](#2-install) for install commands.
 
 ### Run tests
 
@@ -267,10 +321,9 @@ uv run ruff format autolab/         # ruff's own formatter
 3. **`ruff`** — lints + auto-fixes safe issues; runs `ruff format` after.
 4. **`pytest`** — runs the full unit test suite via `uv run pytest -q tests/`. Commit fails if any test fails.
 
-Install once after cloning:
+Install once after cloning (already covered in [Quickstart §2](#2-install)):
 
 ```bash
-uv sync --group dev
 uv run pre-commit install
 ```
 
@@ -286,14 +339,11 @@ To bypass in an emergency only (don't make a habit of it):
 git commit --no-verify
 ```
 
-## Verification (smoke)
+## Expected output
 
-```bash
-scripts/start --idea "investigate whether layer-wise learning rates help small MLPs on MNIST"
-```
+After a successful run (~15–30 min on the default settings) under `projects/<slug>-<date>/`:
 
-Expect after ~15-30 min:
-- `projects/<slug>-<date>/thread/log.jsonl` populated across artifact types: Idea, Hypothesis, LitFinding, Critique, ExperimentPlan, ExperimentResult, Citation, DraftSection
+- `thread/log.jsonl` populated across artifact types: Idea, Hypothesis, LitFinding, Critique, ExperimentPlan, ExperimentResult, Citation, DraftSection
 - `papers/` has ≥5 fetched markdown copies
 - `experiments/EXP-001/runs/` has logs + `result.json` with mean ± stddev
 - `experiments/EXP-001/repro.sh` exists and is executable
