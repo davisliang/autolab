@@ -7,7 +7,7 @@ Method:
   3. Return a normalized score in [0, 1].
 
 Usage:
-    tools/verify_citation.py \
+    python -m autolab.verify_citation \
         --claim "Per-layer LR scaling outperforms uniform LR on small MNIST MLPs" \
         --candidate-arxiv-id 2412.00123
 
@@ -18,6 +18,7 @@ Score interpretation (informal):
   0.50-0.85: related, citable
   < 0.50: tangential
 """
+
 from __future__ import annotations
 
 import argparse

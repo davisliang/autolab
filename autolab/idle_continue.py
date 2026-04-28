@@ -4,18 +4,18 @@
 Project-scoped: requires AUTOLAB_PROJECT env var (set by ./resume --watchdog).
 Stops on the active project's final.json, on STOP file, or on max-respawns.
 """
+
 from __future__ import annotations
 
 import argparse
-import json
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import psutil
 
-from _paths import (
+from autolab.paths import (
     REPO,
     STOP_FILE,
     checkpoints_dir,
@@ -23,11 +23,11 @@ from _paths import (
     watchdog_log,
 )
 
-LOOP = REPO / "tools" / "continue_loop.sh"
+LOOP = REPO / "scripts" / "continue_loop.sh"
 
 
 def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def log(msg: str):

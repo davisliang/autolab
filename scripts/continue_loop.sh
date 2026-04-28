@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Resume the autolab loop for the active project (AUTOLAB_PROJECT env var).
-# Used by ./resume and by tools/idle_continue.py.
+# Used by scripts/resume and by autolab.idle_continue.
 set -euo pipefail
 
+# This script lives at <repo>/scripts/continue_loop.sh, so REPO_DIR is one parent up.
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
 
@@ -21,5 +22,5 @@ if [[ -f "$REPO_DIR/.env" ]]; then
   set +a
 fi
 
-exec uv run python tools/run_orchestrator.py --resume "$@" \
+exec uv run python -m autolab.orchestrator --resume "$@" \
   >> "$LOG_DIR/orchestrator.log" 2>&1

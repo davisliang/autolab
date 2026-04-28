@@ -1,0 +1,61 @@
+# pre-commit hooks for autolab.
+# Install once with:  uv run pre-commit install
+#
+# On each `git commit` the hooks below run on the staged files. Any
+# non-zero exit fails the commit. Skip on emergency with `--no-verify`,
+# but DO NOT make a habit of it — CI/local diverge fast.
+
+default_language_version:
+  python: python3
+
+# Don't try to run hooks against generated/output content.
+exclude: |
+  (?x)^(
+      projects/.*
+    | \.venv/.*
+    | uv\.lock
+  )$
+
+repos:
+  # Generic file hygiene.
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-case-conflict
+
+  # Format with black (config in pyproject.toml).
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+
+  # Lint + import-sort with ruff (config in pyproject.toml).
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # Run the test suite locally before every commit. Uses the dev venv's
+  # pytest (system entry) — install dev deps first with `uv sync --group dev`.
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest (unit tests)
+        entry: uv run --group dev pytest -q tests/
+        language: system
+        types: [python]
+        # `pass_filenames: false` runs the full suite once per commit
+        # instead of once per changed file.
+        pass_filenames: false
+        # Always run, regardless of which paths changed — config or
+        # skill-file edits can break the section-brief tests too.
+        always_run: true

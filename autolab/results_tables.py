@@ -12,13 +12,14 @@ and standalone delta metrics like `cost_savings_pp_vs_X`.
 Pure: no orchestrator imports, no AUTOLAB_PROJECT lookup. Caller passes the
 already-parsed thread list and the experiments dir.
 """
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-
 # ---- formatting helpers ----------------------------------------------------
+
 
 def fmt_num(v, sig: int = 4) -> str:
     """Compact numeric formatter: avoids scientific where possible, max sig figs."""
@@ -55,7 +56,7 @@ def detect_proposed_baseline_pairs(metrics: dict) -> list[tuple[str, str, str]]:
             continue
         for prefix in ("proposed_", "baseline_"):
             if k.startswith(prefix):
-                base = k[len(prefix):]
+                base = k[len(prefix) :]
                 other_prefix = "baseline_" if prefix == "proposed_" else "proposed_"
                 other = other_prefix + base
                 if other in metrics and is_stat_dict(metrics[other]) and base not in seen:
@@ -98,6 +99,7 @@ def read_result_json(experiments_root: Path, plan_id: str) -> dict | None:
 
 
 # ---- main entry point ------------------------------------------------------
+
 
 def format_results_tables(thread: list[dict], experiments_root: Path) -> str:
     """Generate a markdown block of results tables for every ExperimentResult.
@@ -147,8 +149,10 @@ def format_results_tables(thread: list[dict], experiments_root: Path) -> str:
         if nested:
             proposed = metrics["proposed"]
             baseline = metrics["baseline"]
-            flat = {**{f"proposed_{k}": v for k, v in proposed.items()},
-                    **{f"baseline_{k}": v for k, v in baseline.items()}}
+            flat = {
+                **{f"proposed_{k}": v for k, v in proposed.items()},
+                **{f"baseline_{k}": v for k, v in baseline.items()},
+            }
             pairs = [(k, f"proposed_{k}", f"baseline_{k}") for k in proposed if k in baseline]
         else:
             flat = {k: v for k, v in metrics.items() if is_stat_dict(v)}
@@ -184,9 +188,13 @@ def format_results_tables(thread: list[dict], experiments_root: Path) -> str:
             thr_str = ""
             if pred_threshold is not None:
                 op = (
-                    "≥" if str(pred_direction).lower() in ("greater", "higher", "up", "+")
-                    else "≤" if str(pred_direction).lower() in ("less", "lower", "down", "-")
-                    else "vs"
+                    "≥"
+                    if str(pred_direction).lower() in ("greater", "higher", "up", "+")
+                    else (
+                        "≤"
+                        if str(pred_direction).lower() in ("less", "lower", "down", "-")
+                        else "vs"
+                    )
                 )
                 thr_str = f" (target {op}{fmt_num(pred_threshold)})"
             hyp_short = (hyp.get("summary", "") or "")[:50].replace("|", "\\|")
@@ -232,7 +240,8 @@ def format_results_tables(thread: list[dict], experiments_root: Path) -> str:
         if pred_metric or pred_threshold is not None:
             thr_part = (
                 f" {pred_direction or ''} {fmt_num(pred_threshold)}".strip()
-                if pred_threshold is not None else ""
+                if pred_threshold is not None
+                else ""
             )
             parts.append(
                 f"_Prediction: `{pred_metric or '?'}`"
@@ -246,16 +255,14 @@ def format_results_tables(thread: list[dict], experiments_root: Path) -> str:
             parts.append(
                 "##### Proposed vs Baseline\n\n"
                 "| Metric | Baseline | Proposed | Δ | Seeds |\n"
-                "|--------|----------|----------|---|-------|\n"
-                + "\n".join(pair_rows) + "\n"
+                "|--------|----------|----------|---|-------|\n" + "\n".join(pair_rows) + "\n"
             )
         if flat_rows:
             heading = "##### Other Metrics" if pair_rows else "##### Metrics"
             parts.append(
                 f"{heading}\n\n"
                 "| Metric | Mean ± StdDev | Seeds |\n"
-                "|--------|---------------|-------|\n"
-                + "\n".join(flat_rows) + "\n"
+                "|--------|---------------|-------|\n" + "\n".join(flat_rows) + "\n"
             )
         detail_blocks.append("\n".join(parts))
 
@@ -267,7 +274,8 @@ def format_results_tables(thread: list[dict], experiments_root: Path) -> str:
         out.append(
             "| Plan | Hypothesis | Main Metric | Result | Status |\n"
             "|------|------------|-------------|--------|--------|\n"
-            + "\n".join(summary_rows) + "\n"
+            + "\n".join(summary_rows)
+            + "\n"
         )
     if detail_blocks:
         out.append("\n### Per-Experiment Detail\n\n" + "\n\n".join(detail_blocks))

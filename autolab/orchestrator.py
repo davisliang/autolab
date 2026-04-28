@@ -13,10 +13,11 @@ Stop conditions:
   * STOP file at repo root
 
 Usage:
-    AUTOLAB_PROJECT=<id> tools/run_orchestrator.py --idea "..."   # fresh run
-    AUTOLAB_PROJECT=<id> tools/run_orchestrator.py --resume       # continue
-    AUTOLAB_PROJECT=<id> tools/run_orchestrator.py --resume --hypothesis "..."
+    AUTOLAB_PROJECT=<id> python -m autolab.orchestrator --idea "..."   # fresh run
+    AUTOLAB_PROJECT=<id> python -m autolab.orchestrator --resume       # continue
+    AUTOLAB_PROJECT=<id> python -m autolab.orchestrator --resume --hypothesis "..."
 """
+
 from __future__ import annotations
 
 import argparse
@@ -25,14 +26,13 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
-from _paths import (
+from autolab.paths import (
     PROGRAM,
     REPO,
     STOP_FILE,
-    TOOLS,
     checkpoints_dir,
     cost_ledger,
     drafts_dir,
@@ -42,10 +42,9 @@ from _paths import (
     orchestrator_log,
     parking_lot,
     project_dir,
-    thoughts_dir,
     thread_log,
 )
-from _results_tables import format_results_tables as _fmt_tables_impl
+from autolab.results_tables import format_results_tables as _fmt_tables_impl
 
 PHASES = [
     "seed",
@@ -100,7 +99,7 @@ orchestrator will retreat and ask you to try again — wilder.
 
 
 def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def log_line(msg: str):
@@ -171,9 +170,7 @@ def _result_envelope(parsed) -> dict:
     if isinstance(parsed, list):
         for ev in reversed(parsed):
             if isinstance(ev, dict) and (
-                ev.get("type") == "result"
-                or "usage" in ev
-                or "total_cost_usd" in ev
+                ev.get("type") == "result" or "usage" in ev or "total_cost_usd" in ev
             ):
                 return ev
         for ev in reversed(parsed):
@@ -225,8 +222,9 @@ def project_paths_block() -> str:
         f"Drafts dir: `{base}/drafts/`\n"
         f"Ideas/parking lot: `{base}/ideas/parking_lot.md`\n"
         f"All read/write paths in this phase resolve under this project root. "
-        f"The tools (`tools/append_artifact.py`, `tools/refresh_indexes.py`, etc.) "
-        f"already read AUTOLAB_PROJECT={pid} from the env; you do not need to pass it.\n"
+        f"The tools (`python -m autolab.append_artifact`, "
+        f"`python -m autolab.refresh_indexes`, etc.) already read "
+        f"AUTOLAB_PROJECT={pid} from the env; you do not need to pass it.\n"
     )
 
 
@@ -326,7 +324,7 @@ def parallel_calls(jobs: list[dict]) -> list[dict]:
 
 def append_via_tool(args: list[str], stdin: str | None = None) -> str:
     proc = subprocess.run(
-        [sys.executable, str(TOOLS / "append_artifact.py")] + args,
+        [sys.executable, "-m", "autolab.append_artifact", *args],
         cwd=REPO,
         env={**os.environ, "AUTOLAB_PROJECT": get_project_id()},
         capture_output=True,
@@ -391,7 +389,7 @@ def write_seed_hypothesis(text: str) -> str:
 
 def refresh_indexes():
     subprocess.run(
-        [sys.executable, str(TOOLS / "refresh_indexes.py")],
+        [sys.executable, "-m", "autolab.refresh_indexes"],
         cwd=REPO,
         env={**os.environ, "AUTOLAB_PROJECT": get_project_id()},
         check=False,
@@ -438,7 +436,7 @@ def phase_expand() -> list[str]:
         f"WILDNESS BAR above. At least one MUST be a W1 cross-domain transplant from "
         f"a non-ML field. Each MUST include prediction_metric, prediction_threshold, "
         f"prediction_direction, and a body that explicitly names the wildness ticket(s) "
-        f"it satisfies. Use tools/append_artifact.py for emission. End with the stdout contract."
+        f"it satisfies. Use `python -m autolab.append_artifact` for emission. End with the stdout contract."
     )
     call_claude("expand", "idea-expander", "sonnet", prompt)
     refresh_indexes()
@@ -460,7 +458,8 @@ def phase_survey() -> list[str]:
             f"{cycle_ctx}"
             f"Read thread/INDEX.md and thoughts/{h['id']}.md (under the active project root). "
             f"Per the literature-scout skill, fetch 3-7 papers and emit LitFinding rows. "
-            f"Use tools/fetch_paper.py for caching, then tools/append_artifact.py for emission. "
+            f"Use `python -m autolab.fetch_paper` for caching, then "
+            f"`python -m autolab.append_artifact` for emission. "
             f"End with the stdout contract."
         )
         jobs.append(
@@ -500,9 +499,7 @@ def phase_gap_fill() -> list[str]:
     call_claude("gap-fill", "idea-expander", "sonnet", prompt)
     refresh_indexes()
     return [
-        r["id"]
-        for r in by_type(read_thread(), "Hypothesis")
-        if r.get("author") == "idea-expander"
+        r["id"] for r in by_type(read_thread(), "Hypothesis") if r.get("author") == "idea-expander"
     ]
 
 
@@ -547,12 +544,12 @@ def phase_screen() -> list[str]:
     parallel_calls(boredom_jobs)
 
     nov_prompt = (
-        f"Phase: screen-novelty\n"
-        f"Invoke skill: novelty-checker\n\n"
-        f"Read thread/INDEX.md. For each Hypothesis row, run tools/verify_citation.py "
-        f"against each linked LitFinding's arxiv_id. Emit Citation rows for each pair "
-        f"and high-severity Critiques for collisions (score >= 0.85). "
-        f"End with the stdout contract."
+        "Phase: screen-novelty\n"
+        "Invoke skill: novelty-checker\n\n"
+        "Read thread/INDEX.md. For each Hypothesis row, run "
+        "`python -m autolab.verify_citation` against each linked LitFinding's "
+        "arxiv_id. Emit Citation rows for each pair and high-severity Critiques "
+        "for collisions (score >= 0.85). End with the stdout contract."
     )
     call_claude("screen-novelty", "novelty-checker", "haiku", nov_prompt)
 
@@ -610,11 +607,12 @@ def _framework_hint() -> str:
         return _FRAMEWORK_HINT_CACHE
     try:
         import mlx.core as mx  # noqa: F401
+
         device = str(mx.default_device())
         _FRAMEWORK_HINT_CACHE = (
             "## Framework availability (REQUIRED)\n"
             f"`mlx` is INSTALLED on this machine. Default device: {device}. "
-            "Set `framework=\"mlx\"` in your ExperimentPlan and write the "
+            'Set `framework="mlx"` in your ExperimentPlan and write the '
             "code_skeleton using `import mlx.core as mx`, `import mlx.nn as nn`, "
             "`import mlx.optimizers as optim`. Seed via `mx.random.seed(seed)`. "
             "Use `torch` ONLY if you need an op MLX genuinely lacks (rare for MLP, "
@@ -623,7 +621,7 @@ def _framework_hint() -> str:
     except ImportError:
         _FRAMEWORK_HINT_CACHE = (
             "## Framework availability\n"
-            "`mlx` is NOT installed on this machine — use `framework=\"torch\"` "
+            '`mlx` is NOT installed on this machine — use `framework="torch"` '
             "with CPU device. (Note: this run is missing the preferred backend; "
             "performance will be much slower than MLX on Apple Silicon.)\n\n"
         )
@@ -666,9 +664,7 @@ def phase_design(benchmark: str | None) -> list[str]:
 
 def phase_run() -> list[str]:
     queue: list[str] = [
-        p["id"]
-        for p in by_type(read_thread(), "ExperimentPlan")
-        if not p.get("is_ablation", False)
+        p["id"] for p in by_type(read_thread(), "ExperimentPlan") if not p.get("is_ablation", False)
     ]
     new_results: list[str] = []
     seen_plans: set[str] = set()
@@ -689,9 +685,7 @@ def phase_run() -> list[str]:
         call_claude("run", "experiment-runner", "sonnet", prompt, timeout_s=2400)
         refresh_indexes()
         results_for_plan = [
-            r
-            for r in by_type(read_thread(), "ExperimentResult")
-            if r.get("plan_id") == pid
+            r for r in by_type(read_thread(), "ExperimentResult") if r.get("plan_id") == pid
         ]
         if not results_for_plan:
             continue
@@ -808,10 +802,10 @@ def phase_write() -> list[str]:
     new_ids: list[str] = []
     for sec in sections:
         prompt_parts = [
-            f"Phase: write",
-            f"Invoke skill: paper-writer",
+            "Phase: write",
+            "Invoke skill: paper-writer",
             f"section={sec}",
-            f"version=1",
+            "version=1",
             f"cite_pool={','.join(cite_pool) or '(none)'}",
             f"relevant_artifacts={relevant}",
             "",
@@ -839,34 +833,38 @@ def phase_write() -> list[str]:
             "",
         ]
         if results_tables and sec == "experiments":
-            prompt_parts.extend([
-                "## Pre-rendered results tables (deterministic — paste VERBATIM)",
-                "",
-                "The orchestrator has rendered the canonical results tables from each "
-                "experiments/<EXP-id>/result.json. Paste the entire block below "
-                "VERBATIM into your experiments section body, then write your prose "
-                "AROUND it — sanity-gate notes, qualitative analysis, ablation discussion, "
-                "threats to validity. Do NOT retype the numbers in prose form. "
-                "Do NOT modify, summarize, or reformat the tables. Place the block at the "
-                "start of your section (before the prose) so readers can skim outcomes first.",
-                "",
-                "===== BEGIN PRE-RENDERED TABLES (paste verbatim) =====",
-                results_tables,
-                "===== END PRE-RENDERED TABLES =====",
-                "",
-            ])
+            prompt_parts.extend(
+                [
+                    "## Pre-rendered results tables (deterministic — paste VERBATIM)",
+                    "",
+                    "The orchestrator has rendered the canonical results tables from each "
+                    "experiments/<EXP-id>/result.json. Paste the entire block below "
+                    "VERBATIM into your experiments section body, then write your prose "
+                    "AROUND it — sanity-gate notes, qualitative analysis, ablation discussion, "
+                    "threats to validity. Do NOT retype the numbers in prose form. "
+                    "Do NOT modify, summarize, or reformat the tables. Place the block at the "
+                    "start of your section (before the prose) so readers can skim outcomes first.",
+                    "",
+                    "===== BEGIN PRE-RENDERED TABLES (paste verbatim) =====",
+                    results_tables,
+                    "===== END PRE-RENDERED TABLES =====",
+                    "",
+                ]
+            )
         elif results_tables and sec in ("abstract", "discussion"):
-            prompt_parts.extend([
-                "## Reference data (use these numbers — do NOT paste verbatim)",
-                "",
-                "Below are the canonical results tables for accurate numerical reference. "
-                "When stating headline results in prose, use these exact numbers. The full "
-                "tables will appear in the Experiments section; you do not need to "
-                "reproduce them here.",
-                "",
-                results_tables,
-                "",
-            ])
+            prompt_parts.extend(
+                [
+                    "## Reference data (use these numbers — do NOT paste verbatim)",
+                    "",
+                    "Below are the canonical results tables for accurate numerical reference. "
+                    "When stating headline results in prose, use these exact numbers. The full "
+                    "tables will appear in the Experiments section; you do not need to "
+                    "reproduce them here.",
+                    "",
+                    results_tables,
+                    "",
+                ]
+            )
         prompt_parts.append(
             "Per the paper-writer skill, produce one DraftSection. "
             "Write the section body to thoughts/<DRAFT-id>.md and append to drafts/citations.bib. "
@@ -875,11 +873,7 @@ def phase_write() -> list[str]:
         prompt = "\n".join(prompt_parts)
         call_claude("write", "paper-writer", "opus", prompt, timeout_s=1800)
         refresh_indexes()
-        latest = [
-            r
-            for r in by_type(read_thread(), "DraftSection")
-            if r.get("section") == sec
-        ]
+        latest = [r for r in by_type(read_thread(), "DraftSection") if r.get("section") == sec]
         if latest:
             new_ids.append(latest[-1]["id"])
     return new_ids
@@ -1019,14 +1013,9 @@ def phase_final() -> list[str]:
         # Safety net: if paper-writer was supposed to paste the tables into the
         # experiments section but didn't, inject them at assembly time so the
         # final paper is never missing them.
-        if (
-            key == "experiments"
-            and results_tables
-            and "### Results Summary" not in body_text
-        ):
+        if key == "experiments" and results_tables and "### Results Summary" not in body_text:
             log_line(
-                "final: experiments section body lacks tables; "
-                "injecting auto-rendered fallback"
+                "final: experiments section body lacks tables; " "injecting auto-rendered fallback"
             )
             out.append(results_tables)
         if body_text:
@@ -1056,7 +1045,13 @@ def read_cycle_state() -> dict:
     """
     p = cycle_state_path()
     if not p.exists():
-        return {"current": 1, "history": [], "crash_retries": {}, "idea_cycle": 1, "idea_history": []}
+        return {
+            "current": 1,
+            "history": [],
+            "crash_retries": {},
+            "idea_cycle": 1,
+            "idea_history": [],
+        }
     try:
         s = json.loads(p.read_text())
         s.setdefault("current", 1)
@@ -1066,7 +1061,13 @@ def read_cycle_state() -> dict:
         s.setdefault("idea_history", [])
         return s
     except json.JSONDecodeError:
-        return {"current": 1, "history": [], "crash_retries": {}, "idea_cycle": 1, "idea_history": []}
+        return {
+            "current": 1,
+            "history": [],
+            "crash_retries": {},
+            "idea_cycle": 1,
+            "idea_history": [],
+        }
 
 
 def write_cycle_state(state: dict):
@@ -1109,13 +1110,13 @@ def _experiment_results_after(boundary_iso: str | None) -> list[dict]:
 
 def _retreat(
     *,
-    counter_key: str,        # "current" | "idea_cycle"
-    history_key: str,        # "history" | "idea_history"
+    counter_key: str,  # "current" | "idea_cycle"
+    history_key: str,  # "history" | "idea_history"
     max_cycles: int,
-    target_phase: str,       # phase to return on retreat
-    wipe_from: str,          # phase to wipe checkpoints from
-    label: str,              # log-line prefix
-    decide,                  # state -> (advance: bool, history_entry: dict | None)
+    target_phase: str,  # phase to return on retreat
+    wipe_from: str,  # phase to wipe checkpoints from
+    label: str,  # log-line prefix
+    decide,  # state -> (advance: bool, history_entry: dict | None)
 ) -> str | None:
     """Generic retreat: shared cap check + history append + counter bump + checkpoint wipe.
 
@@ -1147,6 +1148,7 @@ def _retreat(
 
 def cycle_retreat_check() -> str | None:
     """Retreat after `critique` if no primary experiment passed."""
+
     def decide(state):
         cycle = state["current"]
         prev = state["history"][-1]["ended_at"] if state["history"] else None
@@ -1162,7 +1164,7 @@ def cycle_retreat_check() -> str | None:
         failed_plan_ids = [r.get("plan_id") for r in primary if r.get("plan_id")]
         failed_hyp_ids: list[str] = []
         for pid in failed_plan_ids:
-            for parent in (plans_by_id.get(pid, {}).get("parent_ids") or []):
+            for parent in plans_by_id.get(pid, {}).get("parent_ids") or []:
                 if parent.startswith("HYP-") and parent not in failed_hyp_ids:
                     failed_hyp_ids.append(parent)
         park_hypotheses(
@@ -1175,6 +1177,7 @@ def cycle_retreat_check() -> str | None:
             "summary": f"{len(primary)} primary experiment(s), 0 pass",
             "_log_extra": f"parked {len(failed_hyp_ids)} HYPs ({failed_hyp_ids})",
         }
+
     return _retreat(
         counter_key="current",
         history_key="history",
@@ -1224,7 +1227,9 @@ def crash_retry_pass() -> int:
             continue
         state["crash_retries"][pid] = used + 1
         write_cycle_state(state)
-        log_line(f"crash-retry: re-running {pid} (orchestrator attempt {used+1}/{MAX_CRASH_RETRIES})")
+        log_line(
+            f"crash-retry: re-running {pid} (orchestrator attempt {used+1}/{MAX_CRASH_RETRIES})"
+        )
         prompt = (
             f"Phase: run-debug-retry\n"
             f"Invoke skill: experiment-runner\n"
@@ -1283,6 +1288,7 @@ def idea_cycle_context_block(state: dict) -> str:
 
 def idea_retreat_check() -> str | None:
     """Retreat after `screen` if too few hypotheses cleared the wildness bar."""
+
     def decide(state):
         n = len(surviving_hypotheses())
         if n >= MIN_WILD_HYPOTHESES:
@@ -1308,6 +1314,7 @@ def idea_retreat_check() -> str | None:
                 f"parked {len(parked)} HYPs ({parked})"
             ),
         }
+
     return _retreat(
         counter_key="idea_cycle",
         history_key="idea_history",

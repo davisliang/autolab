@@ -68,7 +68,7 @@ The pre-rendered block is delimited by `===== BEGIN PRE-RENDERED TABLES (paste v
 ## Tools
 
 - `Read` — to load referenced artifacts and prior `DraftSection` rows
-- `Bash` — for `tools/append_artifact.py`
+- `Bash` — for `python -m autolab.append_artifact`
 - `Write`, `Edit` — for the section's markdown body and `drafts/citations.bib`
 
 ## Recommended model
@@ -99,7 +99,7 @@ The pre-rendered block is delimited by `===== BEGIN PRE-RENDERED TABLES (paste v
    }
    ```
    Skip duplicates. Source these from `papers/<arxiv-id>.meta.json`.
-6. Emit one DraftSection via `tools/append_artifact.py`.
+6. Emit one DraftSection via `python -m autolab.append_artifact`.
 
 ## Section-specific guidance (NeurIPS quality bar)
 

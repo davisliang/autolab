@@ -6,20 +6,18 @@ have edited DraftSection bodies and want to re-assemble the markdown without
 re-running earlier phases.
 
 Usage:
-    uv run python tools/finalize.py --project <id>
-    AUTOLAB_PROJECT=<id> uv run python tools/finalize.py
+    uv run python -m autolab.finalize --project <id>
+    AUTOLAB_PROJECT=<id> uv run python -m autolab.finalize
 """
+
 from __future__ import annotations
 
 import argparse
 import os
 import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-
-from _paths import project_dir
-from run_orchestrator import phase_final
+from autolab.orchestrator import phase_final
+from autolab.paths import project_dir
 
 
 def main():

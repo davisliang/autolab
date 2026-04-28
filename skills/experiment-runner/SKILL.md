@@ -20,13 +20,13 @@ Take a single `ExperimentPlan`, materialize its code skeleton into `experiments/
 - `experiments/<EXP-id>/runs/<timestamp>.log` per invocation
 - `experiments/<EXP-id>/result.json` — canonical metrics dict
 - `experiments/<EXP-id>/repro.sh` — executable script that recreates the run from scratch
-- One `ExperimentResult` artifact via `tools/append_artifact.py`
+- One `ExperimentResult` artifact via `python -m autolab.append_artifact`
 
 ## Tools
 
-- `tools/run_experiment.py` — the canonical runner. It handles sanity gate, multi-seed execution, baseline execution, timeout enforcement, log capture, and `repro.sh` emission. **Always use it; do not invoke `python` or `uv run` directly to run the experiment.**
+- `python -m autolab.run_experiment` — the canonical runner. It handles sanity gate, multi-seed execution, baseline execution, timeout enforcement, log capture, and `repro.sh` emission. **Always use it; do not invoke `python` or `uv run` directly to run the experiment.**
 - `Read`, `Edit`, `Write` — only inside `experiments/<EXP-id>/`
-- `Bash` — for `tools/run_experiment.py` and `tools/append_artifact.py` invocations
+- `Bash` — for `python -m autolab.run_experiment` and `python -m autolab.append_artifact` invocations
 
 ## Recommended model
 
@@ -41,18 +41,18 @@ Take a single `ExperimentPlan`, materialize its code skeleton into `experiments/
    - If the plan provides additional helper files, write each to `experiments/<EXP-id>/code/`
 3. Sanity gate:
    ```
-   tools/run_experiment.py --plan-id <EXP-id> --sanity
+   python -m autolab.run_experiment --plan-id <EXP-id> --sanity
    ```
    This trains on 32 examples for 60 s and asserts train loss decreases by ≥50%.
    - If sanity fails: emit a `Critique` (mode=validity, severity=high, target=<EXP-id>, proposed_fix=<analysis>) and stop. The plan is parked.
 4. Main run + baseline:
    ```
-   tools/run_experiment.py --plan-id <EXP-id> --run
+   python -m autolab.run_experiment --plan-id <EXP-id> --run
    ```
    The tool runs all seeds × {proposed, baseline} sequentially with per-run timeouts and writes one log per invocation. It aggregates into `result.json` with `{metric: {mean, stddev, n_seeds, per_seed: [...]}}` for each condition.
 5. On crash: the tool returns non-zero. Up to `max_debug_depth=2`:
    a. Read the failing `runs/<latest>.log`
-   b. Invoke `tools/append_artifact.py --type Critique --mode failure-analysis --target-id <EXP-id> --severity med --concerns "<short>" --proposed_fix "<patch>"`
+   b. Invoke `python -m autolab.append_artifact --type Critique --mode failure-analysis --target-id <EXP-id> --severity med --concerns "<short>" --proposed_fix "<patch>"`
    c. Apply the fix to `experiments/<EXP-id>/code/run.py` via `Edit`
    d. Re-run with `--run`
    e. If still failing after 2 retries: emit a final `Critique` (severity=high, mode=validity) and stop.
@@ -78,11 +78,11 @@ phase=run status=<pass|fail|crash> plan_id=EXP-003 new_ids=RES-005[,CRIT-009]
 ## Worked example
 
 ```
-tools/run_experiment.py --plan-id EXP-003 --sanity
+python -m autolab.run_experiment --plan-id EXP-003 --sanity
 # -> "sanity_pass=true delta_loss=0.71"
-tools/run_experiment.py --plan-id EXP-003 --run
+python -m autolab.run_experiment --plan-id EXP-003 --run
 # -> writes experiments/EXP-003/result.json
-tools/append_artifact.py --type ExperimentResult --parent EXP-003 \
+python -m autolab.append_artifact --type ExperimentResult --parent EXP-003 \
   --author experiment-runner \
   --summary "MNIST MLP per-layer LR vs uniform: +0.42pp val_acc (n=3)" \
   --field plan_id=EXP-003 \

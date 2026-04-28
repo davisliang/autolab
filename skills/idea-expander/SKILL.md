@@ -23,7 +23,7 @@ The orchestrator's prompt names one of:
 
 ## Outputs
 
-`Hypothesis` artifacts via `tools/append_artifact.py`. Required fields:
+`Hypothesis` artifacts via `python -m autolab.append_artifact`. Required fields:
 - `claim` — one sentence
 - `prediction_metric` — e.g. `val_accuracy`, `val_loss`, `bits_per_byte`, `wall_seconds`
 - `prediction_threshold` — numeric (e.g. `0.5` for "≥0.5pp gain")
@@ -33,7 +33,7 @@ The orchestrator's prompt names one of:
 ## Tools
 
 - `Read`, `Grep` — to inspect thread + thoughts + papers
-- `Bash` — to invoke `tools/append_artifact.py` for emission
+- `Bash` — to invoke `python -m autolab.append_artifact` for emission
 - `WebFetch` — only via the `huggingface-papers` skill if you need quick paper context
 
 ## Recommended model
@@ -65,7 +65,7 @@ If the orchestrator retreats with an "IDEA-CYCLE RETREAT CONTEXT" block, the pre
 3. **Mandatory W1 ticket**: generate at least 1 hypothesis that imports a technique from a NON-ML field (per the list above). State the source field and the mechanistic analogy explicitly in the body.
 4. For each hypothesis, write a one-sentence `claim`, a numeric `prediction_metric/threshold/direction`, name the wildness ticket(s) it satisfies, and a 2-3 sentence rationale referencing IDEA-<id> by reference (no requoting).
 5. Verify each prediction is locally testable in <30 minutes on Apple Silicon. If not, scale down or drop.
-6. Emit each via `tools/append_artifact.py --type Hypothesis --parent IDEA-<id> --summary "<claim>" --field prediction_metric=<m> --field prediction_threshold=<n> --field prediction_direction=<dir>`. The tool prints the new id; capture it.
+6. Emit each via `python -m autolab.append_artifact --type Hypothesis --parent IDEA-<id> --summary "<claim>" --field prediction_metric=<m> --field prediction_threshold=<n> --field prediction_direction=<dir>`. The tool prints the new id; capture it.
 
 ## Procedure (mode=gap-fill)
 
@@ -97,7 +97,7 @@ Cross-domain transplant: import **trust-region scaling** from RL/PPO — scale p
 
 Append:
 ```
-tools/append_artifact.py --type Hypothesis \
+python -m autolab.append_artifact --type Hypothesis \
   --parent IDEA-001 \
   --author idea-expander \
   --summary "Trust-region-style per-layer LR scaling outperforms uniform LR on MNIST MLPs" \

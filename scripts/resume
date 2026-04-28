@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 # Resume an existing autolab project. Optionally seed an additional Hypothesis.
 #
-# Usage:
-#   ./resume                                    # interactive: list and pick
-#   ./resume --project <id>                     # continue named project
-#   ./resume --project <id> --hypothesis "..."  # add a user-supplied Hypothesis, then continue
-#   ./resume --project <id> --resume-from-bank  # pop next parked HYP from ideas/parking_lot.md as new seed
-#   ./resume --project <id> --watchdog          # hands-off resume
-#   ./resume --list                             # just print the project table
+# Usage (run from repo root):
+#   scripts/resume                                    # interactive: list and pick
+#   scripts/resume --project <id>                     # continue named project
+#   scripts/resume --project <id> --hypothesis "..."  # add a user-supplied Hypothesis, then continue
+#   scripts/resume --project <id> --resume-from-bank  # pop next parked HYP from ideas/parking_lot.md as new seed
+#   scripts/resume --project <id> --watchdog          # hands-off resume
+#   scripts/resume --list                             # just print the project table
 set -euo pipefail
 
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# This script lives at <repo>/scripts/resume, so REPO_DIR is one parent up.
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
 
 PROJECT_ID=""
@@ -21,7 +22,7 @@ PASS_ARGS=("--resume")
 
 usage() {
   cat <<EOF
-Usage: ./resume [--project <id>] [options]
+Usage: scripts/resume [--project <id>] [options]
 
 Options:
   --project <id>           Project to resume (required unless --list or interactive pick)
@@ -72,7 +73,7 @@ if [[ -f "$REPO_DIR/.env" ]]; then
 fi
 
 mkdir -p projects
-uv run python tools/refresh_indexes.py --projects
+uv run python -m autolab.refresh_indexes --projects
 
 if (( LIST_ONLY )); then
   if [[ -f "projects/INDEX.md" ]]; then
@@ -87,7 +88,7 @@ fi
 if [[ -z "$PROJECT_ID" ]]; then
   mapfile -t CANDIDATES < <(find projects -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort)
   if (( ${#CANDIDATES[@]} == 0 )); then
-    echo "no projects found. Use ./start --idea \"...\" first." >&2
+    echo "no projects found. Use scripts/start --idea \"...\" first." >&2
     exit 2
   fi
   echo "Available projects:"
@@ -117,7 +118,7 @@ if [[ -n "$HYPOTHESIS" ]]; then
 fi
 
 if (( WATCHDOG )); then
-  exec uv run python tools/idle_continue.py
+  exec uv run python -m autolab.idle_continue
 else
-  exec uv run python tools/run_orchestrator.py ${PASS_ARGS[@]+"${PASS_ARGS[@]}"}
+  exec uv run python -m autolab.orchestrator ${PASS_ARGS[@]+"${PASS_ARGS[@]}"}
 fi

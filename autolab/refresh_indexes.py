@@ -6,18 +6,19 @@
   global  -> projects/INDEX.md  (one row per project, no AUTOLAB_PROJECT needed)
 
 Usage:
-    tools/refresh_indexes.py             # all three (uses AUTOLAB_PROJECT for thread/papers)
-    tools/refresh_indexes.py --thread
-    tools/refresh_indexes.py --papers
-    tools/refresh_indexes.py --projects
+    python -m autolab.refresh_indexes             # all three (uses AUTOLAB_PROJECT for thread/papers)
+    python -m autolab.refresh_indexes --thread
+    python -m autolab.refresh_indexes --papers
+    python -m autolab.refresh_indexes --projects
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import os
 
-from _paths import (
+from autolab.paths import (
     PROJECTS,
     list_projects,
     papers_dir,
@@ -90,9 +91,7 @@ def refresh_papers():
             continue
         aid = m.stem.replace(".meta", "")
         title = (meta.get("title") or "").replace("|", "\\|")
-        authors = ", ".join(
-            a.get("name", "") for a in meta.get("authors", [])[:3]
-        )
+        authors = ", ".join(a.get("name", "") for a in meta.get("authors", [])[:3])
         if len(meta.get("authors", [])) > 3:
             authors += ", et al."
         year = (meta.get("publishedAt") or "")[:4]
@@ -132,7 +131,7 @@ def refresh_projects():
 
     out = ["# Projects", ""]
     if not rows:
-        out.append("_(none yet — use `./start --idea \"...\"`)_")
+        out.append('_(none yet — use `./start --idea "..."`)_')
         idx.write_text("\n".join(out) + "\n")
         return
     out.append("| project | seed idea | latest phase | artifacts |")

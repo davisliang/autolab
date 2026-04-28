@@ -25,7 +25,7 @@ The orchestrator's prompt names exactly one of:
 
 ## Outputs
 
-A single `Critique` artifact per invocation, via `tools/append_artifact.py`. Required fields:
+A single `Critique` artifact per invocation, via `python -m autolab.append_artifact`. Required fields:
 - `target_id` — the artifact being critiqued
 - `mode` — `boredom` | `validity` | `failure-analysis`
 - `severity` — `low` | `med` | `high`
@@ -35,7 +35,7 @@ A single `Critique` artifact per invocation, via `tools/append_artifact.py`. Req
 ## Tools
 
 - `Read`, `Grep` — to inspect targets, papers, logs
-- `Bash` — for `tools/append_artifact.py`
+- `Bash` — for `python -m autolab.append_artifact`
 - `WebFetch` — only for `boredom` mode and only via the network allowlist
 
 ## Recommended model

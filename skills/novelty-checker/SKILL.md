@@ -24,7 +24,7 @@ The orchestrator uses high-severity Critiques to park the hypothesis.
 
 ## Tools
 
-- `tools/verify_citation.py --claim "<text>" --candidate-arxiv-ids <id,id,...>` — runs fuzzy title-match via rapidfuzz + Semantic Scholar lookup; prints score per candidate
+- `python -m autolab.verify_citation --claim "<text>" --candidate-arxiv-ids <id,id,...>` — runs fuzzy title-match via rapidfuzz + Semantic Scholar lookup; prints score per candidate
 - `Read` — to inspect Hypothesis + LitFinding bodies
 
 ## Recommended model
@@ -36,7 +36,7 @@ The orchestrator uses high-severity Critiques to park the hypothesis.
 1. Read every `thoughts/HYP-*.md` listed by the orchestrator.
 2. For each Hypothesis, build a candidate LIT subset: all LitFindings whose `parent_ids` include this hypothesis OR whose `key_claims` mention any of the hypothesis's claim nouns.
 3. For each (Hypothesis, LitFinding) pair:
-   a. Run `tools/verify_citation.py --claim "<hyp.claim>" --candidate-arxiv-id <lit.arxiv_id>`
+   a. Run `python -m autolab.verify_citation --claim "<hyp.claim>" --candidate-arxiv-id <lit.arxiv_id>`
    b. Parse the score
    c. Emit a `Citation` row with `verified=true` if score >= 0.5, else `verified=false`
 4. If max(verifier_score) over all candidate LITs is >= 0.85: emit a high-severity `Critique` (mode=validity) flagging duplication and listing the overlapping LIT id(s).
@@ -59,7 +59,7 @@ phase=screen-novelty status=ok new_ids=CITE-014,CITE-015,CRIT-007 parked_hypothe
 
 For HYP-003 vs. LIT-008 (a paper on layer-wise adaptive rates):
 ```
-tools/verify_citation.py \
+python -m autolab.verify_citation \
   --claim "Trust-region-style per-layer LR scaling outperforms uniform LR on MNIST MLPs" \
   --candidate-arxiv-id 2412.00123
 ```

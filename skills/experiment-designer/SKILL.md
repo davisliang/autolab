@@ -22,7 +22,7 @@ For a target `Hypothesis`, produce one minimal `ExperimentPlan` that can validat
 
 ## Outputs
 
-A single `ExperimentPlan` artifact via `tools/append_artifact.py`. Required fields:
+A single `ExperimentPlan` artifact via `python -m autolab.append_artifact`. Required fields:
 - `hypothesis_id` — the HYP id this tests
 - `dataset` — string (e.g. `"mnist"`, `"cifar10"`, `"shakespeare-char"`, `"sst2"`)
 - `framework` — **`"mlx"` is the default and strongly preferred** (Apple Silicon GPU + Neural Engine, ~5-10× faster than torch CPU). Use `"torch"` ONLY if (a) the orchestrator's prompt explicitly says `mlx unavailable`, or (b) you need a specific op that MLX genuinely lacks (rare for MLP / small transformer / CNN work — check `mlx.core` and `mlx.nn` first).
@@ -37,7 +37,7 @@ A single `ExperimentPlan` artifact via `tools/append_artifact.py`. Required fiel
 ## Tools
 
 - `Read` — to inspect Hypothesis + LitFinding bodies
-- `Bash` — to invoke `tools/append_artifact.py`
+- `Bash` — to invoke `python -m autolab.append_artifact`
 
 ## Recommended model
 
@@ -59,7 +59,7 @@ A single `ExperimentPlan` artifact via `tools/append_artifact.py`. Required fiel
    - Train, evaluate, and write `{seed, config, metric: value, wall_seconds}` to JSON-Lines on stdout
    - Use deterministic seeding (`mx.random.seed`, `torch.manual_seed`, `numpy.random.seed`)
    - Avoid network calls inside the run; datasets must be pre-cached or loaded from `~/.cache/...`
-8. Emit the plan via `tools/append_artifact.py --type ExperimentPlan ...`. The id printed (e.g. `EXP-003`) is the runner's working dir name.
+8. Emit the plan via `python -m autolab.append_artifact --type ExperimentPlan ...`. The id printed (e.g. `EXP-003`) is the runner's working dir name.
 
 ## Procedure (mode=ablation)
 
@@ -70,7 +70,7 @@ A single `ExperimentPlan` artifact via `tools/append_artifact.py`. Required fiel
    - `is_ablation=true`
    - `parent_ids=[<EXP-primary-id>]`
 4. Code skeleton should be a minimal diff of the primary skeleton (e.g. set per-layer LRs to a constant), not a fresh implementation.
-5. Emit via `tools/append_artifact.py`.
+5. Emit via `python -m autolab.append_artifact`.
 
 ## Boundaries
 

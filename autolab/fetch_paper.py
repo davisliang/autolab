@@ -7,9 +7,10 @@ Sources (in order):
   3. arxiv.org/abs/{id} (fallback if HF has no markdown)
 
 Usage:
-    tools/fetch_paper.py 2412.00123
-    tools/fetch_paper.py https://arxiv.org/abs/2412.00123
+    python -m autolab.fetch_paper 2412.00123
+    python -m autolab.fetch_paper https://arxiv.org/abs/2412.00123
 """
+
 from __future__ import annotations
 
 import argparse
@@ -19,7 +20,7 @@ import sys
 
 import httpx
 
-from _paths import papers_dir
+from autolab.paths import papers_dir
 
 
 def parse_id(s: str) -> str:

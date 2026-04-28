@@ -17,7 +17,7 @@ Given a target `Hypothesis` (or `Idea`), gather 3-7 papers that are most relevan
 
 ## Outputs
 
-`LitFinding` artifacts via `tools/append_artifact.py`. Required fields:
+`LitFinding` artifacts via `python -m autolab.append_artifact`. Required fields:
 - `arxiv_id` — string (e.g. `2412.00123`)
 - `title` — string
 - `relevance` — float in [0, 1]
@@ -25,13 +25,13 @@ Given a target `Hypothesis` (or `Idea`), gather 3-7 papers that are most relevan
 - `paper_path` — relative path `papers/<arxiv-id>.md`
 
 Side effects:
-- `papers/<arxiv-id>.md` and `papers/<arxiv-id>.meta.json` populated via `tools/fetch_paper.py`
-- `papers/INDEX.md` refreshed via `tools/refresh_indexes.py --papers`
+- `papers/<arxiv-id>.md` and `papers/<arxiv-id>.meta.json` populated via `python -m autolab.fetch_paper`
+- `papers/INDEX.md` refreshed via `python -m autolab.refresh_indexes --papers`
 
 ## Tools
 
 - The `huggingface-papers` skill (loaded from `skills/huggingface-papers/SKILL.md`) — use its API recipes
-- `tools/fetch_paper.py <arxiv-id>` — caches paper markdown + metadata
+- `python -m autolab.fetch_paper <arxiv-id>` — caches paper markdown + metadata
 - `WebFetch` — for arXiv search and Semantic Scholar fallback
 - `Read`, `Grep` — to inspect fetched paper bodies
 
@@ -48,12 +48,12 @@ Side effects:
    ```
    Then arXiv (`http://export.arxiv.org/api/query?search_query=...`) for breadth.
 3. For each candidate paper:
-   a. Run `tools/fetch_paper.py <arxiv-id>` to cache markdown + metadata
+   a. Run `python -m autolab.fetch_paper <arxiv-id>` to cache markdown + metadata
    b. Read the abstract + intro from `papers/<arxiv-id>.md`
    c. Decide relevance (0-1). Keep ≥0.4 only.
 4. For each kept paper: extract 1-3 `key_claims` as short strings (e.g. "Per-layer LR helps for ResNets on ImageNet (>0.5pp top-1)").
-5. Emit one `LitFinding` per paper via `tools/append_artifact.py`.
-6. After all emissions: run `tools/refresh_indexes.py --papers`.
+5. Emit one `LitFinding` per paper via `python -m autolab.append_artifact`.
+6. After all emissions: run `python -m autolab.refresh_indexes --papers`.
 
 ## Boundaries
 

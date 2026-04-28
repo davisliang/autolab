@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 # Start a new autolab project on a seed idea. Does NOT touch existing projects.
 #
-# Usage:
-#   ./start --idea "investigate whether layer-wise LRs help small MLPs on MNIST"
-#   ./start --idea-file idea.txt              # avoid shell quoting headaches for long ideas
-#   cat idea.txt | ./start --idea-stdin       # pipe the idea via stdin
-#   ./start --idea "..." --benchmark mnist
-#   ./start --idea "..." --watchdog            # hands-off mode
-#   ./start --idea "..." --single-step         # run only the seed phase, then exit
-#   ./start --idea "..." --project-id custom-name   # override the auto-generated id
+# Usage (run from repo root):
+#   scripts/start --idea "investigate whether layer-wise LRs help small MLPs on MNIST"
+#   scripts/start --idea-file idea.txt              # avoid shell quoting headaches for long ideas
+#   cat idea.txt | scripts/start --idea-stdin       # pipe the idea via stdin
+#   scripts/start --idea "..." --benchmark mnist
+#   scripts/start --idea "..." --watchdog           # hands-off mode
+#   scripts/start --idea "..." --single-step        # run only the seed phase, then exit
+#   scripts/start --idea "..." --project-id custom-name   # override the auto-generated id
 set -euo pipefail
 
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# This script lives at <repo>/scripts/start, so REPO_DIR is one parent up.
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
 
 IDEA=""
@@ -135,11 +136,11 @@ fi
 if [[ -z "$PROJECT_ID" ]]; then
   PROJECT_ID="$(uv run python -c '
 import sys
-from tools._paths import make_project_id
+from autolab.paths import make_project_id
 print(make_project_id(sys.argv[1]))
 ' "$IDEA")"
 elif [[ -d "projects/$PROJECT_ID" ]]; then
-  echo "ERROR: project id '$PROJECT_ID' already exists; pick a different one or use ./resume" >&2
+  echo "ERROR: project id '$PROJECT_ID' already exists; pick a different one or use scripts/resume" >&2
   exit 2
 fi
 
@@ -153,8 +154,8 @@ export AUTOLAB_PROJECT="$PROJECT_ID"
 if (( WATCHDOG )); then
   # First, materialize the seed phase synchronously so the watchdog has a
   # checkpoint to resume from.
-  uv run python tools/run_orchestrator.py --idea "$IDEA" --single-step ${PASS_ARGS[@]+"${PASS_ARGS[@]}"}
-  exec uv run python tools/idle_continue.py
+  uv run python -m autolab.orchestrator --idea "$IDEA" --single-step ${PASS_ARGS[@]+"${PASS_ARGS[@]}"}
+  exec uv run python -m autolab.idle_continue
 else
-  exec uv run python tools/run_orchestrator.py --idea "$IDEA" ${PASS_ARGS[@]+"${PASS_ARGS[@]}"}
+  exec uv run python -m autolab.orchestrator --idea "$IDEA" ${PASS_ARGS[@]+"${PASS_ARGS[@]}"}
 fi

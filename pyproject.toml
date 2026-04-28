@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "autolab"
 version = "0.1.0"
@@ -13,7 +17,6 @@ dependencies = [
     "scikit-learn>=1.4.0",
     "sentence-transformers>=5.4.1",
     "datasets>=4.8.4",
-    "weasyprint>=68.1",
     # MLX is the preferred framework for ExperimentPlans on Apple Silicon
     # (unified memory, GPU + Neural Engine). Marker scopes the install so
     # non-Apple-Silicon machines don't fail uv sync.
@@ -24,9 +27,56 @@ dependencies = [
 torch = [
     "torch>=2.4.0",
 ]
-data = [
-    "datasets>=3.0.0",
+
+[project.scripts]
+autolab = "autolab.orchestrator:main"
+autolab-finalize = "autolab.finalize:main"
+autolab-dashboard = "autolab.dashboard.server:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "black>=24.0",
+    "ruff>=0.6",
+    "pre-commit>=3.7",
 ]
 
-[tool.uv]
-package = false
+[tool.hatch.build.targets.wheel]
+packages = ["autolab"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+
+[tool.black]
+line-length = 100
+target-version = ["py311", "py312", "py313"]
+# Format the test suite first; widen later once the rest of the tree is
+# formatted. Excludes match what `ruff` skips.
+include = "^/(tests)/.*\\.py$"
+extend-exclude = '''
+(
+  /\.venv/
+  | /\.git/
+  | /projects/
+  | /skills/
+)
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["projects", ".venv", "skills"]
+
+[tool.ruff.lint]
+# E/F/W = pycodestyle + pyflakes; I = isort; B = bugbear; UP = pyupgrade.
+select = ["E", "F", "W", "I", "B", "UP"]
+# Ignore: E501 (long descriptive strings are fine; black handles formatting),
+# E702/E731 (semicolons and lambdas — stylistic, not bugs; the existing
+# dashboard parsing code uses them deliberately for compactness),
+# UP038 (`isinstance(x, X | Y)` is *slower* at runtime than the tuple form
+# because it allocates a UnionType per call — ruff itself deprecated this).
+ignore = ["E501", "E702", "E731", "UP038"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]  # allow `assert False` in tests

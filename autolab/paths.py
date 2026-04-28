@@ -4,30 +4,31 @@ Each autolab "project" is one full run on one seed idea. Projects live under
 `projects/<project-id>/` and contain their own thread/papers/thoughts/etc.
 
 Selection: tools resolve the active project via the `AUTOLAB_PROJECT` env var.
-The `start` and `resume` shell scripts set this; `claude -p` subprocesses
-spawned by the orchestrator inherit it.
+The `scripts/start` and `scripts/resume` shell scripts set this; `claude -p`
+subprocesses spawned by the orchestrator inherit it.
 """
+
 from __future__ import annotations
 
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
+# This file lives at <repo>/autolab/paths.py, so REPO is two parents up.
 REPO = Path(__file__).resolve().parent.parent
 PROJECTS = REPO / "projects"
-PROGRAM = REPO / "program.md"
-TOOLS = REPO / "tools"
+PROGRAM = REPO / "prompts" / "program.md"
+PACKAGE = REPO / "autolab"
 SKILLS = REPO / "skills"
+SCRIPTS = REPO / "scripts"
 STOP_FILE = REPO / "STOP"
 
 
 def get_project_id() -> str:
     pid = os.environ.get("AUTOLAB_PROJECT", "").strip()
     if not pid:
-        raise SystemExit(
-            "AUTOLAB_PROJECT env var is required. Use ./start or ./resume scripts."
-        )
+        raise SystemExit("AUTOLAB_PROJECT env var is required. Use ./start or ./resume scripts.")
     return pid
 
 
@@ -108,7 +109,7 @@ def slugify(text: str, max_words: int = 6) -> str:
 def make_project_id(seed_idea: str) -> str:
     """Build a unique project id: <slug>-<YYYYMMDD>, suffixed with -2/-3 on collision."""
     slug = slugify(seed_idea)
-    date = datetime.now(timezone.utc).strftime("%Y%m%d")
+    date = datetime.now(UTC).strftime("%Y%m%d")
     base = f"{slug}-{date}"
     PROJECTS.mkdir(parents=True, exist_ok=True)
     candidate = base

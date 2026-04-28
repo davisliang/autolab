@@ -1,31 +1,65 @@
 # autolab
 
-Autonomous research-loop. Point it at a one-line idea, walk away, come back to a paper draft (Markdown + optional PDF) with verified citations, deterministic results tables, and reproducible experiments. Each run lives in its own project directory; subagents communicate through a typed shared thread on disk — never via chat — referencing each other by stable artifact ID.
+Autonomous research-loop. Point it at a one-line idea, walk away, come back to a paper draft (Markdown) with verified citations, deterministic results tables, and reproducible experiments. Each run lives in its own project directory; subagents communicate through a typed shared thread on disk — never via chat — referencing each other by stable artifact ID.
+
+## Repository layout
+
+```
+.
+├── autolab/                  # the python package — core build
+│   ├── __init__.py
+│   ├── orchestrator.py       # phase pipeline driver
+│   ├── paths.py              # project-scoped path helpers
+│   ├── results_tables.py     # deterministic markdown table generator
+│   ├── append_artifact.py    # append-only thread/log writer
+│   ├── refresh_indexes.py    # regenerate thread/papers/projects INDEX.md
+│   ├── fetch_paper.py        # cache HF/arXiv paper markdown
+│   ├── verify_citation.py    # fuzzy claim↔paper match
+│   ├── run_experiment.py     # sanity gate + multi-seed runner
+│   ├── finalize.py           # re-assemble paper-vFINAL.md
+│   ├── idle_continue.py      # CPU-idle watchdog
+│   └── dashboard/            # read-only progress dashboard
+├── scripts/                  # entry shell scripts
+│   ├── start                 # new project on a fresh idea
+│   ├── resume                # continue an existing project
+│   └── continue_loop.sh      # used by idle_continue
+├── prompts/program.md        # system prompt loaded into every claude -p call
+├── skills/                   # claude skill definitions (one dir per subagent)
+├── tests/                    # pytest suite for pure helpers + structural invariants
+├── projects/                 # per-run output (gitignored)
+├── pyproject.toml            # package metadata + dev deps + tool config
+├── .pre-commit-config.yaml   # black + ruff + pytest, runs on git commit
+└── README.md                 # this file
+```
 
 ## Quick start
 
 ```bash
 # new project — argv quoting
-./start --idea "investigate whether layer-wise learning rates help small MLPs on MNIST"
+scripts/start --idea "investigate whether layer-wise learning rates help small MLPs on MNIST"
 
 # new project — long ideas without shell-quoting headaches
-./start --idea-file my-idea.txt
-./start --idea-stdin <<'EOF'
+scripts/start --idea-file my-idea.txt
+scripts/start --idea-stdin <<'EOF'
 ... multi-line idea, apostrophes/quotes fine ...
 EOF
 
 # pick up where it left off
-./resume                                  # interactive picker
-./resume --project <id>                   # by id
-./resume --project <id> --hypothesis "user-supplied claim"
-./resume --project <id> --resume-from-bank   # pop next parked HYP
-./resume --list                           # print the project table
+scripts/resume                                  # interactive picker
+scripts/resume --project <id>                   # by id
+scripts/resume --project <id> --hypothesis "user-supplied claim"
+scripts/resume --project <id> --resume-from-bank   # pop next parked HYP
+scripts/resume --list                           # print the project table
 
 # live progress dashboard (separate terminal)
-uv run python tools/dashboard.py          # http://127.0.0.1:8765
+uv run python -m autolab.dashboard.server          # http://127.0.0.1:8765
 ```
 
-To stop a running orchestrator: Ctrl+C its terminal, or `touch STOP` at the repo root, or `pkill -f run_orchestrator.py`.
+For a fully-worked invocation that exposes every tunable env var and CLI
+flag, see [`example.sh`](example.sh) at the repo root — copy it, edit the
+seed idea + knobs, and run with `bash example.sh`.
+
+To stop a running orchestrator: Ctrl+C its terminal, or `touch STOP` at the repo root, or `pkill -f autolab.orchestrator`.
 
 ## Architecture
 
@@ -54,8 +88,8 @@ seed → expand → survey → gap-fill → screen → design → run → critiq
 | `design` | `experiment-designer` (primary) | Opus | One `ExperimentPlan` per surviving HYP (≥3 seeds, matched-budget baseline, ≤30min compute) |
 | `run` | `experiment-runner` | Sonnet | Materializes code, runs sanity gate then full sweep; emits `ExperimentResult` (`pass`/`fail`/`crash`); auto-ablates on pass |
 | `critique` | `critic` (validity) | Opus | Reviews each `ExperimentResult` for threats to validity, baseline parity, statistical sins |
-| `write` | `paper-writer` | Opus | Section-by-section: outline → abstract → intro → related-work → method → experiments → discussion |
-| `final` | — (orchestrator) | — | Stitches `paper-vFINAL.md`; renders PDF if pandoc + a TeX engine are available |
+| `write` | `paper-writer` | Opus | Section-by-section: outline → abstract → intro → related → background → data/models → method → experiments → discussion → conclusion → broader-impact → reproducibility |
+| `final` | — (orchestrator) | — | Stitches `paper-vFINAL.md` |
 
 ### Three feedback loops
 
@@ -81,7 +115,7 @@ State for all three loops lives in `projects/<id>/thread/cycles.json`.
 | `critic` | `boredom` / `validity` / `failure-analysis` modes | Opus / Haiku |
 | `paper-writer` | Section-by-section, only verified citations; pastes pre-rendered tables | Opus |
 
-Plus the bundled `huggingface-papers` skill (used by literature-scout, novelty-checker).
+Plus the bundled `huggingface-papers` skill (used by `literature-scout`, `novelty-checker`).
 
 ### Wildness bar
 
@@ -100,7 +134,7 @@ The boredom critic is calibrated to allow ~1-in-3 hypotheses through. Failures c
 projects/<id>/
 ├── thread/
 │   ├── log.jsonl            # append-only event stream (one record per artifact)
-│   ├── INDEX.md             # human-readable index, regenerated by tools/refresh_indexes.py
+│   ├── INDEX.md             # human-readable index, regenerated by python -m autolab.refresh_indexes
 │   ├── cycles.json          # idea/experiment retreat state + crash retry counters
 │   └── checkpoints/         # one <phase>.json per completed phase
 ├── thoughts/                # one MD per artifact id (long-form companion to log.jsonl)
@@ -130,13 +164,13 @@ projects/<id>/
 - **Failure analysis** — between failed retries, the critic explains why before the runner patches; up to 2 in-skill + `MAX_CRASH_RETRIES` orchestrator-level attempts.
 - **Reproducibility envelope** — `experiments/<id>/repro.sh` captures seeds, code hash, env hash, command line.
 - **Token ledger** — `logs/cost_ledger.tsv` rows per skill invocation: timestamp, phase, skill, model, input_tokens (fresh), cache_creation_tokens, cache_read_tokens, output_tokens. USD is intentionally not tracked; runs go until you stop them or hit a retreat cap.
-- **Persistent idea bank** — un-pursued and parked hypotheses go to `ideas/parking_lot.md` and survive across runs (`./resume --resume-from-bank`).
+- **Persistent idea bank** — un-pursued and parked hypotheses go to `ideas/parking_lot.md` and survive across runs (`scripts/resume --resume-from-bank`).
 - **Deterministic results tables** — `phase_final` injects a markdown summary table + per-experiment detail tables (proposed vs baseline, mean ± stddev, threshold, status) at the top of the Experiments section. The paper-writer is also given the same block to paste verbatim, so prose is anchored to canonical numbers.
 
 ## Dashboard
 
 ```bash
-uv run python tools/dashboard.py          # http://127.0.0.1:8765
+uv run python -m autolab.dashboard.server          # http://127.0.0.1:8765
 ```
 
 Auto-refreshes every 3s. No DB; reads directly from `projects/<id>/`. Shows:
@@ -158,20 +192,20 @@ All env vars are optional.
 
 | Variable | Default | Effect |
 |----------|---------|--------|
-| `AUTOLAB_PROJECT` | (set by `./start`/`./resume`) | Which project subdir tools resolve under |
+| `AUTOLAB_PROJECT` | (set by `scripts/start`/`scripts/resume`) | Which project subdir tools resolve under |
 | `AUTOLAB_MAX_CYCLES` | `5` | Max experiment retreats per project (0 = unbounded) |
 | `AUTOLAB_MAX_IDEA_CYCLES` | `3` | Max idea retreats per project |
 | `AUTOLAB_MIN_WILD_HYPOTHESES` | `2` | Min HYPs that must survive screen to advance to design |
 | `AUTOLAB_MAX_CRASH_RETRIES` | `2` | Orchestrator-level crash retries per plan (on top of the runner's 2 internal) |
 
-Stop conditions are now: `final.json` checkpoint exists, `STOP` file at repo root, or you Ctrl+C. There is no dollar budget cap.
+Stop conditions: `final.json` checkpoint exists, `STOP` file at repo root, or you Ctrl+C. There is no dollar budget cap.
 
 ## Output: paper
 
 `phase_final` writes `drafts/paper-vFINAL.md`. Re-assemble it without re-running the orchestrator:
 
 ```bash
-uv run python tools/finalize.py --project <id>
+uv run python -m autolab.finalize --project <id>
 ```
 
 ## Setup
@@ -183,12 +217,79 @@ uv sync
 
 **Framework.** On Apple Silicon, MLX is installed by default and runs experiments on the unified-memory GPU + Neural Engine. The `experiment-designer` skill is wired to use `framework="mlx"` and the orchestrator injects a runtime probe of `mlx.default_device()` into each design prompt so the LLM knows MLX is available without inferring it. On non-Apple-Silicon hosts MLX is silently skipped (PEP 508 marker on the dep) and the designer falls back to PyTorch CPU. To opt into PyTorch as well: `uv sync --extra torch`.
 
-**Authentication.** Claude Code subscription OAuth works out of the box. Run `claude login` in a regular terminal first; the orchestrator's subprocess inherits the on-disk credentials (it explicitly strips host-injected `ANTHROPIC_API_KEY` / `ANTHROPIC_BASE_URL` / `CLAUDE_CODE_OAUTH_TOKEN` so you can run `./start` from anywhere — even from inside a Claude Code session).
+**Authentication.** Claude Code subscription OAuth works out of the box. Run `claude login` in a regular terminal first; the orchestrator's subprocess inherits the on-disk credentials (it explicitly strips host-injected `ANTHROPIC_API_KEY` / `ANTHROPIC_BASE_URL` / `CLAUDE_CODE_OAUTH_TOKEN` so you can run `scripts/start` from anywhere — even from inside a Claude Code session).
+
+## Development
+
+### Install dev dependencies
+
+The dev tools (pytest, black, ruff, pre-commit) live in the `dev` dependency group:
+
+```bash
+uv sync --group dev
+```
+
+### Run tests
+
+The `tests/` directory holds the pytest suite. It exercises pure helpers (`autolab.paths`, `autolab.results_tables`) and structural invariants of the orchestrator (phase ordering, NeurIPS section briefs, `phase_final` assembly order):
+
+```bash
+uv run pytest                       # all tests, quiet
+uv run pytest -v                    # verbose
+uv run pytest tests/test_paths.py   # one file
+uv run pytest -k slugify            # by name
+```
+
+The full suite runs in well under a second. New code that's testable as a pure function should ship with tests in this directory.
+
+### Lint and format
+
+Black and ruff are both configured in `pyproject.toml`:
+
+- `black` — formatter; line length 100.
+- `ruff` — linter (E/F/W/I/B/UP rule sets); import-sorts and applies UP modernization fixes.
+
+Run them manually:
+
+```bash
+uv run black tests/                 # format tests
+uv run ruff check autolab/ tests/   # lint
+uv run ruff check --fix autolab/    # apply auto-fixes
+uv run ruff format autolab/         # ruff's own formatter
+```
+
+### Pre-commit hooks
+
+`.pre-commit-config.yaml` runs four kinds of checks on every `git commit`:
+
+1. **File hygiene** — trailing whitespace, EOF newline, valid YAML/TOML, no merge-conflict markers, no large files (>500 KB).
+2. **`black`** — auto-formats staged Python files to match `pyproject.toml` settings.
+3. **`ruff`** — lints + auto-fixes safe issues; runs `ruff format` after.
+4. **`pytest`** — runs the full unit test suite via `uv run pytest -q tests/`. Commit fails if any test fails.
+
+Install once after cloning:
+
+```bash
+uv sync --group dev
+uv run pre-commit install
+```
+
+Subsequent commits will trigger the hooks automatically. To run all hooks against every file (e.g. after upgrading the config):
+
+```bash
+uv run pre-commit run --all-files
+```
+
+To bypass in an emergency only (don't make a habit of it):
+
+```bash
+git commit --no-verify
+```
 
 ## Verification (smoke)
 
 ```bash
-./start --idea "investigate whether layer-wise learning rates help small MLPs on MNIST"
+scripts/start --idea "investigate whether layer-wise learning rates help small MLPs on MNIST"
 ```
 
 Expect after ~15-30 min:
@@ -196,7 +297,7 @@ Expect after ~15-30 min:
 - `papers/` has ≥5 fetched markdown copies
 - `experiments/EXP-001/runs/` has logs + `result.json` with mean ± stddev
 - `experiments/EXP-001/repro.sh` exists and is executable
-- `drafts/paper-vFINAL.md` has all six numbered sections with a Results Summary table at the top of Experiments
+- `drafts/paper-vFINAL.md` has all eleven NeurIPS-style sections (Abstract through Reproducibility) with a Results Summary table at the top of Experiments
 - `drafts/citations.bib` contains only `verified=true` citations
 - `logs/cost_ledger.tsv` shows per-phase token counts (8-column schema)
 

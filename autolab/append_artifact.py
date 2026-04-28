@@ -6,7 +6,7 @@ The active project is selected via the AUTOLAB_PROJECT env var (set by the
 start/resume scripts). All paths resolve under projects/<id>/.
 
 Usage:
-    tools/append_artifact.py \
+    python -m autolab.append_artifact \
         --type Hypothesis \
         --parent IDEA-001,LIT-014 \
         --author idea-expander \
@@ -18,14 +18,15 @@ Usage:
 
 Prints the new artifact id (e.g. HYP-003) to stdout.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from _paths import thread_log, thoughts_dir
+from autolab.paths import thoughts_dir, thread_log
 
 TYPE_PREFIX = {
     "Idea": "IDEA",
@@ -115,7 +116,7 @@ def main():
     row = {
         "id": aid,
         "type": args.type,
-        "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "parent_ids": parents,
         "author": args.author,
         "summary": args.summary,

@@ -5,21 +5,22 @@ Single-file stdlib HTTP server that reads directly from `projects/<id>/` and
 renders a live-refreshing web view of every run's progress.
 
 Usage:
-    uv run python tools/dashboard.py            # http://localhost:8765
-    uv run python tools/dashboard.py --port 9000
+    uv run python -m autolab.dashboard.server            # http://localhost:8765
+    uv run python -m autolab.dashboard.server --port 9000
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import urlparse
 
-from _paths import (
+from autolab.paths import (
     PROJECTS,
     checkpoints_dir,
     cost_ledger,
@@ -29,19 +30,26 @@ from _paths import (
     orchestrator_log,
     papers_index,
     parking_lot,
-    project_dir,
     thoughts_dir,
     thread_log,
 )
 
 PHASES = [
-    "seed", "expand", "survey", "gap-fill", "screen",
-    "design", "run", "critique", "write", "final",
+    "seed",
+    "expand",
+    "survey",
+    "gap-fill",
+    "screen",
+    "design",
+    "run",
+    "critique",
+    "write",
+    "final",
 ]
 
 # Static dashboard HTML lives next to this file. Read on each request so editing
 # the file shows up after a browser refresh — no server restart needed.
-STATIC_INDEX = Path(__file__).resolve().parent / "dashboard_static" / "index.html"
+STATIC_INDEX = Path(__file__).resolve().parent / "static" / "index.html"
 
 
 def safe_read(p: Path, max_bytes: int = 200_000) -> str:
@@ -84,16 +92,24 @@ def parse_ledger(p: Path) -> dict:
     Returns aggregates with cache breakdown so the dashboard can show hit rate.
     """
     empty_bucket = lambda: {
-        "calls": 0, "fresh_in": 0, "cache_create": 0,
-        "cache_read": 0, "in_tokens": 0, "out_tokens": 0,
+        "calls": 0,
+        "fresh_in": 0,
+        "cache_create": 0,
+        "cache_read": 0,
+        "in_tokens": 0,
+        "out_tokens": 0,
     }
     if not p.exists():
         return {
             "rows": [],
-            "total_fresh_in": 0, "total_cache_create": 0, "total_cache_read": 0,
-            "total_in_tokens": 0, "total_out_tokens": 0,
+            "total_fresh_in": 0,
+            "total_cache_create": 0,
+            "total_cache_read": 0,
+            "total_in_tokens": 0,
+            "total_out_tokens": 0,
             "cache_hit_ratio": 0.0,
-            "by_phase": {}, "by_model": {},
+            "by_phase": {},
+            "by_model": {},
         }
     rows = []
     totals = {"fresh_in": 0, "cache_create": 0, "cache_read": 0, "in_tokens": 0, "out_tokens": 0}
@@ -108,18 +124,32 @@ def parse_ledger(p: Path) -> dict:
             ts, phase, skill, model = parts[:4]
             try:
                 if len(parts) >= 8:
-                    fresh = int(parts[4]); cc = int(parts[5]); cr = int(parts[6]); out = int(parts[7])
+                    fresh = int(parts[4])
+                    cc = int(parts[5])
+                    cr = int(parts[6])
+                    out = int(parts[7])
                 else:
                     # 6 or 7 col legacy: column 4 already holds total input, no cache split
-                    fresh = int(parts[4]); cc = 0; cr = 0; out = int(parts[5])
+                    fresh = int(parts[4])
+                    cc = 0
+                    cr = 0
+                    out = int(parts[5])
             except ValueError:
                 continue
             in_total = fresh + cc + cr
-            rows.append({
-                "ts": ts, "phase": phase, "skill": skill, "model": model,
-                "fresh_in": fresh, "cache_create": cc, "cache_read": cr,
-                "input_tokens": in_total, "output_tokens": out,
-            })
+            rows.append(
+                {
+                    "ts": ts,
+                    "phase": phase,
+                    "skill": skill,
+                    "model": model,
+                    "fresh_in": fresh,
+                    "cache_create": cc,
+                    "cache_read": cr,
+                    "input_tokens": in_total,
+                    "output_tokens": out,
+                }
+            )
             totals["fresh_in"] += fresh
             totals["cache_create"] += cc
             totals["cache_read"] += cr
@@ -157,12 +187,14 @@ def list_checkpoints(pid: str) -> list[dict]:
             data = json.loads(f.read_text())
         except (OSError, json.JSONDecodeError):
             continue
-        out.append({
-            "phase": data.get("phase", f.stem),
-            "completed_artifact_ids": data.get("completed_artifact_ids", []),
-            "next_action": data.get("next_action"),
-            "completed_at": data.get("completed_at"),
-        })
+        out.append(
+            {
+                "phase": data.get("phase", f.stem),
+                "completed_artifact_ids": data.get("completed_artifact_ids", []),
+                "next_action": data.get("next_action"),
+                "completed_at": data.get("completed_at"),
+            }
+        )
     return out
 
 
@@ -187,7 +219,7 @@ def parse_thought(p: Path) -> dict:
     summary = ""
     m = _FRONT_MATTER_RE.match(text)
     if m:
-        body = text[m.end():].strip()
+        body = text[m.end() :].strip()
     else:
         body = text.strip()
     for line in body.splitlines():
@@ -199,7 +231,13 @@ def parse_thought(p: Path) -> dict:
             summary = line[:240]
             break
     mtime = p.stat().st_mtime if p.exists() else 0
-    return {"id": p.stem, "title": title, "summary": summary, "mtime": mtime, "path": str(p.relative_to(PROJECTS.parent))}
+    return {
+        "id": p.stem,
+        "title": title,
+        "summary": summary,
+        "mtime": mtime,
+        "path": str(p.relative_to(PROJECTS.parent)),
+    }
 
 
 def list_thoughts(pid: str) -> list[dict]:
@@ -221,11 +259,13 @@ def list_drafts(pid: str) -> list[dict]:
         if not p.is_file():
             continue
         st = p.stat()
-        out.append({
-            "name": p.name,
-            "size": st.st_size,
-            "mtime": st.st_mtime,
-        })
+        out.append(
+            {
+                "name": p.name,
+                "size": st.st_size,
+                "mtime": st.st_mtime,
+            }
+        )
     return out
 
 
@@ -279,14 +319,20 @@ def live_status(pid: str) -> dict:
             continue
         m = _LOG_CALL_BEGIN_RE.search(line)
         if m:
-            inflight_calls.append({
-                "phase": m.group(1), "skill": m.group(2), "model": m.group(3),
-                "started_at": ts,
-            })
+            inflight_calls.append(
+                {
+                    "phase": m.group(1),
+                    "skill": m.group(2),
+                    "model": m.group(3),
+                    "started_at": ts,
+                }
+            )
             continue
         m = _LOG_CALL_EXIT_RE.search(line) or _LOG_CALL_TIMEOUT_RE.search(line)
         if m:
-            ph, sk = (m.group(2), m.group(3)) if m.re is _LOG_CALL_EXIT_RE else (m.group(1), m.group(2))
+            ph, sk = (
+                (m.group(2), m.group(3)) if m.re is _LOG_CALL_EXIT_RE else (m.group(1), m.group(2))
+            )
             for i in range(len(inflight_calls) - 1, -1, -1):
                 c = inflight_calls[i]
                 if c["phase"] == ph and c["skill"] == sk:
@@ -423,15 +469,17 @@ def parse_thread_events(pid: str, n: int = 80) -> list[dict]:
                 ev = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            out.append({
-                "id": ev.get("id"),
-                "type": ev.get("type"),
-                "author": ev.get("author"),
-                "summary": (ev.get("summary") or "")[:240],
-                "decision": event_decision_summary(ev),
-                "ts": ev.get("ts") or ev.get("created_at"),
-                "parent_ids": ev.get("parent_ids") or [],
-            })
+            out.append(
+                {
+                    "id": ev.get("id"),
+                    "type": ev.get("type"),
+                    "author": ev.get("author"),
+                    "summary": (ev.get("summary") or "")[:240],
+                    "decision": event_decision_summary(ev),
+                    "ts": ev.get("ts") or ev.get("created_at"),
+                    "parent_ids": ev.get("parent_ids") or [],
+                }
+            )
     return out[-n:][::-1]
 
 
@@ -575,30 +623,34 @@ def active_work(pid: str) -> dict:
             status = "pending design"
         else:
             status = " · ".join(plan_status(pid_) for pid_ in plan_ids)
-        alive_hyps.append({
-            "id": h["id"],
-            "claim": (h.get("claim") or h.get("summary") or "")[:240],
-            "prediction_metric": h.get("prediction_metric", "") or "",
-            "prediction_threshold": h.get("prediction_threshold"),
-            "prediction_direction": h.get("prediction_direction", "") or "",
-            "wildness": h.get("wildness_tickets") or h.get("wildness_ticket") or "",
-            "plan_ids": plan_ids,
-            "status": status,
-        })
+        alive_hyps.append(
+            {
+                "id": h["id"],
+                "claim": (h.get("claim") or h.get("summary") or "")[:240],
+                "prediction_metric": h.get("prediction_metric", "") or "",
+                "prediction_threshold": h.get("prediction_threshold"),
+                "prediction_direction": h.get("prediction_direction", "") or "",
+                "wildness": h.get("wildness_tickets") or h.get("wildness_ticket") or "",
+                "plan_ids": plan_ids,
+                "status": status,
+            }
+        )
 
     active_plans = []
     for p in plans:
         if is_terminal(p["id"]):
             continue
-        active_plans.append({
-            "id": p["id"],
-            "summary": (p.get("summary") or "")[:240],
-            "is_ablation": bool(p.get("is_ablation")),
-            "compute_budget_minutes": p.get("compute_budget_minutes"),
-            "seeds": p.get("seeds") or [],
-            "status": plan_status(p["id"]),
-            "hyp_id": hyp_for_plan.get(p["id"]),
-        })
+        active_plans.append(
+            {
+                "id": p["id"],
+                "summary": (p.get("summary") or "")[:240],
+                "is_ablation": bool(p.get("is_ablation")),
+                "compute_budget_minutes": p.get("compute_budget_minutes"),
+                "seeds": p.get("seeds") or [],
+                "status": plan_status(p["id"]),
+                "hyp_id": hyp_for_plan.get(p["id"]),
+            }
+        )
 
     return {"hypotheses": alive_hyps, "plans": active_plans}
 
@@ -657,8 +709,6 @@ def read_draft_full(pid: str, filename: str) -> dict:
     return {"name": safe, "content": safe_read(p, 500_000)}
 
 
-
-
 class Handler(BaseHTTPRequestHandler):
     def _json(self, obj, code=200):
         body = json.dumps(obj, default=str).encode("utf-8")
@@ -698,9 +748,11 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/projects":
                 projects = [project_summary(p) for p in list_projects()]
                 projects.sort(key=lambda x: x.get("last_activity_ts") or 0, reverse=True)
-                return self._json({"projects": projects, "now": datetime.now(timezone.utc).isoformat(timespec="seconds")})
+                return self._json(
+                    {"projects": projects, "now": datetime.now(UTC).isoformat(timespec="seconds")}
+                )
             if path.startswith("/raw/"):
-                rest = path[len("/raw/"):]
+                rest = path[len("/raw/") :]
                 parts = rest.split("/", 3)
                 if len(parts) < 3 or parts[1] != "draft":
                     return self.send_error(404, "Not Found")
@@ -724,7 +776,7 @@ class Handler(BaseHTTPRequestHandler):
                 }.get(p.suffix.lower(), "application/octet-stream")
                 return self._raw(p, ct)
             if path.startswith("/api/project/"):
-                rest = path[len("/api/project/"):]
+                rest = path[len("/api/project/") :]
                 parts = rest.split("/", 2)
                 pid = parts[0]
                 if pid not in list_projects():
