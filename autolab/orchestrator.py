@@ -1025,8 +1025,92 @@ def phase_final() -> list[str]:
         out.append("")
     final_path = drafts / "paper-vFINAL.md"
     final_path.write_text("\n".join(out) + "\n")
-    log_line(f"final: wrote {final_path}")
+    log_line(f"final: wrote initial assembly to {final_path}")
+    _run_polish_pass(final_path)
     return [str(final_path)]
+
+
+def _run_polish_pass(paper_path: Path) -> None:
+    """Re-read the assembled paper and run a clarity + completeness pass.
+
+    Section-by-section writes occasionally leave gaps: a DraftSection may
+    be missing (rendered `_(missing)_` by the assembly above), a body may
+    be sparse, or two sections may contradict each other on numbers. The
+    polish pass reads the full paper plus all artifacts and edits the
+    file in place via the `paper-polisher` skill.
+
+    Failures degrade gracefully: if the claude call errors out, we restore
+    the pre-polish version from the backup so the user still has the
+    assembled paper.
+
+    Set `AUTOLAB_SKIP_POLISH=1` to disable.
+    """
+    if os.environ.get("AUTOLAB_SKIP_POLISH"):
+        log_line("final: polish pass skipped (AUTOLAB_SKIP_POLISH set)")
+        return
+    if not paper_path.exists():
+        log_line(f"final: polish skipped, {paper_path.name} missing")
+        return
+
+    backup_path = paper_path.with_name(paper_path.stem + ".pre-polish.md")
+    backup_path.write_text(paper_path.read_text())
+    log_line(f"final: backed up pre-polish version to {backup_path.name}")
+
+    thread = read_thread()
+    cite_pool = [r["id"] for r in by_type(thread, "Citation") if r.get("verified")]
+    relevant = ",".join(
+        [r["id"] for r in by_type(thread, "Idea")]
+        + [r["id"] for r in by_type(thread, "Hypothesis")]
+        + [r["id"] for r in by_type(thread, "ExperimentPlan")]
+        + [r["id"] for r in by_type(thread, "ExperimentResult")]
+        + [r["id"] for r in by_type(thread, "Critique") if r.get("mode") == "validity"]
+    )
+    results_tables = _format_results_tables()
+
+    prompt_parts = [
+        "Phase: polish",
+        "Invoke skill: paper-polisher",
+        f"paper_path={paper_path.relative_to(REPO)}",
+        f"backup_path={backup_path.relative_to(REPO)}",
+        f"cite_pool={','.join(cite_pool) or '(none)'}",
+        f"relevant_artifacts={relevant}",
+        "",
+        "## Reference data (numerical anchor — do NOT alter the numbers)",
+        "",
+        "Below are the canonical results tables rendered from each "
+        "experiments/<EXP-id>/result.json. Any numerical claim in the "
+        "polished paper must agree with these exactly.",
+        "",
+        results_tables or "(no experiments yet — leave results-bearing prose untouched)",
+        "",
+        "## Goals for this pass",
+        "",
+        "1. **Completeness.** Find every '_(missing)_' placeholder and any "
+        "section with fewer than ~3 sentences; replace with a complete body "
+        "grounded in the artifacts and tables above. Use the NeurIPS "
+        "structural standard in skills/paper-writer/SKILL.md as your rubric.",
+        "2. **Clarity.** Tighten convoluted prose without changing claims. "
+        "Remove duplicated phrasing across sections.",
+        "3. **Consistency.** The introduction's contributions bullet list "
+        "and the experiments headline table must tell the same story "
+        "1-for-1. For negative-results work, lead with the falsified "
+        "prediction; do not soften 'fail' into 'promising trend'.",
+        "4. **Fidelity.** Cite only ids in cite_pool. Do not fabricate "
+        "experiments, datasets, or numbers. Do not add or remove section "
+        "headings. Preserve the title.",
+        "",
+        f"Edit {paper_path.relative_to(REPO)} in place. End with the stdout contract.",
+    ]
+    prompt = "\n".join(prompt_parts)
+
+    try:
+        call_claude("polish", "paper-polisher", "opus", prompt, timeout_s=1800)
+        log_line(f"final: polish pass complete; final paper at {paper_path}")
+    except SystemExit as e:
+        # Polish is best-effort. If it fails, restore the pre-polish
+        # version so the user still has the assembled paper.
+        log_line(f"final: polish pass failed ({e}); restoring pre-polish version")
+        paper_path.write_text(backup_path.read_text())
 
 
 def cycle_state_path() -> Path:

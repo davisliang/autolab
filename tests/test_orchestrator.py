@@ -127,3 +127,78 @@ class TestPhaseFinalAssemblyOrder:
             assert (
                 f'("{sec}", "{header}")' in src
             ), f"phase_final order entry missing or out of date: ({sec}, {header})"
+
+
+class TestPolishPass:
+    """phase_final invokes a polish pass at the end that re-reads the
+    assembled paper and fills in/improves it via the paper-polisher
+    skill. These tests pin the wiring without invoking claude."""
+
+    def test_polish_helper_exists(self):
+        assert hasattr(orch, "_run_polish_pass"), (
+            "phase_final's polish step is missing — _run_polish_pass should "
+            "exist alongside phase_final"
+        )
+        assert callable(orch._run_polish_pass)
+
+    def test_phase_final_calls_polish(self):
+        import inspect
+
+        src = inspect.getsource(orch.phase_final)
+        assert "_run_polish_pass(" in src, (
+            "phase_final must invoke _run_polish_pass after writing the "
+            "assembled paper-vFINAL.md"
+        )
+
+    def test_polish_invokes_paper_polisher_skill(self):
+        import inspect
+
+        src = inspect.getsource(orch._run_polish_pass)
+        assert (
+            '"paper-polisher"' in src
+        ), "_run_polish_pass must call_claude with skill='paper-polisher'"
+        assert '"polish"' in src, "_run_polish_pass must use phase='polish'"
+
+    def test_polish_handles_failure_gracefully(self):
+        import inspect
+
+        src = inspect.getsource(orch._run_polish_pass)
+        # Polish is best-effort: a failed claude call must not destroy the
+        # pre-polish assembly. The implementation should catch SystemExit
+        # (raised by call_claude on error) and restore from backup.
+        assert "SystemExit" in src and "backup" in src, (
+            "_run_polish_pass must catch SystemExit and restore from backup "
+            "so polish failures don't lose the assembled paper"
+        )
+
+    def test_polish_respects_skip_env_var(self):
+        import inspect
+
+        src = inspect.getsource(orch._run_polish_pass)
+        assert "AUTOLAB_SKIP_POLISH" in src, (
+            "_run_polish_pass should honor AUTOLAB_SKIP_POLISH for users "
+            "who want to opt out of the polish step"
+        )
+
+
+class TestPolisherSkillOnDisk:
+    """Sanity-check that the paper-polisher skill file exists and looks
+    well-formed. The orchestrator references it by name; a missing skill
+    file would cause polish to fail at runtime."""
+
+    def test_skill_md_exists(self):
+        from autolab.paths import SKILLS
+
+        skill = SKILLS / "paper-polisher" / "SKILL.md"
+        assert skill.exists(), (
+            f"missing skill file at {skill} — paper-polisher is referenced "
+            "by phase_final's polish pass"
+        )
+
+    def test_skill_md_has_frontmatter(self):
+        from autolab.paths import SKILLS
+
+        text = (SKILLS / "paper-polisher" / "SKILL.md").read_text()
+        assert text.startswith("---\n"), "skill file missing YAML frontmatter"
+        assert "name: paper-polisher" in text, "skill name field missing/wrong"
+        assert "description:" in text, "skill description field missing"

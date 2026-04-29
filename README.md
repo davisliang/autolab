@@ -154,7 +154,7 @@ seed → expand → survey → gap-fill → screen → design → run → critiq
 | `run` | `experiment-runner` | Sonnet | Materializes code, runs sanity gate then full sweep; emits `ExperimentResult` (`pass`/`fail`/`crash`); auto-ablates on pass |
 | `critique` | `critic` (validity) | Opus | Reviews each `ExperimentResult` for threats to validity, baseline parity, statistical sins |
 | `write` | `paper-writer` | Opus | Section-by-section: outline → abstract → intro → related → background → data/models → method → experiments → discussion → conclusion → broader-impact → reproducibility |
-| `final` | — (orchestrator) | — | Stitches `paper-vFINAL.md` |
+| `final` | `paper-polisher` | Opus | Stitches `paper-vFINAL.md`, then runs a polish pass that re-reads the whole paper, fills any `_(missing)_` sections, tightens weak prose, and enforces consistency between the intro contributions and the experiments table. Pre-polish version is kept at `paper-vFINAL.pre-polish.md` for diffing. |
 
 ### Three feedback loops
 
@@ -179,6 +179,7 @@ State for all three loops lives in `projects/<id>/thread/cycles.json`.
 | `experiment-runner` | Sanity-gate + run + log; auto-ablate on pass; failure-analysis retry | Sonnet |
 | `critic` | `boredom` / `validity` / `failure-analysis` modes | Opus / Haiku |
 | `paper-writer` | Section-by-section, only verified citations; pastes pre-rendered tables | Opus |
+| `paper-polisher` | Final whole-paper pass: fills missing sections, improves clarity, enforces intro↔experiments consistency | Opus |
 
 Plus the bundled `huggingface-papers` skill (used by `literature-scout`, `novelty-checker`).
 
@@ -210,8 +211,9 @@ projects/<id>/
 │   ├── result.json          # canonical metrics (mean, stddev, n_seeds, per-seed)
 │   └── repro.sh             # executable: recreates the run from scratch
 ├── drafts/
-│   ├── paper-vFINAL.md      # assembled paper with auto-injected results tables
-│   └── citations.bib        # verified citations only
+│   ├── paper-vFINAL.md           # assembled and polished paper (see `final` phase)
+│   ├── paper-vFINAL.pre-polish.md  # pre-polish backup, kept for diffing
+│   └── citations.bib              # verified citations only
 ├── ideas/parking_lot.md     # parked HYPs (failed boredom/validity or experiment retreat)
 └── logs/
     ├── orchestrator.log     # phase begin/end + every call_claude
@@ -262,6 +264,7 @@ All env vars are optional.
 | `AUTOLAB_MAX_IDEA_CYCLES` | `3` | Max idea retreats per project |
 | `AUTOLAB_MIN_WILD_HYPOTHESES` | `2` | Min HYPs that must survive screen to advance to design |
 | `AUTOLAB_MAX_CRASH_RETRIES` | `2` | Orchestrator-level crash retries per plan (on top of the runner's 2 internal) |
+| `AUTOLAB_SKIP_POLISH` | unset | If set (any value), skip the polish pass at the end of `phase_final`. The unpolished assembled paper is still written. |
 
 Stop conditions: `final.json` checkpoint exists, `STOP` file at repo root, or you Ctrl+C. There is no dollar budget cap.
 
