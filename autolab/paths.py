@@ -97,6 +97,14 @@ def watchdog_log(project_id: str | None = None) -> Path:
     return logs_dir(project_id) / "watchdog.log"
 
 
+def history_log(project_id: str | None = None) -> Path:
+    """Append-only Markdown narrative of every loopback (experiment retreat,
+    idea retreat, review loopback). Read by `history_block()` and injected
+    into every phase prompt that may run as part of a loopback so skills
+    see the cross-cycle story in one place."""
+    return thread_dir(project_id) / "history.md"
+
+
 def slugify(text: str, max_words: int = 6) -> str:
     """Make a short filesystem-safe slug from a free-form idea string."""
     text = text.lower().strip()

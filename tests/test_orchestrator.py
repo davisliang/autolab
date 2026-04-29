@@ -335,6 +335,250 @@ class TestReviewArtifactType:
         assert TYPE_PREFIX.get("Review") == "REV"
 
 
+class TestRunHistory:
+    """Cross-loop narrative file at <project>/thread/history.md.
+
+    Every loopback (experiment retreat, idea retreat, review loopback)
+    appends one Markdown section. Every phase that may run as part of a
+    loopback injects the file content via `history_block()`. This is the
+    single source of truth for cross-loop context — replaces the earlier
+    per-loop helpers (cycle_context_block / idea_cycle_context_block /
+    review_cycle_context_block).
+    """
+
+    # ---- helpers exist and have the right shape ----
+
+    def test_history_block_exists(self):
+        assert callable(orch.history_block)
+
+    def test_append_history_entry_exists(self):
+        assert callable(orch.append_history_entry)
+
+    def test_three_entry_builders_exist(self):
+        assert callable(orch._history_entry_experiment_retreat)
+        assert callable(orch._history_entry_idea_retreat)
+        assert callable(orch._history_entry_review_loopback)
+
+    def test_legacy_per_loop_helpers_are_gone(self):
+        # Belt-and-suspenders: confirm the old per-loop helpers are removed
+        # so nothing accidentally falls back to them.
+        for name in (
+            "cycle_context_block",
+            "idea_cycle_context_block",
+            "review_cycle_context_block",
+        ):
+            assert not hasattr(orch, name), (
+                f"legacy helper {name!r} should have been deleted; the "
+                f"unified history mechanism replaces it"
+            )
+
+    # ---- history_block file I/O ----
+
+    def test_history_block_returns_empty_for_virgin_project(
+        self, tmp_path, monkeypatch, fake_active_project
+    ):
+        # Point history_log at a tmp file that doesn't exist.
+        log_path = tmp_path / "history.md"
+        monkeypatch.setattr(orch, "history_log", lambda: log_path)
+        assert orch.history_block() == ""
+
+    def test_history_block_returns_empty_for_whitespace_only_file(
+        self, tmp_path, monkeypatch, fake_active_project
+    ):
+        log_path = tmp_path / "history.md"
+        log_path.write_text("\n   \n")
+        monkeypatch.setattr(orch, "history_log", lambda: log_path)
+        assert orch.history_block() == ""
+
+    def test_history_block_renders_when_file_has_content(
+        self, tmp_path, monkeypatch, fake_active_project
+    ):
+        log_path = tmp_path / "history.md"
+        log_path.write_text("### Cycle 1 ended — experiment retreat → survey\n\nbody\n")
+        monkeypatch.setattr(orch, "history_log", lambda: log_path)
+        block = orch.history_block()
+        assert "RUN HISTORY" in block
+        assert "Cycle 1 ended" in block
+
+    def test_history_block_truncates_when_oversize(
+        self, tmp_path, monkeypatch, fake_active_project
+    ):
+        # Synthesize a long history file and confirm the elision marker
+        # appears and the block respects the budget.
+        log_path = tmp_path / "history.md"
+        log_path.write_text("X" * 20000)
+        monkeypatch.setattr(orch, "history_log", lambda: log_path)
+        block = orch.history_block(max_chars=2000)
+        assert "elided" in block.lower(), "oversize history must mention elision"
+        # The cap is inclusive of the framing prefix; verify it's bounded.
+        assert len(block) < 4000
+
+    def test_append_history_entry_writes_section_separated(
+        self, tmp_path, monkeypatch, fake_active_project
+    ):
+        log_path = tmp_path / "history.md"
+        monkeypatch.setattr(orch, "history_log", lambda: log_path)
+        orch.append_history_entry("### A\n\nfirst")
+        orch.append_history_entry("### B\n\nsecond")
+        text = log_path.read_text()
+        assert "### A" in text and "### B" in text
+        # Each entry must terminate with a blank line so the next append
+        # doesn't visually run together.
+        assert text.count("\n\n") >= 2
+
+    def test_append_history_entry_ignores_empty_input(
+        self, tmp_path, monkeypatch, fake_active_project
+    ):
+        log_path = tmp_path / "history.md"
+        monkeypatch.setattr(orch, "history_log", lambda: log_path)
+        orch.append_history_entry("")
+        orch.append_history_entry("   \n  \n")
+        assert not log_path.exists() or log_path.read_text() == ""
+
+    # ---- entry builders ----
+
+    def _fake_thread(self):
+        return [
+            {"type": "Hypothesis", "id": "HYP-001", "claim": "Layer-wise LRs help small MLPs"},
+            {"type": "Hypothesis", "id": "HYP-002", "claim": "Mixup helps small RL"},
+            {
+                "type": "Critique",
+                "id": "CRIT-007",
+                "target_id": "HYP-001",
+                "mode": "validity",
+                "severity": "high",
+                "concerns": ["single-seed", "baseline used different optimizer"],
+            },
+            {
+                "type": "Critique",
+                "id": "CRIT-005",
+                "target_id": "HYP-001",
+                "mode": "boredom",
+                "severity": "high",
+                "concerns": ["variant of standard practice; not novel"],
+            },
+            {
+                "type": "Review",
+                "id": "REV-001",
+                "persona": "methodologist",
+                "recommendation": "major_revision",
+                "target_phase": "design",
+                "summary": "baseline used different seeds; ablation absent",
+                "created_at": "2026-04-29T05:01:00+00:00",
+            },
+            {
+                "type": "Review",
+                "id": "REV-002",
+                "persona": "domain-expert",
+                "recommendation": "minor_revision",
+                "summary": "missing comparison",
+                "created_at": "2026-04-29T05:01:05+00:00",
+            },
+        ]
+
+    def test_experiment_retreat_entry_inlines_hyps_and_critiques(self):
+        thread = self._fake_thread()
+        md = orch._history_entry_experiment_retreat(
+            {"current": 1},
+            {
+                "failed_hyp_ids": ["HYP-001", "HYP-002"],
+                "failed_plan_ids": ["EXP-003"],
+                "summary": "2 primary experiments, 0 pass",
+            },
+            thread,
+        )
+        assert "experiment retreat → survey" in md
+        assert "HYP-001" in md and "HYP-002" in md
+        assert "Layer-wise LRs help small MLPs" in md, "must inline the HYP claim"
+        assert "CRIT-007" in md, "must inline the validity Critique id"
+        assert "single-seed" in md, "must inline the Critique concerns"
+        assert "**Next:**" in md, "must end with a directive for the re-run skill"
+
+    def test_idea_retreat_entry_inlines_parked_and_boredom_critiques(self):
+        thread = self._fake_thread()
+        md = orch._history_entry_idea_retreat(
+            {"idea_cycle": 1},
+            {"parked_hyp_ids": ["HYP-001"], "n_survivors": 0},
+            thread,
+        )
+        assert "idea retreat → expand" in md
+        assert "HYP-001" in md
+        assert "CRIT-005" in md, "must inline the boredom Critique id"
+        assert "variant of standard practice" in md
+        assert "Wildness Tickets" in md
+        assert "**Next:**" in md
+
+    def test_review_loopback_entry_lists_per_persona_verdicts(self):
+        thread = self._fake_thread()
+        md = orch._history_entry_review_loopback(
+            {"review_cycle": 1, "review_history": []},
+            {
+                "target_phase": "design",
+                "recommendations": ["major_revision", "minor_revision"],
+                "summary": "1 major rev, 1 minor; target=design",
+            },
+            thread,
+        )
+        assert "review loopback → design" in md
+        assert "REV-001" in md and "REV-002" in md
+        assert "methodologist" in md and "domain-expert" in md
+        assert "major_revision" in md
+        assert "**Next:**" in md
+
+    # ---- integration: every loopback-eligible phase injects history_block ----
+
+    def test_history_block_injected_into_every_loopback_eligible_phase(self):
+        """Every phase that may run as part of any loopback must inject
+        `history_block()` so the re-run skill sees the cross-loop narrative."""
+        import inspect
+
+        # Phases that are downstream of any retreat/loopback target. This
+        # is a superset of VALID_REVIEW_LOOPBACK_PHASES because experiment
+        # and idea retreats also re-enter expand/screen/gap-fill.
+        eligible = {
+            "expand": orch.phase_expand,
+            "survey": orch.phase_survey,
+            "gap-fill": orch.phase_gap_fill,
+            "screen": orch.phase_screen,
+            "design": orch.phase_design,
+            "run": orch.phase_run,
+            "critique": orch.phase_critique,
+            "write": orch.phase_write,
+            "final": orch._run_polish_pass,  # the claude call inside phase_final
+            "review": orch.phase_review,
+        }
+        for phase_name, fn in eligible.items():
+            src = inspect.getsource(fn)
+            assert "history_block(" in src, (
+                f"phase {phase_name!r} must call history_block() so the "
+                f"re-run narrative reaches the skill prompt"
+            )
+
+    # ---- integration: each retreat hook passes its narrative_builder ----
+
+    def test_retreat_hooks_pass_narrative_builder(self):
+        import inspect
+
+        for fn, builder_name in (
+            (orch.cycle_retreat_check, "_history_entry_experiment_retreat"),
+            (orch.idea_retreat_check, "_history_entry_idea_retreat"),
+            (orch.review_loopback_check, "_history_entry_review_loopback"),
+        ):
+            src = inspect.getsource(fn)
+            assert (
+                f"narrative_builder={builder_name}" in src
+            ), f"{fn.__name__} must pass narrative_builder={builder_name} to _retreat()"
+
+    def test_retreat_helper_accepts_narrative_builder_kw(self):
+        import inspect
+
+        sig = inspect.signature(orch._retreat)
+        assert "narrative_builder" in sig.parameters, (
+            "_retreat must accept a narrative_builder kwarg so each loop "
+            "can append its templated history.md entry"
+        )
+
+
 class TestStopConditionsTracksTerminalPhase:
     """Regression: when `review` was added as the new terminal phase, the
     stop-condition check still returned True for `final.json`, causing the

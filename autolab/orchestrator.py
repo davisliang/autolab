@@ -39,6 +39,7 @@ from autolab.paths import (
     drafts_dir,
     experiments_dir,
     get_project_id,
+    history_log,
     init_project_dir,
     orchestrator_log,
     parking_lot,
@@ -467,14 +468,12 @@ def phase_expand() -> list[str]:
     if not ideas:
         raise SystemExit("expand: no Idea artifact found; run seed first")
     target = ideas[-1]["id"]
-    state = read_cycle_state()
-    cycle_ctx = cycle_context_block(state)
-    idea_ctx = idea_cycle_context_block(state)
+    history_ctx = history_block()
     prompt = (
         f"Phase: expand\n"
         f"Invoke skill: idea-expander (mode=expand)\n"
         f"Target: {target}\n\n"
-        f"{cycle_ctx}{idea_ctx}"
+        f"{history_ctx}"
         f"{WILDNESS_CRITERIA}\n"
         f"Read thread/INDEX.md and thoughts/{target}.md (under the active project root). "
         f"Per the idea-expander skill, emit 3-5 Hypothesis rows that satisfy the "
@@ -493,14 +492,14 @@ def phase_survey() -> list[str]:
     hyps = by_type(thread, "Hypothesis")
     if not hyps:
         raise SystemExit("survey: no Hypothesis artifacts to survey")
-    cycle_ctx = cycle_context_block(read_cycle_state())
+    history_ctx = history_block()
     jobs = []
     for h in hyps[:5]:
         prompt = (
             f"Phase: survey\n"
             f"Invoke skill: literature-scout\n"
             f"Target: {h['id']}\n\n"
-            f"{cycle_ctx}"
+            f"{history_ctx}"
             f"Read thread/INDEX.md and thoughts/{h['id']}.md (under the active project root). "
             f"Per the literature-scout skill, fetch 3-7 papers and emit LitFinding rows. "
             f"Use `python -m autolab.fetch_paper` for caching, then "
@@ -527,14 +526,12 @@ def phase_gap_fill() -> list[str]:
     if not ideas:
         raise SystemExit("gap-fill: no Idea")
     target = ideas[-1]["id"]
-    state = read_cycle_state()
-    cycle_ctx = cycle_context_block(state)
-    idea_ctx = idea_cycle_context_block(state)
+    history_ctx = history_block()
     prompt = (
         f"Phase: gap-fill\n"
         f"Invoke skill: idea-expander (mode=gap-fill)\n"
         f"Target: {target}\n\n"
-        f"{cycle_ctx}{idea_ctx}"
+        f"{history_ctx}"
         f"{WILDNESS_CRITERIA}\n"
         f"Read thread/INDEX.md, thoughts/{target}.md, and every thoughts/LIT-*.md. "
         f"Per the idea-expander skill (gap-fill mode), identify the question conspicuously absent "
@@ -553,6 +550,7 @@ def phase_screen() -> list[str]:
     hyps = by_type(thread, "Hypothesis")
     if not hyps:
         raise SystemExit("screen: no Hypothesis")
+    history_ctx = history_block()
 
     boredom_jobs = []
     for h in hyps:
@@ -560,6 +558,7 @@ def phase_screen() -> list[str]:
             f"Phase: screen-boredom\n"
             f"Invoke skill: critic (mode=boredom)\n"
             f"Target: {h['id']}\n\n"
+            f"{history_ctx}"
             f"Read thoughts/{h['id']}.md and any LitFindings linked via parent_ids. "
             f"Per the critic skill (boredom mode), emit one Critique.\n"
             f"\n## Wildness bar (apply STRICTLY in addition to trivial/known/dead-end)\n"
@@ -591,6 +590,7 @@ def phase_screen() -> list[str]:
     nov_prompt = (
         "Phase: screen-novelty\n"
         "Invoke skill: novelty-checker\n\n"
+        f"{history_ctx}"
         "Read thread/INDEX.md. For each Hypothesis row, run "
         "`python -m autolab.verify_citation` against each linked LitFinding's "
         "arxiv_id. Emit Citation rows for each pair and high-severity Critiques "
@@ -679,7 +679,7 @@ def phase_design(benchmark: str | None) -> list[str]:
         log_line("design: no surviving hypotheses; nothing to design")
         return []
     bench_note = f" Benchmark hint: {benchmark}." if benchmark else ""
-    cycle_ctx = cycle_context_block(read_cycle_state())
+    history_ctx = history_block()
     fw_hint = _framework_hint()
     jobs = []
     for h in survivors:
@@ -688,7 +688,7 @@ def phase_design(benchmark: str | None) -> list[str]:
             f"Invoke skill: experiment-designer (mode=primary)\n"
             f"Target: {h['id']}\n\n"
             f"{fw_hint}"
-            f"{cycle_ctx}"
+            f"{history_ctx}"
             f"Read thoughts/{h['id']}.md. Per the experiment-designer skill, "
             f"emit one ExperimentPlan with seeds (>=3) and baseline_spec.{bench_note} "
             f"End with the stdout contract."
@@ -713,6 +713,7 @@ def phase_run() -> list[str]:
     ]
     new_results: list[str] = []
     seen_plans: set[str] = set()
+    history_ctx = history_block()
     while queue:
         pid = queue.pop(0)
         if pid in seen_plans:
@@ -722,6 +723,7 @@ def phase_run() -> list[str]:
             f"Phase: run\n"
             f"Invoke skill: experiment-runner\n"
             f"Target: {pid}\n\n"
+            f"{history_ctx}"
             f"Read thoughts/{pid}.md. Per the experiment-runner skill, "
             f"materialize code/run.py under experiments/{pid}/, run sanity gate, "
             f"then run the multi-seed sweep. Emit one ExperimentResult. "
@@ -790,10 +792,12 @@ def phase_critique() -> list[str]:
     if not results:
         return []
     targets = ",".join(r["id"] for r in results)
+    history_ctx = history_block()
     prompt = (
         f"Phase: critique\n"
         f"Invoke skill: critic (mode=validity)\n"
         f"Targets: {targets}\n\n"
+        f"{history_ctx}"
         f"For each ExperimentResult above, read its body and the linked plan. "
         f"Per the critic skill (validity mode), emit one Critique per RES id "
         f"covering threats to validity, baseline parity, statistical concerns. "
@@ -844,6 +848,7 @@ def phase_write() -> list[str]:
     # the prose is anchored to the same numbers as result.json on disk.
     results_tables = _format_results_tables()
     section_brief = _neurips_section_brief()
+    history_ctx = history_block()
     new_ids: list[str] = []
     for sec in sections:
         prompt_parts = [
@@ -854,6 +859,7 @@ def phase_write() -> list[str]:
             f"cite_pool={','.join(cite_pool) or '(none)'}",
             f"relevant_artifacts={relevant}",
             "",
+            history_ctx,
             "## Target structure (NeurIPS standard)",
             "",
             "The assembled paper must satisfy a NeurIPS-style structure: Title and "
@@ -1111,6 +1117,7 @@ def _run_polish_pass(paper_path: Path) -> None:
         + [r["id"] for r in by_type(thread, "Critique") if r.get("mode") == "validity"]
     )
     results_tables = _format_results_tables()
+    history_ctx = history_block()
 
     prompt_parts = [
         "Phase: polish",
@@ -1120,6 +1127,7 @@ def _run_polish_pass(paper_path: Path) -> None:
         f"cite_pool={','.join(cite_pool) or '(none)'}",
         f"relevant_artifacts={relevant}",
         "",
+        history_ctx,
         "## Reference data (numerical anchor — do NOT alter the numbers)",
         "",
         "Below are the canonical results tables rendered from each "
@@ -1179,14 +1187,15 @@ def phase_review() -> list[str]:
 
     state = read_cycle_state()
     rcycle = state.get("review_cycle", 1)
-    cycle_ctx = (
+    rereview_note = (
         f"\n## REVIEW CYCLE {rcycle} (of up to {MAX_REVIEW_CYCLES})\n"
-        "This is a re-review after a previous loopback. Read the prior "
-        "Review artifacts in the thread index to see what the committee "
-        "asked for and weigh whether it has been addressed.\n"
+        "This is a re-review after a previous loopback. The full cross-loop "
+        "narrative is in RUN HISTORY above; weigh whether the committee's "
+        "prior concerns have been addressed in the latest paper draft.\n"
         if rcycle > 1
         else ""
     )
+    history_ctx = history_block()
 
     thread = read_thread()
     cite_pool = [r["id"] for r in by_type(thread, "Citation") if r.get("verified")]
@@ -1212,7 +1221,8 @@ def phase_review() -> list[str]:
                 f"cite_pool={','.join(cite_pool) or '(none)'}",
                 f"valid_loopback_phases={valid_phases}",
                 "",
-                cycle_ctx,
+                history_ctx,
+                rereview_note,
                 "## Persona focus",
                 "",
                 persona["focus"],
@@ -1326,20 +1336,28 @@ def _experiment_results_after(boundary_iso: str | None) -> list[dict]:
 
 def _retreat(
     *,
-    counter_key: str,  # "current" | "idea_cycle"
-    history_key: str,  # "history" | "idea_history"
+    counter_key: str,  # "current" | "idea_cycle" | "review_cycle"
+    history_key: str,  # "history" | "idea_history" | "review_history"
     max_cycles: int,
     target_phase: str,  # phase to return on retreat
     wipe_from: str,  # phase to wipe checkpoints from
     label: str,  # log-line prefix
     decide,  # state -> (advance: bool, history_entry: dict | None)
+    narrative_builder=None,  # (state, entry, thread) -> Markdown section to append to history.md
 ) -> str | None:
-    """Generic retreat: shared cap check + history append + counter bump + checkpoint wipe.
+    """Generic retreat: shared cap check + structured-state history append +
+    counter bump + checkpoint wipe + (NEW) Markdown-narrative append.
 
     `decide` inspects state/thread and returns:
       (True, _)        — no retreat; decide() logged its own reason.
       (False, entry)   — retreat; entry's `_log_extra` (if any) is appended to the
                          auto-generated retreat log line, then stripped before persist.
+
+    `narrative_builder` (optional) takes (pre-bump state, structured entry,
+    thread) and returns a Markdown section that is appended to
+    `<project>/thread/history.md`. This is the canonical cross-loop context
+    surface — every loopback hook should pass one of the
+    `_history_entry_*` builders.
     """
     state = read_cycle_state()
     cycle = state.get(counter_key, 1)
@@ -1349,6 +1367,15 @@ def _retreat(
     advance, entry = decide(state)
     if advance:
         return None
+    # Append the running-history entry BEFORE state mutation so the entry
+    # builder sees the cycle that just ended, not the one about to begin.
+    if narrative_builder is not None:
+        try:
+            md = narrative_builder(state, entry, read_thread())
+            if md:
+                append_history_entry(md)
+        except Exception as e:  # noqa: BLE001
+            log_line(f"{label}: failed to append history.md entry: {e}")
     entry = dict(entry or {})
     extra = entry.pop("_log_extra", "")
     state[history_key].append({**entry, counter_key: cycle, "ended_at": now_iso()})
@@ -1402,6 +1429,7 @@ def cycle_retreat_check() -> str | None:
         wipe_from="survey",
         label="retreat",
         decide=decide,
+        narrative_builder=_history_entry_experiment_retreat,
     )
 
 
@@ -1483,6 +1511,7 @@ def review_loopback_check() -> str | None:
         wipe_from=target,
         label="review-retreat",
         decide=lambda _state: (False, entry),
+        narrative_builder=_history_entry_review_loopback,
     )
 
 
@@ -1527,12 +1556,32 @@ def crash_retry_pass() -> int:
         log_line(
             f"crash-retry: re-running {pid} (orchestrator attempt {used+1}/{MAX_CRASH_RETRIES})"
         )
+        # Surface any failure-analysis Critiques already filed against this
+        # plan or its crashed RES so the retry sees the prior diagnosis
+        # inline rather than having to discover it via Read.
+        prior_fa: list[dict] = []
+        for tid in (pid, latest.get("id")):
+            if not tid:
+                continue
+            prior_fa.extend(_critiques_for(thread, tid, mode="failure-analysis"))
+        prior_fa_block = ""
+        if prior_fa:
+            lines = [f"  └─ {_format_critique_one_line(c)}" for c in prior_fa]
+            prior_fa_block = (
+                "\n## PRIOR FAILURE-ANALYSIS (already diagnosed; address these)\n"
+                + "\n".join(lines)
+                + "\n"
+            )
         prompt = (
             f"Phase: run-debug-retry\n"
             f"Invoke skill: experiment-runner\n"
-            f"Target: {pid}\n\n"
+            f"Target: {pid}\n"
+            f"Crashed result: {latest.get('id', '?')}\n"
+            f"Attempt: {used+1} of {MAX_CRASH_RETRIES} (orchestrator-level)\n\n"
+            f"{prior_fa_block}"
             f"PRIOR ATTEMPT CRASHED. Read thoughts/{pid}.md, the latest "
-            f"experiments/{pid}/runs/*.log, and any failure-analysis Critiques. "
+            f"experiments/{pid}/runs/*.log, and any failure-analysis Critiques "
+            f"(summarized above if present). "
             f"Per the experiment-runner skill, diagnose the crash, edit "
             f"experiments/{pid}/code/run.py to address the root cause "
             f"(common: hyperparam out of range, dtype mismatch, OOM, missing import, "
@@ -1545,42 +1594,224 @@ def crash_retry_pass() -> int:
     return retries_done
 
 
-def cycle_context_block(state: dict) -> str:
-    """Prompt prefix injected into survey/design phases when cycle > 1."""
-    if state["current"] <= 1 or not state["history"]:
+# ---------------------------------------------------------------------------
+# Run history (single source of truth for cross-loop context).
+#
+# Every loopback (experiment retreat, idea retreat, review loopback) appends
+# one short, deterministically-templated section to `<project>/thread/history.md`
+# describing what was tried, what didn't work, and why we looped back. Every
+# phase that may run as part of a loopback injects the entire history.md as
+# a prompt prefix via `history_block()`, so skills always see the running
+# narrative — across loops, across cycles, in order — with pointers to the
+# raw artifacts they can `Read` for full detail.
+#
+# This replaced an earlier per-loop architecture (one custom context-builder
+# per loopback type) that didn't compound across cycles and duplicated logic.
+# ---------------------------------------------------------------------------
+
+HISTORY_BUDGET_CHARS = 8000
+
+
+def _truncate_one_line(s: str, n: int) -> str:
+    s = " ".join((s or "").split())
+    return s if len(s) <= n else s[: n - 1] + "…"
+
+
+def _hyp_claim(thread: list[dict], hyp_id: str) -> str:
+    """Best-effort one-line claim for a HYP id (used in history entries)."""
+    for r in thread:
+        if r.get("type") == "Hypothesis" and r.get("id") == hyp_id:
+            claim = r.get("claim") or r.get("summary") or ""
+            return _truncate_one_line(claim, 120)
+    return "(claim not found)"
+
+
+def _critiques_for(thread: list[dict], target_id: str, mode: str | None = None) -> list[dict]:
+    """Return Critique rows targeting `target_id` (optionally filtered by mode)."""
+    out = []
+    for r in thread:
+        if r.get("type") != "Critique":
+            continue
+        if r.get("target_id") != target_id:
+            continue
+        if mode is not None and r.get("mode") != mode:
+            continue
+        out.append(r)
+    return out
+
+
+def _format_critique_one_line(crit: dict) -> str:
+    """Render a Critique as one short line for history entries."""
+    cid = crit.get("id", "?")
+    mode = crit.get("mode") or "?"
+    sev = crit.get("severity") or "?"
+    concerns = crit.get("concerns") or []
+    if isinstance(concerns, str):
+        try:
+            concerns = json.loads(concerns)
+        except json.JSONDecodeError:
+            concerns = [concerns]
+    if not isinstance(concerns, list):
+        concerns = [str(concerns)]
+    head = "; ".join(_truncate_one_line(str(c), 100) for c in concerns[:2]) or crit.get(
+        "summary", ""
+    )
+    return f"{cid} ({mode}, severity={sev}): {head}"
+
+
+def append_history_entry(entry_text: str) -> None:
+    """Append a Markdown section to `<project>/thread/history.md`.
+
+    Entries are written deterministically by the loopback hooks (no LLM
+    call) so the running narrative stays cheap, structured, and consistent.
+    Empty/whitespace inputs are ignored.
+    """
+    if not entry_text or not entry_text.strip():
+        return
+    p = history_log()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    sep = "" if not p.exists() or p.read_text().endswith("\n\n") else "\n"
+    with p.open("a") as f:
+        f.write(sep + entry_text.rstrip() + "\n\n")
+
+
+def history_block(max_chars: int = HISTORY_BUDGET_CHARS) -> str:
+    """Return the running history.md as a prompt prefix.
+
+    Injected by every phase that may run as part of a loopback. Returns "" on
+    a virgin project so first-run prompts are unaffected. If the file is
+    larger than `max_chars` (default ~2k tokens), only the most recent
+    portion is kept, with an explicit elision note prepended so the skill
+    knows older context exists on disk.
+    """
+    p = history_log()
+    if not p.exists():
         return ""
-    last = state["history"][-1]
-    failed_hyps = last.get("failed_hyp_ids", [])
-    failed_plans = last.get("failed_plan_ids", [])
+    text = p.read_text()
+    if not text.strip():
+        return ""
+    elided = ""
+    if len(text) > max_chars:
+        text = text[-max_chars:]
+        elided = (
+            "_[earlier entries elided to fit prompt budget; full log lives at "
+            "`<project>/thread/history.md`]_\n\n"
+        )
     return (
-        f"\n## RETREAT CONTEXT (cycle {state['current']} of up to {MAX_CYCLES})\n"
-        f"This is iteration {state['current']}. Previous cycle(s) did NOT yield a positive result.\n"
-        f"Parked failed Hypotheses (do not re-propose these): {failed_hyps}\n"
-        f"Failed ExperimentPlans: {failed_plans}\n"
-        f"Read each parked HYP's body and any linked ExperimentResult/Critique to "
-        f"understand WHY it failed (wrong mechanism? bad metric? confounded baseline?). "
-        f"Propose materially different angles — not minor variations of the same idea.\n"
+        "\n## RUN HISTORY (groomed, append-only)\n\n"
+        "Cross-loop narrative of every retreat / loopback so far. Each entry "
+        "lists what was tried, the parked artifact ids (HYP-/REV-/CRIT-), and "
+        "what the next phase should do about it. Read referenced artifact ids "
+        "for full bodies.\n\n"
+        f"{elided}{text.rstrip()}\n"
     )
 
 
-def idea_cycle_context_block(state: dict) -> str:
-    """Prompt prefix injected into expand/gap-fill when idea_cycle > 1."""
+def _history_entry_experiment_retreat(state: dict, entry: dict, thread: list[dict]) -> str:
+    """Templated history section for an experiment retreat.
+
+    `entry` is the structured dict that `cycle_retreat_check.decide()` built
+    (failed_plan_ids, failed_hyp_ids, summary). `state` is read pre-bump so
+    `state["current"]` is the cycle that just ended.
+    """
+    cycle = state.get("current", 1)
+    failed_hyps = entry.get("failed_hyp_ids", []) or []
+    failed_plans = entry.get("failed_plan_ids", []) or []
+    summary = entry.get("summary") or ""
+    lines = [
+        f"### Cycle {cycle} ended ({now_iso()}) — experiment retreat → survey",
+        "",
+        f"{summary or 'Previous cycle yielded no positive results.'} "
+        "Orchestrator parked the failed HYPs and is re-running from `survey`.",
+        "",
+        "Failed HYPs (parked, do not re-propose variations):",
+    ]
+    if failed_hyps:
+        for hid in failed_hyps:
+            lines.append(f'  - **{hid}** "{_hyp_claim(thread, hid)}"')
+            for c in _critiques_for(thread, hid, mode="validity"):
+                lines.append(f"    └─ {_format_critique_one_line(c)}")
+    else:
+        lines.append("  (none recorded)")
+    lines.append("")
+    lines.append(f"Failed ExperimentPlans: {failed_plans or '(none)'}")
+    lines.append("")
+    lines.append(
+        "**Next:** propose materially different angles in survey/design — "
+        "not variations of the parked HYPs above. Read parked HYP bodies and "
+        "linked ExperimentResult / Critique artifacts for the full picture."
+    )
+    return "\n".join(lines)
+
+
+def _history_entry_idea_retreat(state: dict, entry: dict, thread: list[dict]) -> str:
+    """Templated history section for an idea retreat (post-screen wildness fail)."""
     icycle = state.get("idea_cycle", 1)
-    history = state.get("idea_history", [])
-    if icycle <= 1 or not history:
-        return ""
-    last = history[-1]
-    parked = last.get("parked_hyp_ids", [])
-    return (
-        f"\n## IDEA-CYCLE RETREAT CONTEXT (idea cycle {icycle} of up to {MAX_IDEA_CYCLES})\n"
-        f"Previous batch produced only {last.get('n_survivors', 0)} hypotheses that "
-        f"cleared the wildness bar. The boring ones were PARKED in ideas/parking_lot.md "
-        f"with reasons. DO NOT regenerate variations of: {parked}.\n"
-        f"The new batch must be substantially WILDER. Push hard into Wildness Tickets "
-        f"W1 (NON-ML cross-domain) and W2 (textbook contradiction). If your draft "
-        f"hypothesis would not surprise a sharp PhD student, throw it out and try "
-        f"again BEFORE emitting.\n"
+    parked = entry.get("parked_hyp_ids", []) or []
+    n_survivors = entry.get("n_survivors", 0)
+    lines = [
+        f"### Idea-cycle {icycle} ended ({now_iso()}) — idea retreat → expand",
+        "",
+        f"Only {n_survivors} HYP(s) cleared the wildness bar. Boring ones parked.",
+        "",
+        "Parked HYPs (do not regenerate variations):",
+    ]
+    if parked:
+        for hid in parked:
+            lines.append(f'  - **{hid}** "{_hyp_claim(thread, hid)}"')
+            for c in _critiques_for(thread, hid, mode="boredom"):
+                lines.append(f"    └─ {_format_critique_one_line(c)}")
+    else:
+        lines.append("  (none recorded)")
+    lines.append("")
+    lines.append(
+        "**Next:** push hard into Wildness Tickets W1 (NON-ML cross-domain) "
+        "and W2 (textbook contradiction). If your draft hypothesis would not "
+        "surprise a sharp PhD student, throw it out before emitting."
     )
+    return "\n".join(lines)
+
+
+def _history_entry_review_loopback(state: dict, entry: dict, thread: list[dict]) -> str:
+    """Templated history section for a committee review loopback."""
+    rcycle = state.get("review_cycle", 1)
+    target = entry.get("target_phase") or "?"
+    summary = entry.get("summary") or ""
+    recs = entry.get("recommendations", []) or []
+    # Reviews from this just-ended cycle: created since the previous review_history entry.
+    prior = state.get("review_history") or []
+    last_ts = prior[-1]["ended_at"] if prior else None
+    cycle_reviews = [
+        r for r in by_type(thread, "Review") if not last_ts or (r.get("created_at") or "") > last_ts
+    ]
+
+    lines = [
+        f"### Review cycle {rcycle} ended ({now_iso()}) — review loopback → {target}",
+        "",
+        f"Committee voted: {summary or recs}. Looping back to `{target}`.",
+        "",
+        "Per-persona verdicts:",
+    ]
+    if cycle_reviews:
+        for r in cycle_reviews:
+            persona = r.get("persona", "?")
+            rec = r.get("recommendation", "?")
+            tp = r.get("target_phase", "")
+            marker = f" → wants `{tp}`" if rec == "major_revision" and tp else ""
+            sm = _truncate_one_line(r.get("summary") or "", 140)
+            sm_tail = f" — {sm}" if sm else ""
+            lines.append(f"  - **{persona}** ({r['id']}) {rec}{marker}{sm_tail}")
+    else:
+        lines.append("  (no per-persona summary available)")
+    lines.append("")
+    lines.append(
+        f"**Next:** address every `major_revision` concern explicitly when "
+        f"re-running `{target}` (and downstream phases). Read the full Review "
+        f"bodies in `thoughts/REV-NNN.md` for specific concerns and requested "
+        f"changes. Advisory `minor_revision` feedback should be considered "
+        f"but is not blocking."
+    )
+    return "\n".join(lines)
 
 
 def idea_retreat_check() -> str | None:
@@ -1620,6 +1851,7 @@ def idea_retreat_check() -> str | None:
         wipe_from="expand",
         label="idea-retreat",
         decide=decide,
+        narrative_builder=_history_entry_idea_retreat,
     )
 
 
