@@ -50,8 +50,29 @@ export AUTOLAB_MIN_WILD_HYPOTHESES="${AUTOLAB_MIN_WILD_HYPOTHESES:-2}"
 # in-skill 2 retries. Total worst-case attempts = 1 + 2 + this value.
 export AUTOLAB_MAX_CRASH_RETRIES="${AUTOLAB_MAX_CRASH_RETRIES:-20}"
 
+# Cap committee-review loopbacks. After this many rounds, the paper ships
+# unconditionally regardless of reviewer recommendations. Each cycle =
+# 3 reviewers (methodologist, domain-expert, clarity-reviewer) running in
+# parallel; any reviewer voting `major_revision` with a valid target_phase
+# triggers a loopback to that phase.
+export AUTOLAB_MAX_REVIEW_CYCLES="${AUTOLAB_MAX_REVIEW_CYCLES:-5}"
+
 # ---------------------------------------------------------------------------
-# 3. Optional CLI flags for scripts/start.
+# 3. Optional kill-switches for the two paper-finishing steps.
+# ---------------------------------------------------------------------------
+# Uncomment either to skip that step. The orchestrator still runs every
+# other phase normally; only the named step is bypassed.
+
+# Skip the polish pass at the end of `final` (saves ~1 opus call). The
+# unpolished assembled paper is still written to drafts/paper-vFINAL.md.
+# export AUTOLAB_SKIP_POLISH=1
+
+# Skip the committee-review phase entirely (saves 3 opus calls per cycle).
+# The paper ships straight from `final` with no reviewer feedback.
+# export AUTOLAB_SKIP_REVIEW=1
+
+# ---------------------------------------------------------------------------
+# 4. Optional CLI flags for scripts/start.
 # ---------------------------------------------------------------------------
 # Override the auto-generated project id (default: <slug>-<YYYYMMDD>).
 # Useful when you want a stable, predictable directory name.
@@ -70,7 +91,7 @@ WATCHDOG=0                    # 1 to enable
 SINGLE_STEP=0                 # 1 to enable
 
 # ---------------------------------------------------------------------------
-# 4. Build the argv to scripts/start and invoke.
+# 5. Build the argv to scripts/start and invoke.
 # ---------------------------------------------------------------------------
 ARGS=()
 
@@ -92,6 +113,9 @@ echo ">>> AUTOLAB_MAX_IDEA_CYCLES     = $AUTOLAB_MAX_IDEA_CYCLES"
 echo ">>> AUTOLAB_MAX_CYCLES          = $AUTOLAB_MAX_CYCLES"
 echo ">>> AUTOLAB_MIN_WILD_HYPOTHESES = $AUTOLAB_MIN_WILD_HYPOTHESES"
 echo ">>> AUTOLAB_MAX_CRASH_RETRIES   = $AUTOLAB_MAX_CRASH_RETRIES"
+echo ">>> AUTOLAB_MAX_REVIEW_CYCLES   = $AUTOLAB_MAX_REVIEW_CYCLES"
+echo ">>> AUTOLAB_SKIP_POLISH         = ${AUTOLAB_SKIP_POLISH:-(unset)}"
+echo ">>> AUTOLAB_SKIP_REVIEW         = ${AUTOLAB_SKIP_REVIEW:-(unset)}"
 echo ">>> scripts/start ${ARGS[*]}"
 echo
 

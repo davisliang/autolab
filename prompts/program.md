@@ -48,10 +48,11 @@ Every artifact has: `id`, `type`, `created_at`, `parent_ids`, `author` (skill na
 | `ExperimentResult`| `RES-`   | `plan_id`, `status` (pass/fail/crash), `metrics{mean,stddev,n_seeds}`, `runs_dir`, `notes`         |
 | `Critique`       | `CRIT-`   | `target_id`, `mode` (validity/boredom/failure-analysis), `severity` (low/med/high), `concerns[]`, `proposed_fix` |
 | `DraftSection`   | `DRAFT-`  | `section`, `version`, `citation_ids[]`, `text_path`                                                |
+| `Review`         | `REV-`    | `persona` (methodologist/domain-expert/clarity-reviewer), `recommendation` (accept/minor_revision/major_revision), `target_phase` (only for major), `score_overall`, `score_soundness`, `score_novelty`, `score_clarity` |
 
 **Cross-references use IDs only** — do not requote bodies.
 
-## The 10-phase pipeline
+## The 11-phase pipeline
 
 The orchestrator drives one phase per `claude -p` invocation. Each phase ends by writing `thread/checkpoints/<phase>.json` with `{phase, completed_artifact_ids, next_action, completed_at}`. The orchestrator reads the latest checkpoint to decide the next phase.
 
@@ -64,7 +65,8 @@ The orchestrator drives one phase per `claude -p` invocation. Each phase ends by
 7. **`run`** — `experiment-runner` per `ExperimentPlan`, sequentially (one local job at a time). Each run starts with a sanity-gate (`overfit-32-examples` test). Failed retries trigger `critic` in `failure-analysis` mode. Passing experiments trigger an automatic ablation: a follow-up `ExperimentPlan` with `is_ablation=true` isolating the proposed mechanism, also run sequentially.
 8. **`critique`** — `critic` in `validity` mode over all `ExperimentResult` rows. Threats to validity, missing baselines, suspect metrics — all become `Critique` rows.
 9. **`write`** — `paper-writer` produces section-by-section. Outline first; then Abstract / Introduction / Related Work / Method / Experiments / Discussion. Each section is a separate `claude -p` call reading only the artifact IDs it cites. Citations are admissible only if their `Citation.verified=true`.
-10. **`final`** — Orchestrator concatenates `DraftSection` rows into `drafts/paper-vFINAL.md`, emits `drafts/citations.bib`, writes the final checkpoint.
+10. **`final`** — Orchestrator concatenates `DraftSection` rows into `drafts/paper-vFINAL.md`, emits `drafts/citations.bib`, then runs a polish pass via the `paper-polisher` skill that fills any `_(missing)_` sections, tightens weak prose, and enforces consistency between the intro contributions and the experiments table. The pre-polish version is kept at `drafts/paper-vFINAL.pre-polish.md`.
+11. **`review`** — `committee-reviewer` is invoked 3× in parallel, one call per persona (`methodologist`, `domain-expert`, `clarity-reviewer`). Each emits one `Review` artifact carrying a `recommendation` ∈ `{accept, minor_revision, major_revision}` and (for `major_revision`) a `target_phase` ∈ `{survey, design, run, critique, write, final}`. If any reviewer requests `major_revision`, the orchestrator wipes checkpoints from the earliest requested target phase, bumps `review_cycle`, and re-runs from that phase. Capped at `AUTOLAB_MAX_REVIEW_CYCLES` rounds.
 
 ## Pre-registration contract
 

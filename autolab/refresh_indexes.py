@@ -57,6 +57,7 @@ def refresh_thread():
         "ExperimentPlan",
         "ExperimentResult",
         "DraftSection",
+        "Review",
     ]
     for t in order:
         rows = by_type.get(t, [])

@@ -37,6 +37,7 @@ TYPE_PREFIX = {
     "ExperimentResult": "RES",
     "Critique": "CRIT",
     "DraftSection": "DRAFT",
+    "Review": "REV",
 }
 
 

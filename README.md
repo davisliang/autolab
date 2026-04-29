@@ -133,14 +133,19 @@ The bot is a `claude` CLI loop. Each phase is a fresh headless `claude -p` subpr
 ### Phase pipeline
 
 ```
-seed → expand → survey → gap-fill → screen → design → run → critique → write → final
-                              ↑                                  │
-                              │  experiment retreat (no pass)    │
-                              └──────────────────────────────────┘
-                  ↑              │
-                  │ idea retreat │
-                  │ (too boring) │
-                  └──────────────┘
+seed → expand → survey → gap-fill → screen → design → run → critique → write → final → review
+                              ↑                                  │                       │
+                              │  experiment retreat (no pass)    │                       │
+                              └──────────────────────────────────┘                       │
+                  ↑              │                                                       │
+                  │ idea retreat │                                                       │
+                  │ (too boring) │                                                       │
+                  └──────────────┘                                                       │
+                                                                                         │
+              ┌──────────────────────────────────────────────────────────────────────────┘
+              │ review loopback (committee says major_revision → target_phase)
+              ▼
+         survey | design | run | critique | write | final
 ```
 
 | Phase | Skill (mode) | Model | What it does |
@@ -155,8 +160,9 @@ seed → expand → survey → gap-fill → screen → design → run → critiq
 | `critique` | `critic` (validity) | Opus | Reviews each `ExperimentResult` for threats to validity, baseline parity, statistical sins |
 | `write` | `paper-writer` | Opus | Section-by-section: outline → abstract → intro → related → background → data/models → method → experiments → discussion → conclusion → broader-impact → reproducibility |
 | `final` | `paper-polisher` | Opus | Stitches `paper-vFINAL.md`, then runs a polish pass that re-reads the whole paper, fills any `_(missing)_` sections, tightens weak prose, and enforces consistency between the intro contributions and the experiments table. Pre-polish version is kept at `paper-vFINAL.pre-polish.md` for diffing. |
+| `review` | `committee-reviewer` ×3 (parallel) | Opus | A 3-persona committee (methodologist, domain-expert, clarity-reviewer) reads the polished paper plus the artifact thread and emits one `Review` per persona. Recommendations aggregate to `accept` (ship), `minor_revision` (ship; advisory), or `major_revision` → loop back to a reviewer-named `target_phase` (one of `survey`, `design`, `run`, `critique`, `write`, `final`). |
 
-### Three feedback loops
+### Four feedback loops
 
 The orchestrator is not strictly forward — failed work loops back automatically.
 
@@ -165,8 +171,50 @@ The orchestrator is not strictly forward — failed work loops back automaticall
 | **Idea retreat** | After `screen`, `< MIN_WILD_HYPOTHESES` survive the wildness bar | Wipe checkpoints from `expand`; bump `idea_cycle`; re-run with parked-HYPs context | `AUTOLAB_MAX_IDEA_CYCLES=3` |
 | **Experiment retreat** | After `critique`, no primary `ExperimentResult.status == "pass"` | Park failed HYPs; wipe from `survey`; bump `cycle`; re-run with failure context | `AUTOLAB_MAX_CYCLES=5` |
 | **Crash retry** | After `run`, only `status=crash` for a plan | Re-invoke the runner with debug-fix prompt | `AUTOLAB_MAX_CRASH_RETRIES=2` per plan (on top of the runner's own 2 internal retries) |
+| **Review loopback** | After `review`, any committee persona returns `recommendation=major_revision` with a valid `target_phase` | Wipe checkpoints from the earliest requested `target_phase` forward; bump `review_cycle`; re-run with the prior-round Review artifacts in context | `AUTOLAB_MAX_REVIEW_CYCLES=2` |
 
-State for all three loops lives in `projects/<id>/thread/cycles.json`.
+State for all four loops lives in `projects/<id>/thread/cycles.json`.
+
+### Committee review (the `review` phase, in detail)
+
+After `final` writes a polished paper, `phase_review` runs a NeurIPS-style program committee against it. The mechanics:
+
+**1. Three reviewers in parallel.** `phase_review` dispatches three concurrent calls of the `committee-reviewer` skill, one per persona:
+
+| Persona | Focus |
+|---------|-------|
+| `methodologist` | Experimental design, statistical validity, baseline parity, seed counts, ablation coverage, reproducibility envelope. Cross-checks claims in the paper against validity-mode `Critique` artifacts. |
+| `domain-expert` | Novelty, contribution, related-work positioning. Are claims supported by experiments? Are obvious neighbors missing from `cite_pool`? |
+| `clarity-reviewer` | Writing, structure, story. Is the introduction's contributions list 1-for-1 with the experiments headline table? Would a NeurIPS reviewer reading only Abstract + §1 + main table walk away with the right takeaway? |
+
+Each reviewer reads the polished `paper-vFINAL.md`, the relevant artifact thread (Idea, Hypotheses, ExperimentResults, validity Critiques, *and prior Reviews if this is a re-review*), and `citations.bib`.
+
+**2. Each persona emits one `Review` artifact** with these fields:
+
+| Field | Values |
+|-------|--------|
+| `persona` | `methodologist` / `domain-expert` / `clarity-reviewer` |
+| `recommendation` | `accept` / `minor_revision` / `major_revision` |
+| `target_phase` | one of `survey`, `design`, `run`, `critique`, `write`, `final` (required only for `major_revision`) |
+| `score_overall` | int 1–10 |
+| `score_soundness` | int 1–10 |
+| `score_novelty` | int 1–10 |
+| `score_clarity` | int 1–10 |
+
+Plus a markdown body with strengths, weaknesses, specific concerns (cited by section number and artifact id), and requested changes.
+
+**3. Decision rules.** `review_loopback_check()` aggregates the three Reviews and chooses one of:
+
+| Aggregate verdict | Action |
+|---|---|
+| All three say `accept` | **Ship.** Paper is done; orchestrator exits. |
+| Any reviewer says `major_revision` with a valid `target_phase` | **Loop back.** Wipe checkpoints from the *earliest* requested `target_phase` forward, bump `review_cycle`, re-run from that phase. Prior Reviews stay in the thread so the next round of writers/designers/runners sees the feedback. |
+| Mix of accept + minor (no valid major) | **Ship.** Minor revisions are advisory; the polish pass already ran inside `final`, so further changes would need a manual `--resume`. |
+| Cap reached (`review_cycle >= AUTOLAB_MAX_REVIEW_CYCLES`) | **Ship unconditionally**, regardless of recommendations. |
+
+**4. Is there a numeric pass threshold?** No, not at the orchestrator level. The decision is made on the categorical `recommendation` field; the four numeric scores are recorded for reference but never read by `review_loopback_check`. The `committee-reviewer` skill suggests a rubric to each reviewer (`score_overall ≥ 7` → accept, `5–6` → minor, `≤ 4` → major), but reviewers can override based on qualitative concerns. The effective ship condition is **3-for-3 unanimous accept** (or any non-major outcome at the cycle cap).
+
+**5. Skipping the committee.** Set `AUTOLAB_SKIP_REVIEW=1` to bypass the phase entirely — the paper ships straight from `final`.
 
 ### Subagents
 
@@ -180,6 +228,7 @@ State for all three loops lives in `projects/<id>/thread/cycles.json`.
 | `critic` | `boredom` / `validity` / `failure-analysis` modes | Opus / Haiku |
 | `paper-writer` | Section-by-section, only verified citations; pastes pre-rendered tables | Opus |
 | `paper-polisher` | Final whole-paper pass: fills missing sections, improves clarity, enforces intro↔experiments consistency | Opus |
+| `committee-reviewer` | Single-persona NeurIPS-style reviewer; emits one `Review` artifact (accept / minor / major + target_phase). Run 3× in parallel during `review` | Opus |
 
 Plus the bundled `huggingface-papers` skill (used by `literature-scout`, `novelty-checker`).
 
@@ -264,7 +313,9 @@ All env vars are optional.
 | `AUTOLAB_MAX_IDEA_CYCLES` | `3` | Max idea retreats per project |
 | `AUTOLAB_MIN_WILD_HYPOTHESES` | `2` | Min HYPs that must survive screen to advance to design |
 | `AUTOLAB_MAX_CRASH_RETRIES` | `2` | Orchestrator-level crash retries per plan (on top of the runner's 2 internal) |
+| `AUTOLAB_MAX_REVIEW_CYCLES` | `2` | Max committee-review loopbacks before shipping the paper unconditionally |
 | `AUTOLAB_SKIP_POLISH` | unset | If set (any value), skip the polish pass at the end of `phase_final`. The unpolished assembled paper is still written. |
+| `AUTOLAB_SKIP_REVIEW` | unset | If set, skip the `review` phase entirely. The paper ships straight from `final`. |
 
 Stop conditions: `final.json` checkpoint exists, `STOP` file at repo root, or you Ctrl+C. There is no dollar budget cap.
 

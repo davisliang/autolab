@@ -57,15 +57,54 @@ PHASES = [
     "critique",
     "write",
     "final",
+    "review",
 ]
 
 # Phases re-run on retreat (everything from survey through critique).
 RETREAT_PHASES = ["survey", "gap-fill", "screen", "design", "run", "critique"]
 
+# Phases a committee reviewer may request as a `target_phase` for a major
+# revision. Anything outside this set is treated as a minor revision.
+VALID_REVIEW_LOOPBACK_PHASES = {"survey", "design", "run", "critique", "write", "final"}
+
 MAX_CYCLES = int(os.environ.get("AUTOLAB_MAX_CYCLES", "5"))
 MAX_CRASH_RETRIES = int(os.environ.get("AUTOLAB_MAX_CRASH_RETRIES", "2"))
 MAX_IDEA_CYCLES = int(os.environ.get("AUTOLAB_MAX_IDEA_CYCLES", "3"))
+MAX_REVIEW_CYCLES = int(os.environ.get("AUTOLAB_MAX_REVIEW_CYCLES", "2"))
 MIN_WILD_HYPOTHESES = int(os.environ.get("AUTOLAB_MIN_WILD_HYPOTHESES", "2"))
+
+REVIEWER_PERSONAS = [
+    {
+        "id": "methodologist",
+        "focus": (
+            "Experimental design, statistical validity, baseline parity, "
+            "seed counts, ablation coverage, reproducibility envelope. "
+            "Cross-check claims in the paper against validity-mode "
+            "Critique artifacts; flag any claim the artifacts do not "
+            "support. Penalize single-seed RL results."
+        ),
+    },
+    {
+        "id": "domain-expert",
+        "focus": (
+            "Novelty, contribution, and positioning vs. cited literature. "
+            "Are the claims supported by the experiments? Is the related "
+            "work coverage adequate? Are obvious neighbors missing from "
+            "cite_pool? For negative-results work, evaluate whether the "
+            "refutation is genuinely informative or merely a null."
+        ),
+    },
+    {
+        "id": "clarity-reviewer",
+        "focus": (
+            "Writing, structure, and story. Is the introduction's "
+            "contributions list 1-for-1 with the experiments headline "
+            "table? Are sections complete and self-consistent? Would a "
+            "NeurIPS reviewer reading only Abstract + §1 + the main "
+            "table walk away with the right takeaway?"
+        ),
+    },
+]
 
 WILDNESS_CRITERIA = """## WILDNESS BAR (read carefully)
 
@@ -1113,12 +1152,103 @@ def _run_polish_pass(paper_path: Path) -> None:
         paper_path.write_text(backup_path.read_text())
 
 
+def phase_review() -> list[str]:
+    """Run a 3-reviewer committee against the current paper-vFINAL.md.
+
+    Each persona produces ONE Review artifact in parallel via the
+    `committee-reviewer` skill. The orchestrator's loopback decision is
+    made later in `review_loopback_check()` based on the aggregated
+    recommendations.
+
+    Set AUTOLAB_SKIP_REVIEW=1 to skip the committee entirely.
+    """
+    if os.environ.get("AUTOLAB_SKIP_REVIEW"):
+        log_line("review: skipped (AUTOLAB_SKIP_REVIEW set)")
+        return []
+
+    paper = drafts_dir() / "paper-vFINAL.md"
+    if not paper.exists():
+        log_line("review: paper-vFINAL.md missing; skipping committee")
+        return []
+
+    state = read_cycle_state()
+    rcycle = state.get("review_cycle", 1)
+    cycle_ctx = (
+        f"\n## REVIEW CYCLE {rcycle} (of up to {MAX_REVIEW_CYCLES})\n"
+        "This is a re-review after a previous loopback. Read the prior "
+        "Review artifacts in the thread index to see what the committee "
+        "asked for and weigh whether it has been addressed.\n"
+        if rcycle > 1
+        else ""
+    )
+
+    thread = read_thread()
+    cite_pool = [r["id"] for r in by_type(thread, "Citation") if r.get("verified")]
+    relevant = ",".join(
+        [r["id"] for r in by_type(thread, "Idea")]
+        + [r["id"] for r in by_type(thread, "Hypothesis")]
+        + [r["id"] for r in by_type(thread, "ExperimentResult")]
+        + [r["id"] for r in by_type(thread, "Critique") if r.get("mode") == "validity"]
+        + [r["id"] for r in by_type(thread, "Review")]
+    )
+    paper_rel = f"projects/{get_project_id()}/drafts/paper-vFINAL.md"
+    valid_phases = ",".join(sorted(VALID_REVIEW_LOOPBACK_PHASES))
+
+    jobs = []
+    for persona in REVIEWER_PERSONAS:
+        prompt = "\n".join(
+            [
+                "Phase: review",
+                "Invoke skill: committee-reviewer",
+                f"persona={persona['id']}",
+                f"paper_path={paper_rel}",
+                f"relevant_artifacts={relevant}",
+                f"cite_pool={','.join(cite_pool) or '(none)'}",
+                f"valid_loopback_phases={valid_phases}",
+                "",
+                cycle_ctx,
+                "## Persona focus",
+                "",
+                persona["focus"],
+                "",
+                "Per the committee-reviewer skill, read the paper and the "
+                "relevant artifacts, then emit ONE Review artifact via "
+                "`python -m autolab.append_artifact --type Review` with the "
+                "required fields (persona, recommendation, target_phase, "
+                "score_overall, score_soundness, score_novelty, "
+                "score_clarity) and the standard markdown body. End with the "
+                "stdout contract.",
+            ]
+        )
+        jobs.append(
+            {
+                "phase": "review",
+                "skill": "committee-reviewer",
+                "model": "opus",
+                "prompt": prompt,
+                "timeout_s": 1800,
+            }
+        )
+
+    parallel_calls(jobs)
+    refresh_indexes()
+
+    last_ts = state["review_history"][-1]["ended_at"] if state.get("review_history") else None
+    new_reviews = [
+        r["id"]
+        for r in by_type(read_thread(), "Review")
+        if not last_ts or (r.get("created_at") or "") > last_ts
+    ]
+    log_line(f"review: cycle {rcycle} emitted {len(new_reviews)} review(s) {new_reviews}")
+    return new_reviews
+
+
 def cycle_state_path() -> Path:
     return checkpoints_dir().parent / "cycles.json"
 
 
 def read_cycle_state() -> dict:
-    """Combined cycle state for both experiment and idea retreat loops.
+    """Combined cycle state for the experiment, idea, and review retreat loops.
 
     Schema:
       current        — experiment cycle (1-indexed), incremented on post-critique retreat
@@ -1126,32 +1256,28 @@ def read_cycle_state() -> dict:
       crash_retries  — { plan_id: count } orchestrator-level crash retries used
       idea_cycle     — idea cycle (1-indexed), incremented on post-screen wildness retreat
       idea_history   — list of idea-cycle endings: idea_cycle, ended_at, n_survivors, parked_hyp_ids
+      review_cycle   — committee review cycle (1-indexed), incremented on post-review loopback
+      review_history — list of review-cycle endings: review_cycle, ended_at, target_phase, recommendations, summary
     """
+    defaults = {
+        "current": 1,
+        "history": [],
+        "crash_retries": {},
+        "idea_cycle": 1,
+        "idea_history": [],
+        "review_cycle": 1,
+        "review_history": [],
+    }
     p = cycle_state_path()
     if not p.exists():
-        return {
-            "current": 1,
-            "history": [],
-            "crash_retries": {},
-            "idea_cycle": 1,
-            "idea_history": [],
-        }
+        return dict(defaults)
     try:
         s = json.loads(p.read_text())
-        s.setdefault("current", 1)
-        s.setdefault("history", [])
-        s.setdefault("crash_retries", {})
-        s.setdefault("idea_cycle", 1)
-        s.setdefault("idea_history", [])
+        for k, v in defaults.items():
+            s.setdefault(k, v)
         return s
     except json.JSONDecodeError:
-        return {
-            "current": 1,
-            "history": [],
-            "crash_retries": {},
-            "idea_cycle": 1,
-            "idea_history": [],
-        }
+        return dict(defaults)
 
 
 def write_cycle_state(state: dict):
@@ -1270,6 +1396,87 @@ def cycle_retreat_check() -> str | None:
         wipe_from="survey",
         label="retreat",
         decide=decide,
+    )
+
+
+def review_loopback_check() -> str | None:
+    """Aggregate the latest cycle's Review artifacts and decide whether to
+    loop the orchestrator back to an earlier phase.
+
+    Decision rules:
+      - all `accept`              -> None  (paper ships)
+      - any `major_revision`      -> earliest valid target_phase named by
+                                     any reviewer; loops back via _retreat
+      - mix of accept/minor only  -> None  (re-running just `final` already
+                                     happened on the way here; minor
+                                     revisions are advisory at this point)
+
+    Capped by MAX_REVIEW_CYCLES; once at the cap, ships unconditionally.
+    """
+
+    def decide(state):
+        cycle = state["review_cycle"]
+        last_ts = state["review_history"][-1]["ended_at"] if state["review_history"] else None
+        reviews = [
+            r
+            for r in by_type(read_thread(), "Review")
+            if not last_ts or (r.get("created_at") or "") > last_ts
+        ]
+        if not reviews:
+            log_line("review-retreat: no Review artifacts emitted; not looping back")
+            return True, None
+        recs = [r.get("recommendation", "accept") for r in reviews]
+        if all(r == "accept" for r in recs):
+            log_line(f"review-retreat: cycle {cycle} all-accept; shipping")
+            return True, None
+
+        targets = []
+        for r in reviews:
+            if r.get("recommendation") != "major_revision":
+                continue
+            tp = r.get("target_phase")
+            if tp in VALID_REVIEW_LOOPBACK_PHASES:
+                targets.append(tp)
+        if not targets:
+            log_line(
+                f"review-retreat: cycle {cycle} recs={recs}; no valid loopback "
+                "target_phase requested — treating as minor revision and shipping"
+            )
+            return True, None
+
+        earliest = min(targets, key=PHASES.index)
+        return False, {
+            "n_reviews": len(reviews),
+            "recommendations": recs,
+            "target_phase": earliest,
+            "summary": (
+                f"{recs.count('major_revision')} major rev, "
+                f"{recs.count('minor_revision')} minor, "
+                f"{recs.count('accept')} accept; target={earliest}"
+            ),
+            "_log_extra": f"target={earliest}; recs={recs}",
+        }
+
+    state = read_cycle_state()
+    if MAX_REVIEW_CYCLES > 0 and state.get("review_cycle", 1) >= MAX_REVIEW_CYCLES:
+        log_line(f"review-retreat: at MAX={MAX_REVIEW_CYCLES}; shipping paper as-is")
+        return None
+
+    # We can't compute the target_phase upfront for the generic _retreat
+    # helper (it depends on the reviews), so resolve it via decide() first
+    # and pass through. Two-step pattern: peek at decide(), then dispatch.
+    advance, entry = decide(state)
+    if advance:
+        return None
+    target = entry["target_phase"]
+    return _retreat(
+        counter_key="review_cycle",
+        history_key="review_history",
+        max_cycles=MAX_REVIEW_CYCLES,
+        target_phase=target,
+        wipe_from=target,
+        label="review-retreat",
+        decide=lambda _state: (False, entry),
     )
 
 
@@ -1427,6 +1634,12 @@ def next_phase_to_run(args) -> str | None:
         retreat = cycle_retreat_check()
         if retreat:
             return retreat
+    # Review-loopback hook: after the committee review, if a major revision
+    # was requested, loop back to the earliest target phase.
+    if cur == "review":
+        loopback = review_loopback_check()
+        if loopback:
+            return loopback
     try:
         i = PHASES.index(cur)
     except ValueError:
@@ -1458,12 +1671,14 @@ def run_phase(phase: str, args) -> list[str]:
         ids = phase_write()
     elif phase == "final":
         ids = phase_final()
+    elif phase == "review":
+        ids = phase_review()
     else:
         raise SystemExit(f"unknown phase: {phase}")
     write_checkpoint(
         phase,
         ids,
-        None if phase == "final" else PHASES[PHASES.index(phase) + 1],
+        None if phase == PHASES[-1] else PHASES[PHASES.index(phase) + 1],
     )
     log_line(f"=== end phase: {phase} ids={ids} ===")
     return ids

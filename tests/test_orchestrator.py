@@ -25,7 +25,13 @@ class TestPhaseConstants:
             "critique",
             "write",
             "final",
+            "review",
         ]
+
+    def test_review_is_terminal_phase(self):
+        # `review` is the new terminal phase; it gates whether the paper
+        # ships or whether the orchestrator loops back to an earlier phase.
+        assert orch.PHASES[-1] == "review"
 
     def test_retreat_phases_are_subset_of_phases(self):
         assert set(orch.RETREAT_PHASES).issubset(set(orch.PHASES))
@@ -36,6 +42,20 @@ class TestPhaseConstants:
         assert "seed" not in orch.RETREAT_PHASES
         assert "write" not in orch.RETREAT_PHASES
         assert "final" not in orch.RETREAT_PHASES
+        assert "review" not in orch.RETREAT_PHASES
+
+    def test_valid_review_loopback_phases_are_in_phases(self):
+        # Every phase a reviewer may request must actually exist as a phase.
+        assert orch.VALID_REVIEW_LOOPBACK_PHASES.issubset(set(orch.PHASES))
+
+    def test_reviewer_personas_are_distinct_and_nonempty(self):
+        ids = [p["id"] for p in orch.REVIEWER_PERSONAS]
+        assert len(ids) == len(set(ids)), "reviewer persona ids must be unique"
+        assert {"methodologist", "domain-expert", "clarity-reviewer"}.issubset(set(ids))
+        for p in orch.REVIEWER_PERSONAS:
+            assert (
+                isinstance(p.get("focus"), str) and len(p["focus"]) >= 40
+            ), f"persona {p.get('id')} missing or has short focus"
 
 
 class TestNeuripsSectionBrief:
@@ -202,3 +222,114 @@ class TestPolisherSkillOnDisk:
         assert text.startswith("---\n"), "skill file missing YAML frontmatter"
         assert "name: paper-polisher" in text, "skill name field missing/wrong"
         assert "description:" in text, "skill description field missing"
+
+
+class TestCommitteeReviewWiring:
+    """phase_review runs after phase_final and either ships the paper or
+    triggers a loopback via review_loopback_check. These tests pin the
+    structural wiring without invoking claude."""
+
+    def test_phase_review_helper_exists(self):
+        assert hasattr(orch, "phase_review") and callable(orch.phase_review)
+
+    def test_review_loopback_check_exists(self):
+        assert hasattr(orch, "review_loopback_check") and callable(orch.review_loopback_check)
+
+    def test_phase_review_invokes_committee_reviewer_skill(self):
+        import inspect
+
+        src = inspect.getsource(orch.phase_review)
+        assert (
+            '"committee-reviewer"' in src
+        ), "phase_review must dispatch to the committee-reviewer skill"
+        assert (
+            "parallel_calls(" in src
+        ), "phase_review must run reviewers in parallel via parallel_calls"
+        assert "persona" in src, "phase_review must pass a persona to each call"
+
+    def test_phase_review_respects_skip_env_var(self):
+        import inspect
+
+        src = inspect.getsource(orch.phase_review)
+        assert "AUTOLAB_SKIP_REVIEW" in src, (
+            "phase_review should honor AUTOLAB_SKIP_REVIEW for users who "
+            "want to opt out of the committee step"
+        )
+
+    def test_run_phase_dispatches_review(self):
+        import inspect
+
+        src = inspect.getsource(orch.run_phase)
+        assert 'phase == "review"' in src, "run_phase must dispatch the review phase"
+        assert "phase_review()" in src
+
+    def test_next_phase_to_run_consults_review_loopback(self):
+        import inspect
+
+        src = inspect.getsource(orch.next_phase_to_run)
+        assert 'cur == "review"' in src, (
+            "next_phase_to_run must call review_loopback_check() after the " "review phase"
+        )
+        assert "review_loopback_check()" in src
+
+    def test_review_loopback_uses_retreat_machinery(self):
+        import inspect
+
+        src = inspect.getsource(orch.review_loopback_check)
+        assert "_retreat(" in src, (
+            "review_loopback_check must reuse _retreat() so checkpoint "
+            "wiping + cycle-counter bumping is consistent with the other "
+            "retreat loops"
+        )
+        assert "MAX_REVIEW_CYCLES" in src
+
+    def test_max_review_cycles_constant_exists(self):
+        assert isinstance(orch.MAX_REVIEW_CYCLES, int)
+        assert orch.MAX_REVIEW_CYCLES >= 1
+
+
+class TestCycleStateReviewKeys:
+    """read_cycle_state() must initialize review_cycle/review_history so
+    review_loopback_check has something to read on the first iteration."""
+
+    def test_defaults_include_review_keys(self, tmp_path, monkeypatch):
+        # Redirect cycle_state_path to a tmp path so this test doesn't
+        # need a real project on disk.
+        monkeypatch.setenv("AUTOLAB_PROJECT", "test-cycle-state")
+        cycle_path = tmp_path / "cycles.json"
+        monkeypatch.setattr(orch, "cycle_state_path", lambda: cycle_path)
+
+        state = orch.read_cycle_state()
+        assert state["review_cycle"] == 1
+        assert state["review_history"] == []
+
+
+class TestCommitteeReviewerSkillOnDisk:
+    """The committee-reviewer skill file must exist and declare itself
+    correctly; the orchestrator references it by name."""
+
+    def test_skill_md_exists(self):
+        from autolab.paths import SKILLS
+
+        skill = SKILLS / "committee-reviewer" / "SKILL.md"
+        assert skill.exists(), (
+            f"missing skill file at {skill} — committee-reviewer is " "referenced by phase_review"
+        )
+
+    def test_skill_md_has_frontmatter_and_name(self):
+        from autolab.paths import SKILLS
+
+        text = (SKILLS / "committee-reviewer" / "SKILL.md").read_text()
+        assert text.startswith("---\n")
+        assert "name: committee-reviewer" in text
+        assert "description:" in text
+
+
+class TestReviewArtifactType:
+    """The append_artifact CLI must accept --type Review with the REV-
+    prefix, since the committee-reviewer skill emits Review artifacts."""
+
+    def test_review_in_type_prefix(self):
+        from autolab.append_artifact import TYPE_PREFIX
+
+        assert TYPE_PREFIX.get("Review") == "REV"
