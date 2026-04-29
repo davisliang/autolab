@@ -317,7 +317,7 @@ All env vars are optional.
 | `AUTOLAB_SKIP_POLISH` | unset | If set (any value), skip the polish pass at the end of `phase_final`. The unpolished assembled paper is still written. |
 | `AUTOLAB_SKIP_REVIEW` | unset | If set, skip the `review` phase entirely. The paper ships straight from `final`. |
 
-Stop conditions: `final.json` checkpoint exists, `STOP` file at repo root, or you Ctrl+C. There is no dollar budget cap.
+Stop conditions: terminal-phase checkpoint exists (`review.json` once the committee has run, or `final.json` when `AUTOLAB_SKIP_REVIEW=1`), `STOP` file at repo root, or you Ctrl+C. There is no dollar budget cap.
 
 ## Output: paper
 

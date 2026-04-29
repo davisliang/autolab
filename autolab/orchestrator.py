@@ -9,7 +9,8 @@ The `start` and `resume` shell scripts set AUTOLAB_PROJECT before invoking
 this script. Subprocesses (`claude -p`, tools/*.py, tools/*.sh) inherit it.
 
 Stop conditions:
-  * <project>/thread/checkpoints/final.json exists
+  * <project>/thread/checkpoints/<terminal-phase>.json exists
+    (terminal phase is the last entry in PHASES; currently `review`)
   * STOP file at repo root
 
 Usage:
@@ -440,8 +441,13 @@ def by_type(thread: list[dict], t: str) -> list[dict]:
 
 
 def stop_conditions_met() -> str | None:
-    if (checkpoints_dir() / "final.json").exists():
-        return "final checkpoint exists"
+    # The orchestrator is done only when the *terminal* phase has emitted
+    # its checkpoint. PHASES[-1] is the source of truth — historically
+    # this was `final`, but `review` is now the terminal phase. Hardcoding
+    # "final.json" caused runs to exit before the committee ever ran.
+    terminal = PHASES[-1]
+    if (checkpoints_dir() / f"{terminal}.json").exists():
+        return f"{terminal} checkpoint exists"
     if STOP_FILE.exists():
         return "STOP file present"
     return None

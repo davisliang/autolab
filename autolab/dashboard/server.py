@@ -45,7 +45,81 @@ PHASES = [
     "critique",
     "write",
     "final",
+    "review",
 ]
+
+# One short description per phase, surfaced as a hover tooltip on each phase
+# pill in the dashboard. Keep these terse — they render via the native
+# `title=""` attribute, which has no formatting and clips long text.
+PHASE_DESCRIPTIONS = {
+    "seed": (
+        "Reads your --idea and emits one Idea artifact. No LLM call; the "
+        "orchestrator does this directly."
+    ),
+    "expand": (
+        "idea-expander emits 3–5 Hypotheses, each with a pre-registered "
+        "numeric prediction and a wildness ticket (W1–W4). At least one "
+        "must be a cross-domain transplant from a non-ML field."
+    ),
+    "survey": (
+        "literature-scout fans out one parallel call per Hypothesis, "
+        "fetches 3–7 papers from HF/arXiv per query, and emits "
+        "LitFinding rows referencing the cached paper markdown."
+    ),
+    "gap-fill": (
+        "idea-expander runs again in negative-space mode and adds 1–2 "
+        "more Hypotheses targeting questions the LitFinding set "
+        "conspicuously misses."
+    ),
+    "screen": (
+        "Two parallel passes per Hypothesis: critic in 'boredom' mode "
+        "argues against each claim, and novelty-checker fuzzy-matches "
+        "titles against the survey results. High-severity HYPs are "
+        "parked. Triggers idea retreat if too few survive."
+    ),
+    "design": (
+        "experiment-designer emits one ExperimentPlan per surviving "
+        "Hypothesis. Each plan must include ≥3 seeds and a "
+        "matched-budget baseline; missing fields are rejected by the "
+        "runner."
+    ),
+    "run": (
+        "experiment-runner sanity-gates each plan (32-example overfit), "
+        "then executes the multi-seed proposed + baseline sweep with "
+        "logged stdout and a hard timeout. Passing experiments trigger "
+        "exactly one auto-ablation isolating the proposed mechanism."
+    ),
+    "critique": (
+        "critic in 'validity' mode reviews each ExperimentResult for "
+        "threats to validity, baseline parity, statistical concerns. "
+        "If no primary result passes, triggers the experiment retreat "
+        "back to survey."
+    ),
+    "write": (
+        "paper-writer produces the paper section by section (outline → "
+        "abstract → intro → related → background → data/models → method "
+        "→ experiments → discussion → conclusion → broader-impact → "
+        "reproducibility). Each section is a separate claude -p call "
+        "and may only cite verified Citation rows."
+    ),
+    "final": (
+        "Orchestrator stitches all DraftSection bodies into "
+        "drafts/paper-vFINAL.md, then paper-polisher does a "
+        "completeness + clarity pass: fills any '_(missing)_' "
+        "sections, tightens weak prose, enforces "
+        "intro-contributions ↔ experiments-table consistency. The "
+        "pre-polish version is kept at paper-vFINAL.pre-polish.md."
+    ),
+    "review": (
+        "3 committee personas (methodologist, domain-expert, "
+        "clarity-reviewer) read the polished paper in parallel and "
+        "each emits one Review artifact with a recommendation "
+        "(accept / minor_revision / major_revision) plus four "
+        "1–10 scores. Any 'major_revision' with a valid target_phase "
+        "loops the orchestrator back to that phase. Capped by "
+        "AUTOLAB_MAX_REVIEW_CYCLES."
+    ),
+}
 
 # Static dashboard HTML lives next to this file. Read on each request so editing
 # the file shows up after a browser refresh — no server restart needed.
@@ -451,6 +525,30 @@ def event_decision_summary(ev: dict) -> str:
         bp = ev.get("body_path") or ""
         return f"`{sec}` v{ver}" + (f" → {bp}" if bp else "")
 
+    if t == "Review":
+        persona = ev.get("persona") or "?"
+        rec = ev.get("recommendation") or "?"
+        target = ev.get("target_phase") or ""
+        marker = {
+            "accept": "✓ accept",
+            "minor_revision": "~ minor",
+            "major_revision": "✗ major",
+        }.get(rec, rec)
+        scores = []
+        for k in ("score_overall", "score_soundness", "score_novelty", "score_clarity"):
+            v = ev.get(k)
+            if v not in (None, ""):
+                scores.append(f"{k.replace('score_', '')}={v}")
+        head = f"**[{persona}]** {marker}"
+        if rec == "major_revision" and target:
+            head += f" → loop back to `{target}`"
+        parts = [head]
+        if scores:
+            parts.append(" · ".join(scores))
+        if summary:
+            parts.append(_truncate(summary, 240))
+        return "\n".join(parts)
+
     # Unknown type: just trust summary
     return _truncate(summary, 320)
 
@@ -522,6 +620,7 @@ def project_summary(pid: str) -> dict:
         "current_phase": current_phase(pid),
         "completed_phases": [c["phase"] for c in cps],
         "all_phases": PHASES,
+        "phase_descriptions": PHASE_DESCRIPTIONS,
         "total_in_tokens": ledger["total_in_tokens"],
         "total_out_tokens": ledger["total_out_tokens"],
         "n_calls": sum(v["calls"] for v in ledger["by_phase"].values()),

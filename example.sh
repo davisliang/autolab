@@ -21,7 +21,7 @@ cd "$REPO_DIR"
 
 # (a) Inline string. Safe for short ideas; avoid embedded apostrophes/quotes
 #     because the shell will split them across argv.
-IDEA="Implement a novel approach to memory compaction for LLMs that solves one or more big issues with compaction today and is not present in modern literature."
+IDEA="Implement a better initialization for low rank adapters to help models learn faster and approach better minima"
 
 # (b) From a file. Recommended for long, multi-paragraph ideas.
 # IDEA_FILE="$REPO_DIR/my-idea.txt"

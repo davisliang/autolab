@@ -333,3 +333,48 @@ class TestReviewArtifactType:
         from autolab.append_artifact import TYPE_PREFIX
 
         assert TYPE_PREFIX.get("Review") == "REV"
+
+
+class TestStopConditionsTracksTerminalPhase:
+    """Regression: when `review` was added as the new terminal phase, the
+    stop-condition check still returned True for `final.json`, causing the
+    orchestrator to exit before the committee ever ran. The check must
+    track PHASES[-1], not a hard-coded phase name."""
+
+    def test_stop_conditions_source_uses_terminal_phase_dynamically(self):
+        import inspect
+
+        src = inspect.getsource(orch.stop_conditions_met)
+        # Must derive the terminal phase from PHASES, not hard-code it.
+        assert "PHASES[-1]" in src, (
+            "stop_conditions_met must derive the terminal phase from "
+            "PHASES[-1] so adding a new terminal phase doesn't silently "
+            "skip it"
+        )
+        # The active code path must use the dynamic f"{terminal}.json"
+        # form, not the literal "final.json" pattern that was the bug.
+        # (Comments may still mention "final.json" for context.)
+        assert 'f"{terminal}.json"' in src, (
+            "stop_conditions_met must build the checkpoint filename "
+            "from the resolved terminal phase variable"
+        )
+        assert '/ "final.json"' not in src, (
+            "stop_conditions_met must not hard-code the path "
+            '(checkpoints_dir() / "final.json") — that was the bug'
+        )
+
+    def test_stop_condition_message_names_terminal_phase(self, tmp_path, monkeypatch):
+        # With the terminal checkpoint absent, no stop reason fires.
+        ckdir = tmp_path / "checkpoints"
+        ckdir.mkdir()
+        monkeypatch.setattr(orch, "checkpoints_dir", lambda: ckdir)
+        monkeypatch.setattr(orch, "STOP_FILE", tmp_path / "STOP-not-here")
+        assert orch.stop_conditions_met() is None
+
+        # With the terminal checkpoint present, stop fires and the message
+        # names the actual terminal phase (review), not a stale "final".
+        terminal = orch.PHASES[-1]
+        (ckdir / f"{terminal}.json").write_text("{}")
+        msg = orch.stop_conditions_met()
+        assert msg is not None
+        assert terminal in msg, f"stop message should mention the terminal phase; got: {msg!r}"

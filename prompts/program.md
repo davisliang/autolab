@@ -129,7 +129,7 @@ Hypotheses that fail `screen` (boredom or novelty collision) are appended to `id
 ## Stop conditions
 
 The loop terminates when ANY of:
-- `thread/checkpoints/final.json` exists
+- `thread/checkpoints/<terminal-phase>.json` exists (terminal phase is `review`, or `final` when `AUTOLAB_SKIP_REVIEW=1`)
 - All Hypotheses are parked (no surviving experiments)
 - Cost ledger sum exceeds `MAX_BUDGET_USD` env var (default $10)
 - A user-created `STOP` file at the repo root

@@ -135,6 +135,7 @@ const expandedThoughts = new Map(); // id -> content
 let timer = null;
 function fmtTok(x){ return (x||0).toLocaleString(); }
 function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s){ return escHtml(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function fmtAgo(ts){
   if (!ts) return '—';
   let s;
@@ -440,7 +441,9 @@ async function loadDetail(){
   const phaseHtml = d.all_phases.map(ph => {
     const done = d.completed_phases.includes(ph);
     const active = ph === d.current_phase && !done;
-    return `<span class="phase ${done?'done':''} ${active?'active':''}">${ph}</span>`;
+    const desc = (d.phase_descriptions && d.phase_descriptions[ph]) || '';
+    const titleAttr = desc ? ` title="${escAttr(desc)}"` : '';
+    return `<span class="phase ${done?'done':''} ${active?'active':''}"${titleAttr}>${ph}</span>`;
   }).join('');
   const histHtml = tokenHistogram(d.ledger.by_phase);
   const histByModelHtml = tokenHistogram(d.ledger.by_model || {});
