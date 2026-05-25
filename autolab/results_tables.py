@@ -89,13 +89,24 @@ def pick_summary_metric(metrics: dict, pred_metric: str) -> str | None:
 
 
 def read_result_json(experiments_root: Path, plan_id: str) -> dict | None:
+    """Load `<experiments_root>/<plan_id>/result.json`.
+
+    Returns the parsed dict, or None if the file is missing, unparseable,
+    or has a non-dict top level. The non-dict case used to surface as
+    `'list' object has no attribute 'get'` deep inside table rendering and
+    crash the `write` phase; we now skip such files so a single malformed
+    output can't kill the whole pipeline.
+    """
     p = experiments_root / plan_id / "result.json"
     if not p.exists():
         return None
     try:
-        return json.loads(p.read_text())
+        data = json.loads(p.read_text())
     except (OSError, json.JSONDecodeError):
         return None
+    if not isinstance(data, dict):
+        return None
+    return data
 
 
 # ---- main entry point ------------------------------------------------------
@@ -127,6 +138,11 @@ def format_results_tables(thread: list[dict], experiments_root: Path) -> str:
         plan_id = res.get("plan_id")
         plan = plans.get(plan_id, {})
         rj = read_result_json(experiments_root, plan_id) or {}
+        # Belt + suspenders: read_result_json already filters non-dicts to
+        # None, but if a future code path passes through arbitrary JSON we
+        # still don't want to crash here.
+        if not isinstance(rj, dict):
+            rj = {}
         metrics = rj.get("metrics") or {}
         if not metrics:
             artifact_m = res.get("metrics")

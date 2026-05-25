@@ -26,6 +26,7 @@ from autolab.paths import (
     cost_ledger,
     drafts_dir,
     experiments_dir,
+    history_log,
     list_projects,
     orchestrator_log,
     papers_index,
@@ -650,6 +651,395 @@ def _load_full_thread(pid: str) -> list[dict]:
     return out
 
 
+# ---------------------------------------------------------------------------
+# Project narrative — human-readable, chronologically ordered story of the
+# project's progress. Synthesizes thread artifacts + phase checkpoints +
+# history.md (loopback narrative) into one stream of plain-English events
+# meant for casual reading: "looked up papers", "came up with N ideas",
+# "experiment failed because Y", "committee asked for design changes".
+# ---------------------------------------------------------------------------
+
+_HISTORY_HEADER_RE = re.compile(r"^### (.+)$")
+_HISTORY_TS_RE = re.compile(r"\(([0-9T:+\-]+)\)")
+
+
+def _parse_history_md_entries(text: str) -> list[dict]:
+    """Split a history.md document into its `### ...` sections.
+
+    Returns a list of {ts, header, body} dicts. `ts` is parsed from the
+    `(YYYY-MM-DDThh:mm:ss…)` substring of the header; missing / unparseable
+    timestamps fall through as None.
+    """
+    if not text:
+        return []
+    entries: list[dict] = []
+    current: dict | None = None
+    for line in text.splitlines():
+        m = _HISTORY_HEADER_RE.match(line)
+        if m:
+            if current:
+                entries.append(current)
+            header = m.group(1).strip()
+            ts_match = _HISTORY_TS_RE.search(header)
+            current = {
+                "ts": ts_match.group(1) if ts_match else None,
+                "header": header,
+                "body": "",
+            }
+            continue
+        if current is not None:
+            current["body"] += line + "\n"
+    if current:
+        entries.append(current)
+    return entries
+
+
+def _bucket_artifacts_by_phase(
+    thread: list[dict], checkpoints: list[dict]
+) -> list[tuple[str, str | None, str | None, list[dict]]]:
+    """Bucket every artifact into the phase-window in which it was created.
+
+    Returns a list of (phase, start_ts, end_ts, artifacts). Each window
+    starts at the previous phase's `completed_at` (or None for the first)
+    and ends at this phase's `completed_at`. A trailing in-progress phase
+    (artifacts after the last checkpoint) is included as a window with
+    `end_ts=None` and a synthetic phase name `"in-progress"`.
+    """
+    cps = sorted(checkpoints, key=lambda c: c.get("completed_at") or "")
+    windows: list[tuple[str, str | None, str | None, list[dict]]] = []
+    prev_end: str | None = None
+    for cp in cps:
+        end = cp.get("completed_at")
+        arts = [
+            r
+            for r in thread
+            if (
+                (prev_end is None or (r.get("created_at") or "") > prev_end)
+                and (end is None or (r.get("created_at") or "") <= end)
+            )
+        ]
+        windows.append((cp.get("phase", "?"), prev_end, end, arts))
+        prev_end = end
+    # In-progress tail: artifacts created after the last checkpoint
+    if prev_end is not None:
+        tail = [r for r in thread if (r.get("created_at") or "") > prev_end]
+        if tail:
+            windows.append(("in-progress", prev_end, None, tail))
+    elif not cps and thread:
+        # Project has artifacts but no checkpoints yet (e.g. seed in flight)
+        windows.append(("in-progress", None, None, list(thread)))
+    return windows
+
+
+def _by_type(arts: list[dict], t: str) -> list[dict]:
+    return [a for a in arts if a.get("type") == t]
+
+
+def _earliest_ts(arts: list[dict]) -> str:
+    """Earliest `created_at` across a list of artifacts; "" if none."""
+    return min((a.get("created_at") or "" for a in arts), default="")
+
+
+def _ts(a: dict) -> str:
+    return a.get("created_at") or ""
+
+
+def _phase_narrative(phase: str, arts: list[dict], thread: list[dict]) -> list[dict]:
+    """Turn a phase's artifacts into one or more human-readable lines.
+
+    Returns a list of `{kind, text, ids}` dicts (no timestamp; the caller
+    fills that in from the phase window). Aggregates routine artifacts
+    (HYPs, LITs, Citations, DraftSections) into single summary lines, and
+    breaks out individually-interesting events (Critiques, ExperimentResult
+    pass/fail/crash, Reviews) so the reader sees what mattered.
+    """
+    out: list[dict] = []
+
+    if phase == "seed":
+        for idea in _by_type(arts, "Idea"):
+            summary = (idea.get("summary") or "").strip()
+            out.append(
+                {
+                    "kind": "seed",
+                    "ts": _ts(idea),
+                    "text": f'Started with idea: "{summary[:160]}"',
+                    "ids": [idea["id"]],
+                }
+            )
+        return out
+
+    if phase in ("expand", "gap-fill"):
+        hyps = _by_type(arts, "Hypothesis")
+        if hyps:
+            wild_count = sum(
+                1
+                for h in hyps
+                if "W1" in (h.get("wildness_tickets") or h.get("wildness_ticket") or "")
+            )
+            verb = "Came up with" if phase == "expand" else "Added"
+            noun = "hypothesis" if len(hyps) == 1 else "hypotheses"
+            tail = (
+                f" ({wild_count} cross-domain transplant{'s' if wild_count != 1 else ''})"
+                if wild_count
+                else ""
+            )
+            out.append(
+                {
+                    "kind": "hypotheses",
+                    "ts": _earliest_ts(hyps),
+                    "text": f"{verb} {len(hyps)} {noun}{tail}",
+                    "ids": [h["id"] for h in hyps],
+                }
+            )
+        return out
+
+    if phase == "survey":
+        lits = _by_type(arts, "LitFinding")
+        if lits:
+            out.append(
+                {
+                    "kind": "papers",
+                    "ts": _earliest_ts(lits),
+                    "text": f"Looked up {len(lits)} paper{'s' if len(lits) != 1 else ''} from the literature",
+                    "ids": [a["id"] for a in lits],
+                }
+            )
+        return out
+
+    if phase == "screen":
+        # Per-HYP boredom kills + novelty verifications
+        boredom_kills = [
+            c
+            for c in _by_type(arts, "Critique")
+            if c.get("mode") == "boredom" and c.get("severity") == "high"
+        ]
+        for c in boredom_kills:
+            target = c.get("target_id") or "?"
+            concerns = c.get("concerns") or []
+            if isinstance(concerns, str):
+                concerns = [concerns]
+            head = (concerns[0] if concerns else c.get("summary") or "").strip()
+            out.append(
+                {
+                    "kind": "parked",
+                    "ts": _ts(c),
+                    "text": f"Parked {target} (too boring): {head[:140]}",
+                    "ids": [c["id"], target],
+                }
+            )
+        cites = _by_type(arts, "Citation")
+        verified = sum(1 for c in cites if c.get("verified"))
+        collisions = [
+            c
+            for c in _by_type(arts, "Critique")
+            if c.get("mode") == "novelty" or "novelty" in (c.get("summary") or "").lower()
+        ]
+        if cites:
+            out.append(
+                {
+                    "kind": "novelty",
+                    "ts": _earliest_ts(cites),
+                    "text": (
+                        f"Verified {verified} of {len(cites)} citations against the literature"
+                        + (
+                            f" — {len(collisions)} collision{'s' if len(collisions) != 1 else ''} found"
+                            if collisions
+                            else " (no collisions)"
+                        )
+                    ),
+                    "ids": [c["id"] for c in cites],
+                }
+            )
+        return out
+
+    if phase == "design":
+        plans = [p for p in _by_type(arts, "ExperimentPlan") if not p.get("is_ablation")]
+        if plans:
+            out.append(
+                {
+                    "kind": "design",
+                    "ts": _earliest_ts(plans),
+                    "text": f"Designed {len(plans)} experiment{'s' if len(plans) != 1 else ''}",
+                    "ids": [p["id"] for p in plans],
+                }
+            )
+        return out
+
+    if phase == "run":
+        results = _by_type(arts, "ExperimentResult")
+        for r in results:
+            status = r.get("status") or "?"
+            plan_id = r.get("plan_id") or "?"
+            notes = (r.get("notes") or r.get("summary") or "").strip()
+            marker = {
+                "pass": ("✓", "Experiment passed"),
+                "fail": ("✗", "Experiment failed"),
+                "crash": ("⚠", "Experiment crashed"),
+            }.get(status, ("?", f"Experiment status={status}"))
+            tail = f" — {notes[:140]}" if notes else ""
+            out.append(
+                {
+                    "kind": f"result_{status}",
+                    "ts": _ts(r),
+                    "text": f"{marker[0]} {marker[1]} for {plan_id}{tail}",
+                    "ids": [r["id"], plan_id],
+                }
+            )
+        # Ablations spawned during this phase
+        ablations = [p for p in _by_type(arts, "ExperimentPlan") if p.get("is_ablation")]
+        if ablations:
+            out.append(
+                {
+                    "kind": "ablation",
+                    "ts": _earliest_ts(ablations),
+                    "text": f"Spawned {len(ablations)} auto-ablation{'s' if len(ablations) != 1 else ''} to verify the proposed mechanism",
+                    "ids": [p["id"] for p in ablations],
+                }
+            )
+        return out
+
+    if phase == "critique":
+        validity = [c for c in _by_type(arts, "Critique") if c.get("mode") == "validity"]
+        for c in validity:
+            target = c.get("target_id") or "?"
+            sev = c.get("severity") or "?"
+            concerns = c.get("concerns") or []
+            if isinstance(concerns, str):
+                concerns = [concerns]
+            head = (concerns[0] if concerns else c.get("summary") or "").strip()
+            out.append(
+                {
+                    "kind": "validity",
+                    "ts": _ts(c),
+                    "text": f"Validity concern on {target} ({sev}): {head[:160]}",
+                    "ids": [c["id"], target],
+                }
+            )
+        return out
+
+    if phase == "write":
+        sections = _by_type(arts, "DraftSection")
+        if sections:
+            names = [s.get("section") or "?" for s in sections]
+            out.append(
+                {
+                    "kind": "write",
+                    "ts": _earliest_ts(sections),
+                    "text": f"Wrote {len(sections)} section{'s' if len(sections) != 1 else ''}: {', '.join(names)}",
+                    "ids": [s["id"] for s in sections],
+                }
+            )
+        return out
+
+    if phase == "final":
+        # phase_final emits no artifacts; surface a single line at the
+        # phase's end ts (set by the caller from the checkpoint).
+        out.append(
+            {
+                "kind": "final",
+                "text": "Assembled and polished `paper-vFINAL.md`",
+                "ids": [],
+            }
+        )
+        return out
+
+    if phase == "review":
+        reviews = _by_type(arts, "Review")
+        for r in reviews:
+            persona = r.get("persona") or "?"
+            rec = r.get("recommendation") or "?"
+            tp = r.get("target_phase") or ""
+            sm = (r.get("summary") or "").strip()
+            marker = {
+                "accept": "✓",
+                "minor_revision": "~",
+                "major_revision": "✗",
+            }.get(rec, "?")
+            tail = f" — wants `{tp}`" if rec == "major_revision" and tp else ""
+            note = f": {sm[:160]}" if sm else ""
+            out.append(
+                {
+                    "kind": f"review_{rec}",
+                    "ts": _ts(r),
+                    "text": f"{marker} {persona} → {rec.replace('_', ' ')}{tail}{note}",
+                    "ids": [r["id"]],
+                }
+            )
+        return out
+
+    if phase == "in-progress":
+        # Render whatever showed up; useful when the dashboard refreshes mid-phase.
+        for a in arts:
+            t = a.get("type") or "?"
+            sm = (a.get("summary") or "").strip()
+            out.append(
+                {
+                    "kind": "pending",
+                    "ts": _ts(a),
+                    "text": f"({t}) {sm[:160]}",
+                    "ids": [a.get("id")] if a.get("id") else [],
+                }
+            )
+        return out
+
+    return out
+
+
+def project_narrative(pid: str) -> list[dict]:
+    """Build a chronologically ordered, human-readable narrative of the project.
+
+    Synthesizes:
+      - phase boundaries from `thread/checkpoints/<phase>.json`
+      - per-phase artifact summaries (aggregated for routine items, broken
+        out for individually-interesting ones)
+      - groomed loopback entries from `thread/history.md`
+
+    Returned events have shape:
+      { "ts": <iso8601 string>, "phase": <phase or "loopback">,
+        "kind": <short tag>, "text": <plain-English line>, "ids": [...] }
+
+    Sorted oldest → newest. Designed to feed a "Story" panel in the dashboard.
+    """
+    events: list[dict] = []
+    thread = _load_full_thread(pid)
+    cps = list_checkpoints(pid)
+    windows = _bucket_artifacts_by_phase(thread, cps)
+
+    for phase, _start, end, arts in windows:
+        for ev in _phase_narrative(phase, arts, thread):
+            # If the per-phase synthesizer set its own `ts` (from an
+            # artifact's created_at) keep it; otherwise fall back to the
+            # phase's end timestamp from its checkpoint.
+            ev_ts = ev.get("ts") or end or ""
+            events.append({"phase": phase, **ev, "ts": ev_ts})
+
+    # Loopback narrative entries (already groomed prose).
+    h_path = history_log(pid)
+    if h_path.exists():
+        for entry in _parse_history_md_entries(h_path.read_text()):
+            header = entry["header"]
+            body = entry["body"].strip()
+            # Pull the first non-blank body line as a one-liner summary
+            summary_line = next(
+                (ln.strip() for ln in body.splitlines() if ln.strip()),
+                "",
+            )
+            events.append(
+                {
+                    "ts": entry["ts"] or "",
+                    "phase": "loopback",
+                    "kind": "loopback",
+                    "text": header,
+                    "body": body,
+                    "summary": summary_line[:240],
+                    "ids": [],
+                }
+            )
+
+    events.sort(key=lambda e: (e.get("ts") or "", e.get("kind") or ""))
+    return events
+
+
 def active_work(pid: str) -> dict:
     """Compute what's still 'alive' — Hypotheses not parked by screen/critique
     and ExperimentPlans whose latest result isn't terminal (pass/fail or
@@ -766,6 +1156,7 @@ def project_detail(pid: str) -> dict:
         "papers_index": safe_read(papers_index(pid), 30_000),
         "live": live_status(pid),
         "thread_events": parse_thread_events(pid, 100),
+        "narrative": project_narrative(pid),
         "active": active_work(pid),
     }
 

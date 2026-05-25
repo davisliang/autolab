@@ -59,6 +59,35 @@
   .ev .decision { color:#cfd6e4; font-size:12px; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
   .ev .decision strong { color:#dde3ef; font-weight:600; }
   .ev .decision code { background:#0a0e14; color:#86efac; padding:1px 4px; border-radius:3px; font-size:11px; }
+
+  /* ---- Story panel: human-readable narrative of the project's iteration ---- */
+  .story { padding:0; }
+  .story .row { display:flex; gap:10px; align-items:flex-start; padding:8px 12px; border-bottom:1px solid #1d242e; font-size:12.5px; line-height:1.55; }
+  .story .row:last-child { border-bottom:none; }
+  .story .ts { color:#5b667a; font-family:ui-monospace,Menlo,monospace; font-size:11px; min-width:60px; flex-shrink:0; padding-top:2px; }
+  .story .phase { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; min-width:74px; flex-shrink:0; padding:2px 6px; border-radius:4px; background:#1a2030; color:#7c8699; text-align:center; }
+  .story .phase.seed     { background:#15233a; color:#93c5fd; }
+  .story .phase.expand   { background:#1f1a30; color:#c4b5fd; }
+  .story .phase.survey   { background:#152a30; color:#7dd3fc; }
+  .story .phase.gap-fill { background:#152a30; color:#7dd3fc; }
+  .story .phase.screen   { background:#2a2014; color:#fbbf24; }
+  .story .phase.design   { background:#1f2a14; color:#bef264; }
+  .story .phase.run      { background:#143123; color:#86efac; }
+  .story .phase.critique { background:#2a1414; color:#fca5a5; }
+  .story .phase.write    { background:#1f1a30; color:#c4b5fd; }
+  .story .phase.final    { background:#15233a; color:#93c5fd; }
+  .story .phase.review   { background:#2a1f14; color:#fbbf24; }
+  .story .phase.loopback { background:#3a1414; color:#fca5a5; font-weight:700; }
+  .story .text { color:#cfd6e4; flex:1; min-width:0; word-break:break-word; }
+  .story .text strong { color:#dde3ef; font-weight:600; }
+  .story .text code { background:#0a0e14; color:#86efac; padding:1px 4px; border-radius:3px; font-size:11px; }
+  .story .text .ok    { color:#86efac; }
+  .story .text .fail  { color:#fca5a5; }
+  .story .text .warn  { color:#fbbf24; }
+  .story .empty { padding:20px 12px; color:#7c8699; font-size:12px; }
+  .story details.loopback-body { margin-top:6px; color:#a1aab9; font-size:11.5px; }
+  .story details.loopback-body summary { cursor:pointer; color:#8b95a7; font-size:11px; }
+  .story details.loopback-body pre { white-space:pre-wrap; word-break:break-word; margin:6px 0 0 0; padding:8px 10px; background:#0a0e14; border-radius:4px; color:#a1aab9; font-size:11px; line-height:1.5; }
   /* Token histogram */
   .hist { display:flex; flex-direction:column; gap:8px; padding:4px 0; }
   .hrow { display:grid; grid-template-columns: 80px 1fr; gap:10px; align-items:center; }
@@ -132,6 +161,11 @@
 <script>
 let activeId = null;
 const expandedThoughts = new Map(); // id -> content
+// Story panel: which loopback `<details>` rows the user has opened.
+// Survives re-renders so the auto-refresh (every 3s) doesn't collapse
+// what they were reading. Keyed by ts + first 80 chars of text — stable
+// across re-renders since the underlying history.md entries are append-only.
+const expandedLoopbacks = new Set();
 let timer = null;
 function fmtTok(x){ return (x||0).toLocaleString(); }
 function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -164,7 +198,7 @@ async function loadProjects(){
       <div class="sub">${escHtml(p.current_phase||'—')} · ${fmtTok((p.total_in_tokens||0)+(p.total_out_tokens||0))} tok · ${p.n_calls} calls · ${fmtAgo(p.last_activity_ts)}</div>
     </div>`).join('');
   el.querySelectorAll('.proj').forEach(d => d.addEventListener('click', () => {
-    if (activeId !== d.dataset.id){ activeId = d.dataset.id; expandedThoughts.clear(); }
+    if (activeId !== d.dataset.id){ activeId = d.dataset.id; expandedThoughts.clear(); expandedLoopbacks.clear(); }
     loadDetail(); loadProjects();
   }));
   if (!activeId && data.projects.length){ activeId = data.projects[0].id; loadDetail(); loadProjects(); }
@@ -203,7 +237,9 @@ function liveBanner(live, cycle, nRetreats, ideaCycle, nIdeaRetreats){
 }
 
 // Collapsed sections — track by stable key so state survives re-renders.
-const collapsedSections = new Set(['thoughts', 'parking', 'papersIndex']); // collapsed by default
+// `threadEvents` is collapsed by default because the Story panel above it
+// already shows the same data in a more readable form.
+const collapsedSections = new Set(['thoughts', 'parking', 'papersIndex', 'threadEvents']);
 function applyCollapsibles(){
   document.querySelectorAll('h2.collapsible').forEach(h => {
     const k = h.dataset.key;
@@ -388,6 +424,63 @@ function threadEventsHtml(events){
     </div>`;
   }).join('');
 }
+
+// Format a story-panel row's main text. Reuses decisionToHtml's
+// markdown-lite handling (bold, code, line breaks) so the story panel
+// renders the same way the thread events do.
+function storyTextHtml(text){
+  return decisionToHtml(text || '')
+    .replace(/✓/g, '<span class="ok">✓</span>')
+    .replace(/✗/g, '<span class="fail">✗</span>')
+    .replace(/⚠/g, '<span class="warn">⚠</span>');
+}
+
+function loopbackKey(e){
+  return (e.ts || '') + '|' + ((e.text || '').slice(0, 80));
+}
+function narrativeHtml(events){
+  if (!events || !events.length){
+    return '<div class="empty">no events yet — the project will start showing progress here once it begins running</div>';
+  }
+  // Server returns events oldest → newest (chronological). The UI shows
+  // newest at the top so a casual reader sees fresh activity first;
+  // scroll down for older context.
+  return events.slice().reverse().map(e => {
+    const ts = e.ts ? String(e.ts).slice(11,19) : '';
+    const phase = e.phase || '?';
+    // For loopback rows, allow the user to expand the full body
+    // (groomed prose from history.md) inline. Re-emit <details open> for
+    // keys the user has already expanded so the auto-refresh doesn't
+    // collapse what they were reading.
+    let loopbackBody = '';
+    if (e.kind === 'loopback' && e.body){
+      const key = loopbackKey(e);
+      const openAttr = expandedLoopbacks.has(key) ? ' open' : '';
+      loopbackBody = `<details class="loopback-body" data-loopback-key="${escAttr(key)}"${openAttr}><summary>show details</summary><pre>${escHtml(e.body)}</pre></details>`;
+    }
+    return `<div class="row">
+      <span class="ts">${escHtml(ts)}</span>
+      <span class="phase ${escHtml(phase)}">${escHtml(phase)}</span>
+      <div class="text">${storyTextHtml(e.text || '')}${loopbackBody}</div>
+    </div>`;
+  }).join('');
+}
+function wireStoryToggles(){
+  // Attach a `toggle` listener to every loopback <details> in the story
+  // panel so user opens/closes update `expandedLoopbacks`. Called after
+  // each panel re-render — the listener cost is trivial (≤ a handful of
+  // loopback rows in any practical project).
+  const storyEl = document.getElementById('story');
+  if (!storyEl) return;
+  storyEl.querySelectorAll('details.loopback-body[data-loopback-key]').forEach(d => {
+    d.addEventListener('toggle', () => {
+      const k = d.dataset.loopbackKey;
+      if (!k) return;
+      if (d.open) expandedLoopbacks.add(k);
+      else expandedLoopbacks.delete(k);
+    });
+  });
+}
 async function loadThoughtFull(tid){
   if (!activeId) return;
   if (expandedThoughts.has(tid)) return; // cached
@@ -458,6 +551,25 @@ async function loadDetail(){
   // Rule: if scrollTop > 4, user has scrolled — preserve. If at top, natural top stays.
   const prevThoughtsScroll = (function(){ const el = document.getElementById('thoughts'); return el ? el.scrollTop : 0; })();
   const prevThreadScroll = (function(){ const el = document.getElementById('threadEvents'); return el ? el.scrollTop : 0; })();
+  // Story panel: newest-first auto-refreshing feed. If the user has scrolled
+  // off the top, plain scrollTop preservation would leave them looking at a
+  // different event each refresh (because new rows shift the index). Snapshot
+  // the topmost-visible row's stable identity so we can re-anchor after
+  // re-render: if the user was at top, they stay at top (and see new items);
+  // if they'd scrolled, the same event ends up at the same offset from the
+  // viewport top.
+  const storyAnchor = (function(){
+    const el = document.getElementById('story');
+    if (!el || el.scrollTop <= 4) return null;
+    for (const row of el.querySelectorAll('.row')){
+      if (row.offsetTop + row.offsetHeight > el.scrollTop){
+        const ts = row.querySelector('.ts')?.textContent || '';
+        const text = (row.querySelector('.text')?.textContent || '').slice(0, 80);
+        return { ts, text, viewportOffset: row.offsetTop - el.scrollTop };
+      }
+    }
+    return null;
+  })();
   const prevExpandedScroll = {};
   document.querySelectorAll('#thoughts .thought-full').forEach(el => {
     const card = el.closest('.thought');
@@ -492,8 +604,10 @@ async function loadDetail(){
         ${activePlansHtml((d.active||{}).plans)}
       </div>
     </div>
-    <h2>thread events <span class="ctl">${(d.thread_events||[]).length} shown · what each subagent decided</span></h2>
-    <div id="threadEvents" class="scrollbox card tall" style="padding:0">${threadEventsHtml(d.thread_events||[])}</div>
+    <h2>story <span class="ctl">${(d.narrative||[]).length} events · what's happened so far, in plain English</span></h2>
+    <div id="story" class="scrollbox card tall story" style="padding:0">${narrativeHtml(d.narrative||[])}</div>
+    <h2 class="collapsible" data-key="threadEvents"><span class="caret">▸</span> thread events <span class="ctl">${(d.thread_events||[]).length} raw artifact rows · what each subagent decided</span></h2>
+    <div id="threadEvents" class="scrollbox card tall" style="padding:0;display:none">${threadEventsHtml(d.thread_events||[])}</div>
     <div class="grid2">
       <div>
         <h2 class="collapsible" data-key="thoughts"><span class="caret">▸</span> thoughts <span class="ctl">${d.thoughts.length} · click to expand</span></h2>
@@ -538,6 +652,32 @@ async function loadDetail(){
   if (thoughtsEl && prevThoughtsScroll > 4) thoughtsEl.scrollTop = prevThoughtsScroll;
   const threadEl = document.getElementById('threadEvents');
   if (threadEl && prevThreadScroll > 4) threadEl.scrollTop = prevThreadScroll;
+  // Story panel: re-attach toggle listeners on each refresh so user
+  // opens/closes update expandedLoopbacks (which then survives the next
+  // re-render). Then re-anchor scroll on the same row the user was
+  // reading so new rows arriving at the top don't drag their viewport.
+  // If the snapshotted row can't be found post-render (rare — happens if
+  // it scrolled past the panel's render budget), fall back to the user's
+  // previous scrollTop so they at least don't jump to top.
+  wireStoryToggles();
+  const storyEl = document.getElementById('story');
+  if (storyEl && storyAnchor){
+    let restored = false;
+    for (const row of storyEl.querySelectorAll('.row')){
+      const ts = row.querySelector('.ts')?.textContent || '';
+      const text = (row.querySelector('.text')?.textContent || '').slice(0, 80);
+      if (ts === storyAnchor.ts && text === storyAnchor.text){
+        storyEl.scrollTop = row.offsetTop - storyAnchor.viewportOffset;
+        restored = true;
+        break;
+      }
+    }
+    if (!restored){
+      // Anchor row not found (e.g. fell out of the render window).
+      // Keep the user roughly where they were rather than snapping to top.
+      storyEl.scrollTop = Math.max(0, storyEl.scrollHeight - storyEl.clientHeight);
+    }
+  }
   document.getElementById('updated').textContent = 'updated ' + new Date().toLocaleTimeString();
 }
 async function tick(){ await loadProjects(); await loadDetail(); }

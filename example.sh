@@ -21,7 +21,7 @@ cd "$REPO_DIR"
 
 # (a) Inline string. Safe for short ideas; avoid embedded apostrophes/quotes
 #     because the shell will split them across argv.
-IDEA="Implement a better initialization for low rank adapters to help models learn faster and approach better minima"
+IDEA="We want to build an AI superforecaster. We want to predict arbitrary future events including one-off non-repeatable events like geopolitical events but also potentially more frequent phenomena like macro economic reporting data. We want to at once leverage patterns in numerical data and at the same time to engage in open world reasoning (for example: when forecasting demand for a product, evidence might come from numerical trends and month-over-month purchasing data but also in the form of online chatter or product reviews). Ideal system should be able to adaptively leverage the appropriate mode of inquiry depending on the query. Taken in aggregate across a large population of queries, predictions should be both internally consistent and probabilistically coherent."
 
 # (b) From a file. Recommended for long, multi-paragraph ideas.
 # IDEA_FILE="$REPO_DIR/my-idea.txt"

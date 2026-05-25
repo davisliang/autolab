@@ -942,32 +942,39 @@ def _neurips_section_brief() -> dict[str, str]:
         "outline": (
             "4–7 bullets covering claim, method, evidence, contribution. "
             "No prose. The bullets you commit here become the contributions "
-            "list in the introduction."
+            "list in the introduction. Frame each bullet as a step in the "
+            "narrative: question → approach → finding."
         ),
         "abstract": (
-            "150–250 words. Tight arc: problem → gap in prior work → "
-            "approach → 2–3 headline numbers (use exact values from the "
-            "reference tables) → takeaway. Commit to specific claims, not "
-            "vague gestures. For negative-results work, lead with the "
-            "refutation and quantify the falsified prediction."
+            "150–250 words. Tell a mini-story: problem → gap → approach → "
+            "2–3 headline numbers (use exact values from the reference "
+            "tables) → takeaway. Open with a sentence that makes the reader "
+            "care *before* jumping to the solution. Commit to specific "
+            "claims, not vague gestures. For negative-results work, lead "
+            "with the refutation and quantify the falsified prediction."
         ),
         "introduction": (
-            "~1 page. Hook → brief survey of what's been tried and what's "
-            "missing → one-paragraph approach sketch → an explicit "
-            "contributions bullet list of *falsifiable claims* (each bullet "
-            "is something a reviewer could disprove with data, not an "
-            "activity). Mention a Figure 1 teaser even if not yet rendered."
+            "~1 page. Hook the reader with *why this problem matters* — a "
+            "concrete consequence, not a platitude. Brief survey of what's "
+            "been tried and why it falls short (build tension). One-paragraph "
+            "approach sketch giving intuition before details. Explicit "
+            "contributions bullet list of *falsifiable claims*. The intro is "
+            "a promise: 'here's the journey we'll take you on.' Mention a "
+            "Figure 1 teaser even if not yet rendered."
         ),
         "related-work": (
-            "Group cited papers by theme. End each thematic paragraph with "
-            "an explicit *Our work differs...* positioning sentence. Bare "
-            "citation lists without positioning are a red flag."
+            "Group cited papers by theme. For each cluster, tell a "
+            "micro-story: what did this line try, what did they achieve, "
+            "where does it leave us wanting? End each paragraph with an "
+            "explicit positioning sentence. Bare citation lists without "
+            "narrative are a red flag."
         ),
         "background": (
             "Notation, problem setup, formal definitions, prior results we "
-            "build on. Self-contained for a reader fluent in the area; do "
-            "not re-derive textbook material. May be folded into method if "
-            "notation is standard."
+            "build on. Motivate each definition — explain why the reader "
+            "needs it for what follows. Self-contained for a reader fluent "
+            "in the area; do not re-derive textbook material. May be folded "
+            "into method if notation is standard."
         ),
         "data-models": (
             "Full data spec (sources, sizes, licenses, dates, mixture "
@@ -982,30 +989,30 @@ def _neurips_section_brief() -> dict[str, str]:
             "training/eval."
         ),
         "method": (
-            "Formal problem statement with locked notation, "
-            "algorithm/architecture with pseudocode or diagram, theoretical "
-            "analysis where applicable (assumptions, theorem statements, "
-            "proof sketch in main text; full proofs to appendix), design "
-            "choices with rationale, complexity analysis. Articulate which "
-            "choices are load-bearing rather than presenting a sequence "
-            "of tricks."
+            "Start with the core insight (1–2 sentences a student could "
+            "repeat back). Then: formal problem statement with locked "
+            "notation, algorithm/architecture with pseudocode or diagram, "
+            "theoretical analysis where applicable, design choices with "
+            "rationale (why this and not the obvious alternative?), "
+            "complexity analysis. The reader should understand the method's "
+            "spirit before its letter."
         ),
         "experiments": (
-            "Paste the pre-rendered tables verbatim at the top, then write "
-            "prose around them: setup recap, main results discussion, "
-            "ablations matching the contributions list 1-for-1 (N claimed "
-            "ideas → N ablations), analysis (scaling, qualitative, probes, "
-            "failure cases), robustness (seed variance, hyperparameter "
-            "sensitivity, OOD). Error bars or seed counts on every number; "
-            "single-seed RL results get hammered."
+            "Paste the pre-rendered tables verbatim at the top. Then write "
+            "prose as a sequence of questions and answers: 'Does the "
+            "mechanism help?' (main results), 'Which component does the "
+            "work?' (ablations), 'Does it hold under stress?' (robustness). "
+            "Frame each experiment as testing a specific claim. Ablations "
+            "match contributions 1-for-1. Error bars or seed counts on "
+            "every number. Interpret results — don't just report them."
         ),
         "discussion": (
-            "Specific threats to validity from CRIT-* artifacts "
-            "(distributions not tested, scales not reached, baselines not "
-            "run, assumptions that may not hold), what the ablations "
-            "showed, what's left open. Specific beats generic. For "
-            "negative results, name what would constitute positive "
-            "evidence (scale, task, regime, effect-size recalibration)."
+            "Step back and reflect honestly. Why does it work (or not)? "
+            "What surprised us? Specific threats to validity from CRIT-* "
+            "artifacts (distributions not tested, scales not reached, "
+            "baselines not run). Frame limitations as open questions, not "
+            "apologies. For negative results, name what would constitute "
+            "positive evidence."
         ),
         "conclusion": (
             "One paragraph (≤ 150 words). Restate the contribution and "

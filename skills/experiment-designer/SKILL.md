@@ -24,7 +24,7 @@ For a target `Hypothesis`, produce one minimal `ExperimentPlan` that can validat
 
 A single `ExperimentPlan` artifact via `python -m autolab.append_artifact`. Required fields:
 - `hypothesis_id` — the HYP id this tests
-- `dataset` — string (e.g. `"mnist"`, `"cifar10"`, `"shakespeare-char"`, `"sst2"`)
+- `dataset` — string: the HuggingFace dataset identifier (e.g. `"mnist"`, `"cifar10"`, `"wikitext"`, `"glue/sst2"`, `"ag_news"`, `"imdb"`). Must be a real dataset loadable via `load_dataset(name)`.
 - `framework` — **`"mlx"` is the default and strongly preferred** (Apple Silicon GPU + Neural Engine, ~5-10× faster than torch CPU). Use `"torch"` ONLY if (a) the orchestrator's prompt explicitly says `mlx unavailable`, or (b) you need a specific op that MLX genuinely lacks (rare for MLP / small transformer / CNN work — check `mlx.core` and `mlx.nn` first).
 - `model_spec` — JSON object describing architecture (e.g. `{"type":"mlp","depths":[64,32],"activation":"relu"}`)
 - `metrics` — JSON list of metric names matching the hypothesis's `prediction_metric` plus any auxiliaries
@@ -46,7 +46,18 @@ A single `ExperimentPlan` artifact via `python -m autolab.append_artifact`. Requ
 ## Procedure (mode=primary)
 
 1. Read the target Hypothesis. Note `prediction_metric`, `prediction_threshold`, `prediction_direction`.
-2. Pick the smallest dataset/model that can plausibly reveal the predicted effect (default: a tracked benchmark — MNIST MLP, tiny-shakespeare char-LM, or CIFAR10 small CNN).
+2. Pick a real-world dataset from HuggingFace Hub that can plausibly reveal the predicted effect. **Do NOT generate synthetic data or use toy/fake datasets.** Use the HuggingFace Datasets library (`from datasets import load_dataset`) to pull established benchmarks with proper train/eval splits. Choose the smallest real dataset that is sufficient — e.g.:
+   - **Classification:** `mnist`, `cifar10`, `ag_news`, `imdb`, `sst2` (via `glue`), `emotion`
+   - **Language modeling:** `wikitext` (wikitext-2-raw-v1), `tiny_shakespeare`, `ptb_text_only`
+   - **Sequence tasks:** `conll2003`, `squad`, `xsum`
+   - **Tabular:** `scikit-learn/iris`, `mstz/heart_failure`
+   - Or any other HuggingFace dataset appropriate to the hypothesis.
+
+   Use the HuggingFace Dataset Viewer API (https://datasets-server.huggingface.co) to verify the dataset exists and inspect its structure (splits, columns, sizes) before committing to it. Specifically:
+   - Check available configs/splits: `GET /splits?dataset={dataset_name}`
+   - Preview rows: `GET /first-rows?dataset={dataset_name}&config={config}&split={split}`
+   - Check size: `GET /size?dataset={dataset_name}`
+
 3. Decide framework:
    - **Default to `mlx`.** It's installed and runs on the Apple Silicon GPU. Use `import mlx.core as mx` and `import mlx.nn as nn` (and `import mlx.optimizers as optim`). Seed via `mx.random.seed(seed)`.
    - Switch to `torch` ONLY if the orchestrator's prompt says `mlx unavailable`, OR you've checked `mlx.core` / `mlx.nn` and the op you need genuinely isn't there. Don't switch out of habit — MLX covers MLP, transformer, CNN, RNN, attention, layernorm, dropout, AdamW, gradient clipping, mixed precision, etc.
@@ -56,9 +67,11 @@ A single `ExperimentPlan` artifact via `python -m autolab.append_artifact`. Requ
 6. Estimate compute: total wall time ≈ seeds × (proposed minutes) + seeds × (baseline minutes). Must fit in `compute_budget_minutes ≤ 30`. If it doesn't, scale the model down.
 7. Write a `code_skeleton` — a complete Python file the runner can drop into `experiments/<EXP-id>/code/run.py`. The skeleton should:
    - Accept `--seed <int>`, `--config <baseline|proposed>`, `--out <path>` CLI args
+   - **Load data via `from datasets import load_dataset`** — use the real train/test splits from HuggingFace. Do NOT synthesize, generate, or fake data. The dataset download is cached automatically to `~/.cache/huggingface/datasets/`.
+   - Apply appropriate preprocessing (tokenization, normalization, reshaping) to the real dataset
    - Train, evaluate, and write `{seed, config, metric: value, wall_seconds}` to JSON-Lines on stdout
    - Use deterministic seeding (`mx.random.seed`, `torch.manual_seed`, `numpy.random.seed`)
-   - Avoid network calls inside the run; datasets must be pre-cached or loaded from `~/.cache/...`
+   - Network calls for dataset download are allowed (HuggingFace is on the allowlist); the `datasets` library caches after first download
 8. Emit the plan via `python -m autolab.append_artifact --type ExperimentPlan ...`. The id printed (e.g. `EXP-003`) is the runner's working dir name.
 
 ## Procedure (mode=ablation)
@@ -78,7 +91,8 @@ A single `ExperimentPlan` artifact via `python -m autolab.append_artifact`. Requ
 - **Do not run the experiment.** That is `experiment-runner`.
 - **Do not propose plans without seeds + baseline.** The runner rejects them and the orchestrator parks the hypothesis.
 - **Do not propose compute_budget_minutes > 30.** Scale down the model or dataset until it fits.
-- **Do not cite uncached data sources.** All datasets must be available offline or via the network allowlist (huggingface.co/datasets).
+- **Do not generate synthetic or fake datasets.** Always use real datasets from HuggingFace Hub via `load_dataset()`. The `datasets` library handles caching — first download hits the network (huggingface.co is on the allowlist), subsequent runs use the cache.
+- **Do not use random/dummy data as a substitute for real evaluation.** If you need a small dataset, pick a small *real* one (e.g., `iris`, `sst2`, `mnist`), don't fabricate one with `numpy.random`.
 
 ## Stdout contract
 

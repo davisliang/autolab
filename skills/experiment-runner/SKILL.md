@@ -39,6 +39,7 @@ Take a single `ExperimentPlan`, materialize its code skeleton into `experiments/
    - `mkdir -p experiments/<EXP-id>/code experiments/<EXP-id>/runs`
    - Write the `code_skeleton` to `experiments/<EXP-id>/code/run.py`
    - If the plan provides additional helper files, write each to `experiments/<EXP-id>/code/`
+   - **Note:** The code skeleton will use `from datasets import load_dataset` to pull real datasets from HuggingFace Hub. This requires network access on first run (cached thereafter at `~/.cache/huggingface/datasets/`). This is expected and allowed.
 3. Sanity gate:
    ```
    python -m autolab.run_experiment --plan-id <EXP-id> --sanity

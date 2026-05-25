@@ -49,12 +49,15 @@ A pre-rendered results-tables block is also injected as the canonical numerical 
 4. Read `drafts/citations.bib` to confirm which citation keys are usable. Cite only ids in `cite_pool`.
 5. Use the NeurIPS structural standard from `skills/paper-writer/SKILL.md` as your rubric for what each section should contain. Section-specific guidance there applies here verbatim.
 6. For each gap, fill the section with a complete body matching the surrounding register and length. Ground every claim in the artifacts and tables; do not fabricate numbers, results, or experiments.
-7. Do a clarity pass on the rest of the paper:
-   - Tighten convoluted sentences without changing claims.
+7. Do a clarity and narrative pass on the rest of the paper:
+   - **Check narrative flow:** Does each section open by connecting to the previous one? Does the paper read as a coherent story (question → approach → evidence → lesson) rather than a stack of disconnected technical cards?
+   - **Check pedagogical clarity:** Would a smart graduate student follow this without re-reading? Where intuition is missing before formalism, add a motivating sentence. Where results are reported without interpretation, add a "this tells us..." sentence.
+   - **Tighten weak prose:** Convoluted sentences, marketing language ("novel", "state-of-the-art", "significant"), and passive-voice hedging. Replace with direct, concrete claims.
    - Remove duplicated phrasing across sections.
    - Verify that the introduction's contributions bullet list and the experiments headline table tell the *same story* 1-for-1.
    - Spot-check that every numerical claim in prose matches the pre-rendered results tables.
    - For negative-results work, lead with the falsified prediction; do not soften "fail" into "promising trend" if a pre-registered threshold was missed.
+   - **Check for "wall of details" anti-pattern:** If any section dumps specifications, numbers, or citations without explaining *why* the reader needs them, restructure to lead with motivation.
 8. Edit the file in place via `Edit` (preferred; sends only the diff) or `Write` (for whole-section rewrites). Preserve the title line and every section heading exactly — do not renumber, add, or remove sections.
 9. Print the stdout contract.
 
