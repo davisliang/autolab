@@ -58,8 +58,9 @@ A pre-rendered results-tables block is also injected as the canonical numerical 
    - Spot-check that every numerical claim in prose matches the pre-rendered results tables.
    - For negative-results work, lead with the falsified prediction; do not soften "fail" into "promising trend" if a pre-registered threshold was missed.
    - **Check for "wall of details" anti-pattern:** If any section dumps specifications, numbers, or citations without explaining *why* the reader needs them, restructure to lead with motivation.
-8. Edit the file in place via `Edit` (preferred; sends only the diff) or `Write` (for whole-section rewrites). Preserve the title line and every section heading exactly — do not renumber, add, or remove sections.
-9. Print the stdout contract.
+8. **Scrub internal identifiers.** Search the paper for any `HYP-`, `EXP-`, `CRIT-`, `LIT-`, `RES-`, `REV-`, `DRAFT-`, `CITE-` prefixed IDs (pattern: uppercase letters followed by a dash and digits). Replace each with a descriptive phrase. Also replace pipeline jargon ("decisively refuted", "downgraded to preliminary", "parked", "wildness bar", "retreat cycle") with standard academic language.
+9. Edit the file in place via `Edit` (preferred; sends only the diff) or `Write` (for whole-section rewrites). Preserve the title line and every section heading exactly — do not renumber, add, or remove sections.
+10. Print the stdout contract.
 
 ## Style
 
@@ -67,6 +68,7 @@ A pre-rendered results-tables block is also injected as the canonical numerical 
 - Numbers reported as `mean ± stddev (n=<seeds>)`.
 - Use only verified citations from `cite_pool`. Inline citations as `[CITE-id]`.
 - Match the prose register and length of the surrounding sections; do not balloon a 200-word abstract into 500.
+- **Conference-ready language:** This paper is being submitted to a peer-reviewed conference. Scrub ALL internal artifact IDs (`HYP-*`, `EXP-*`, `CRIT-*`, `LIT-*`, `RES-*`, `REV-*`, `DRAFT-*`, or any `PREFIX-NNN` pattern) from the prose — replace with descriptive references. Also remove pipeline jargon ("decisively refuted", "downgraded to preliminary status", "parked", "wildness bar", "retreat cycle", "loopback"). Use standard academic language throughout.
 
 ## Boundaries
 

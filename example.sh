@@ -50,6 +50,13 @@ export AUTOLAB_MIN_WILD_HYPOTHESES="${AUTOLAB_MIN_WILD_HYPOTHESES:-2}"
 # in-skill 2 retries. Total worst-case attempts = 1 + 2 + this value.
 export AUTOLAB_MAX_CRASH_RETRIES="${AUTOLAB_MAX_CRASH_RETRIES:-20}"
 
+# Cap run→design loopbacks. After `run`, if no experiment produced a
+# positive result, the orchestrator loops back to `design` to try a
+# different experimental setup (keeping the same hypotheses). After this
+# many cycles, it falls through to `critique` where the broader
+# experiment-retreat may park the hypotheses and retreat to `survey`.
+export AUTOLAB_MAX_RUN_DESIGN_CYCLES="${AUTOLAB_MAX_RUN_DESIGN_CYCLES:-10}"
+
 # Cap committee-review loopbacks. After this many rounds, the paper ships
 # unconditionally regardless of reviewer recommendations. Each cycle =
 # 3 reviewers (methodologist, domain-expert, clarity-reviewer) running in
@@ -109,11 +116,12 @@ fi
 (( WATCHDOG ))         && ARGS+=(--watchdog)
 (( SINGLE_STEP ))      && ARGS+=(--single-step)
 
-echo ">>> AUTOLAB_MAX_IDEA_CYCLES     = $AUTOLAB_MAX_IDEA_CYCLES"
-echo ">>> AUTOLAB_MAX_CYCLES          = $AUTOLAB_MAX_CYCLES"
-echo ">>> AUTOLAB_MIN_WILD_HYPOTHESES = $AUTOLAB_MIN_WILD_HYPOTHESES"
-echo ">>> AUTOLAB_MAX_CRASH_RETRIES   = $AUTOLAB_MAX_CRASH_RETRIES"
-echo ">>> AUTOLAB_MAX_REVIEW_CYCLES   = $AUTOLAB_MAX_REVIEW_CYCLES"
+echo ">>> AUTOLAB_MAX_IDEA_CYCLES      = $AUTOLAB_MAX_IDEA_CYCLES"
+echo ">>> AUTOLAB_MAX_CYCLES           = $AUTOLAB_MAX_CYCLES"
+echo ">>> AUTOLAB_MIN_WILD_HYPOTHESES  = $AUTOLAB_MIN_WILD_HYPOTHESES"
+echo ">>> AUTOLAB_MAX_CRASH_RETRIES    = $AUTOLAB_MAX_CRASH_RETRIES"
+echo ">>> AUTOLAB_MAX_RUN_DESIGN_CYCLES = $AUTOLAB_MAX_RUN_DESIGN_CYCLES"
+echo ">>> AUTOLAB_MAX_REVIEW_CYCLES    = $AUTOLAB_MAX_REVIEW_CYCLES"
 echo ">>> AUTOLAB_SKIP_POLISH         = ${AUTOLAB_SKIP_POLISH:-(unset)}"
 echo ">>> AUTOLAB_SKIP_REVIEW         = ${AUTOLAB_SKIP_REVIEW:-(unset)}"
 echo ">>> scripts/start ${ARGS[*]}"

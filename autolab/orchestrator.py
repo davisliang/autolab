@@ -73,6 +73,7 @@ MAX_CYCLES = int(os.environ.get("AUTOLAB_MAX_CYCLES", "5"))
 MAX_CRASH_RETRIES = int(os.environ.get("AUTOLAB_MAX_CRASH_RETRIES", "2"))
 MAX_IDEA_CYCLES = int(os.environ.get("AUTOLAB_MAX_IDEA_CYCLES", "3"))
 MAX_REVIEW_CYCLES = int(os.environ.get("AUTOLAB_MAX_REVIEW_CYCLES", "2"))
+MAX_RUN_DESIGN_CYCLES = int(os.environ.get("AUTOLAB_MAX_RUN_DESIGN_CYCLES", "2"))
 MIN_WILD_HYPOTHESES = int(os.environ.get("AUTOLAB_MIN_WILD_HYPOTHESES", "2"))
 
 REVIEWER_PERSONAS = [
@@ -919,6 +920,13 @@ def phase_write() -> list[str]:
         prompt_parts.append(
             "Per the paper-writer skill, produce one DraftSection. "
             "Write the section body to thoughts/<DRAFT-id>.md and append to drafts/citations.bib. "
+            "\n\n**CRITICAL — Conference-ready language:** This paper is being submitted to a "
+            "peer-reviewed conference. NEVER use internal artifact IDs (HYP-NNN, EXP-NNN, "
+            "CRIT-NNN, LIT-NNN, RES-NNN, etc.) anywhere in the paper text. NEVER use "
+            "pipeline jargon like 'decisively refuted', 'downgraded to preliminary status', "
+            "'parked', 'wildness bar', 'retreat cycle'. Use standard academic language "
+            "throughout. The paper must be indistinguishable from one written by hand for "
+            "conference submission.\n\n"
             "End with the stdout contract."
         )
         prompt = "\n".join(prompt_parts)
@@ -1008,11 +1016,11 @@ def _neurips_section_brief() -> dict[str, str]:
         ),
         "discussion": (
             "Step back and reflect honestly. Why does it work (or not)? "
-            "What surprised us? Specific threats to validity from CRIT-* "
-            "artifacts (distributions not tested, scales not reached, "
-            "baselines not run). Frame limitations as open questions, not "
-            "apologies. For negative results, name what would constitute "
-            "positive evidence."
+            "What surprised us? Specific threats to validity identified "
+            "during the critique phase (distributions not tested, scales "
+            "not reached, baselines not run). Frame limitations as open "
+            "questions, not apologies. For negative results, name what "
+            "would constitute positive evidence."
         ),
         "conclusion": (
             "One paragraph (≤ 150 words). Restate the contribution and "
@@ -1158,6 +1166,14 @@ def _run_polish_pass(paper_path: Path) -> None:
         "4. **Fidelity.** Cite only ids in cite_pool. Do not fabricate "
         "experiments, datasets, or numbers. Do not add or remove section "
         "headings. Preserve the title.",
+        "5. **Scrub internal identifiers.** Search for and remove ALL "
+        "internal artifact IDs (HYP-NNN, EXP-NNN, CRIT-NNN, LIT-NNN, "
+        "RES-NNN, REV-NNN, DRAFT-NNN — any UPPERCASE-DIGITS pattern). "
+        "Replace with descriptive phrases. Also remove pipeline jargon "
+        "('decisively refuted', 'downgraded to preliminary status', "
+        "'parked', 'wildness bar', 'retreat cycle', 'loopback'). Use "
+        "standard academic language. This paper is being submitted to a "
+        "peer-reviewed conference.",
         "",
         f"Edit {paper_path.relative_to(REPO)} in place. End with the stdout contract.",
     ]
@@ -1290,6 +1306,8 @@ def read_cycle_state() -> dict:
         "idea_history": [],
         "review_cycle": 1,
         "review_history": [],
+        "run_design_cycle": 1,
+        "run_design_history": [],
     }
     p = cycle_state_path()
     if not p.exists():
@@ -1862,6 +1880,87 @@ def idea_retreat_check() -> str | None:
     )
 
 
+def run_positive_result_check() -> str | None:
+    """After `run`, check that at least one primary experiment produced a positive
+    result. If not, loop back to `design` so the experiment design can be
+    re-investigated before giving up on the hypotheses entirely.
+
+    This is a lighter-weight retreat than the post-critique `cycle_retreat_check`
+    which parks the hypotheses and retreats all the way to `survey`. Here we
+    keep the hypotheses alive and just redo the experiment design.
+    """
+
+    def decide(state):
+        cycle = state.get("run_design_cycle", 1)
+        thread = read_thread()
+        results = by_type(thread, "ExperimentResult")
+        primary = [r for r in results if not r.get("is_ablation", False)]
+        if not primary:
+            log_line("run-positive-check: no primary ExperimentResults found; not retreating")
+            return True, None
+        if any(r.get("status") == "pass" for r in primary):
+            log_line(
+                f"run-positive-check: cycle {cycle} has ≥1 positive result; "
+                "advancing to critique"
+            )
+            return True, None
+        # No positive results — loop back to design to re-investigate
+        failed_plan_ids = list({r.get("plan_id") for r in primary if r.get("plan_id")})
+        return False, {
+            "n_primary": len(primary),
+            "failed_plan_ids": failed_plan_ids,
+            "summary": (
+                f"{len(primary)} primary experiment(s) ran, 0 positive results; "
+                "re-investigating experiment design"
+            ),
+            "_log_extra": f"0/{len(primary)} positive; redesigning {failed_plan_ids}",
+        }
+
+    return _retreat(
+        counter_key="run_design_cycle",
+        history_key="run_design_history",
+        max_cycles=MAX_RUN_DESIGN_CYCLES,
+        target_phase="design",
+        wipe_from="design",
+        label="run-positive-check",
+        decide=decide,
+        narrative_builder=_history_entry_run_redesign,
+    )
+
+
+def _history_entry_run_redesign(state: dict, entry: dict, thread: list[dict]) -> str:
+    """Templated history section for a run→design retreat (no positive results)."""
+    cycle = state.get("run_design_cycle", 1)
+    n_primary = entry.get("n_primary", 0)
+    failed_plans = entry.get("failed_plan_ids", []) or []
+    summary = entry.get("summary") or ""
+    lines = [
+        f"### Run-design cycle {cycle} ended ({now_iso()}) — no positive results → design",
+        "",
+        f"{summary or f'{n_primary} experiments ran with no positive results.'} "
+        "Orchestrator is looping back to `design` to re-investigate the "
+        "experiment design before abandoning these hypotheses.",
+        "",
+        "Failed experiment plans (redesign with different approach):",
+    ]
+    if failed_plans:
+        plans_by_id = {p["id"]: p for p in by_type(thread, "ExperimentPlan")}
+        for pid in failed_plans:
+            plan = plans_by_id.get(pid, {})
+            psummary = _truncate_one_line(plan.get("summary", ""), 120)
+            lines.append(f"  - **{pid}**: {psummary}")
+    else:
+        lines.append("  (none recorded)")
+    lines.append("")
+    lines.append(
+        "**Next:** redesign experiments with a different approach — consider "
+        "different hyperparameters, different baselines, different evaluation "
+        "metrics, or a fundamentally different experimental setup. The hypotheses "
+        "are still viable; the experiment design needs revision."
+    )
+    return "\n".join(lines)
+
+
 def next_phase_to_run(args) -> str | None:
     cp = latest_checkpoint()
     if cp is None:
@@ -1871,6 +1970,12 @@ def next_phase_to_run(args) -> str | None:
     # bar, loop back to expand for a wilder batch.
     if cur == "screen":
         retreat = idea_retreat_check()
+        if retreat:
+            return retreat
+    # Run-positive-result hook: after run, if no experiment produced a positive
+    # result, loop back to design to re-investigate the experiment design.
+    if cur == "run":
+        retreat = run_positive_result_check()
         if retreat:
             return retreat
     # Experiment-retreat hook: after critique, if no positive result, loop back
@@ -1980,13 +2085,13 @@ def main():
             ap.error("--idea or --resume required (no prior checkpoint)")
 
     while True:
-        stop_reason = stop_conditions_met()
-        if stop_reason:
-            log_line(f"stop: {stop_reason}")
-            return
         phase = next_phase_to_run(args)
         if phase is None:
-            log_line("no more phases")
+            stop_reason = stop_conditions_met()
+            if stop_reason:
+                log_line(f"stop: {stop_reason}")
+            else:
+                log_line("no more phases")
             return
         try:
             run_phase(phase, args)

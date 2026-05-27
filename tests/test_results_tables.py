@@ -151,9 +151,9 @@ class TestFormatResultsTablesEndToEnd:
         )
         out = format_results_tables(thread, tmp_path)
         assert "### Results Summary" in out
-        assert "EXP-001" in out
+        assert "Experiment 1" in out
         # The picked summary metric appears as a column.
-        assert "val_acc" in out
+        assert "val acc" in out
 
     def test_renders_proposed_baseline_pair(self, tmp_path):
         thread = [

@@ -134,6 +134,8 @@ def format_results_tables(thread: list[dict], experiments_root: Path) -> str:
     summary_rows: list[str] = []
     detail_blocks: list[str] = []
 
+    # Sequential experiment numbering for human-readable paper output.
+    exp_number = 0
     for res in results:
         plan_id = res.get("plan_id")
         plan = plans.get(plan_id, {})
@@ -193,7 +195,10 @@ def format_results_tables(thread: list[dict], experiments_root: Path) -> str:
         marker = {"pass": "**✓ pass**", "fail": "✗ fail", "crash": "⚠ crash"}.get(
             status, f"? {status}"
         )
-        is_ablation = " *(ablation)*" if plan.get("is_ablation") else ""
+        is_ablation = plan.get("is_ablation", False)
+        exp_number += 1
+        exp_label = f"Ablation {exp_number}" if is_ablation else f"Experiment {exp_number}"
+        ablation_tag = " *(ablation)*" if is_ablation else ""
 
         # Summary row
         sm = pick_summary_metric(flat, pred_metric)
@@ -213,10 +218,12 @@ def format_results_tables(thread: list[dict], experiments_root: Path) -> str:
                     )
                 )
                 thr_str = f" (target {op}{fmt_num(pred_threshold)})"
-            hyp_short = (hyp.get("summary", "") or "")[:50].replace("|", "\\|")
+            hyp_short = (hyp.get("summary", "") or "")[:60].replace("|", "\\|")
+            # Use human-readable metric name (strip underscores)
+            metric_display = sm.replace("_", " ")
             summary_rows.append(
-                f"| `{plan_id}`{is_ablation} | `{hyp_id or '—'}` {hyp_short} | "
-                f"`{sm}` | {mean_str} ± {stddev_str}{thr_str} | {marker} |"
+                f"| {exp_label}{ablation_tag} | {hyp_short or '—'} | "
+                f"{metric_display} | {mean_str} ± {stddev_str}{thr_str} | {marker} |"
             )
 
         # Pairwise table
@@ -228,8 +235,9 @@ def format_results_tables(thread: list[dict], experiments_root: Path) -> str:
                 continue
             d = p["mean"] - b["mean"]
             n = p.get("n_seeds") or b.get("n_seeds") or "?"
+            metric_display = base.replace("_", " ")
             pair_rows.append(
-                f"| `{base}` | {fmt_num(b['mean'])} ± {fmt_num(b.get('stddev', 0), 2)} | "
+                f"| {metric_display} | {fmt_num(b['mean'])} ± {fmt_num(b.get('stddev', 0), 2)} | "
                 f"{fmt_num(p['mean'])} ± {fmt_num(p.get('stddev', 0), 2)} | {d:+.4g} | {n} |"
             )
 
@@ -240,27 +248,27 @@ def format_results_tables(thread: list[dict], experiments_root: Path) -> str:
             if k in paired_keys:
                 continue
             m = flat[k]
-            tag = " ←" if k == pred_metric else ""
+            metric_display = k.replace("_", " ")
+            tag = " ★" if k == pred_metric else ""
             flat_rows.append(
-                f"| `{k}`{tag} | {fmt_num(m.get('mean'))} ± {fmt_num(m.get('stddev', 0), 2)} | "
+                f"| {metric_display}{tag} | {fmt_num(m.get('mean'))} ± {fmt_num(m.get('stddev', 0), 2)} | "
                 f"{m.get('n_seeds', '?')} |"
             )
 
         notes = rj.get("notes") or rj.get("hypothesis_result") or ""
 
-        # Block assembly
-        parts = [
-            f"#### `{plan_id}`{is_ablation} → "
-            f"{(hyp.get('summary','')[:140] if hyp_id else '(no linked hypothesis)')}\n"
-        ]
+        # Block assembly — use human-readable labels, not internal IDs
+        hyp_summary = hyp.get("summary", "")[:140] if hyp_id else "(no linked hypothesis)"
+        parts = [f"#### {exp_label}: {hyp_summary}\n"]
         if pred_metric or pred_threshold is not None:
+            metric_display = (pred_metric or "?").replace("_", " ")
             thr_part = (
                 f" {pred_direction or ''} {fmt_num(pred_threshold)}".strip()
                 if pred_threshold is not None
                 else ""
             )
             parts.append(
-                f"_Prediction: `{pred_metric or '?'}`"
+                f"_Prediction: {metric_display}"
                 f"{(' ' + thr_part) if thr_part else ''} — {marker}_\n"
             )
         else:

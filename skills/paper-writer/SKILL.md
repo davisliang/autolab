@@ -138,6 +138,14 @@ The pre-rendered block is delimited by `===== BEGIN PRE-RENDERED TABLES (paste v
 
 The contributions bullets in `introduction` and the headline table in `experiments` must tell the same story. A reviewer who reads only those two artifacts must walk away with the right takeaway. Before emitting your section, sanity-check that your section's narrative is compatible with both.
 
+## Conference-ready language (CRITICAL)
+
+This paper is being submitted to a peer-reviewed conference. The prose must read as a polished academic paper, not an internal lab notebook.
+
+- **NEVER use internal artifact IDs in the paper.** IDs like `HYP-011`, `EXP-014`, `CRIT-003`, `LIT-005`, `CITE-012`, `RES-007`, `REV-001`, `DRAFT-007`, or any `PREFIX-NNN` pattern are internal tracking identifiers for the orchestrator. They must NEVER appear in any section body, table, figure caption, or inline reference. Instead, refer to experiments by descriptive name (e.g., "the entropy-regularization experiment"), hypotheses by their claim content, and critiques by their substance.
+- **NEVER use internal jargon from the pipeline.** Phrases like "decisively refuted", "downgraded to preliminary status", "parked at screen", "wildness bar", "retreat cycle", "loopback", "boredom critique", "validity-mode Critique artifacts" are pipeline terminology. Replace with standard academic language: "our results did not support this hypothesis", "we found no statistically significant effect", "we investigated but found insufficient evidence", etc.
+- **Write as if for an external reader** who has never seen this codebase. The paper should be indistinguishable from one written by hand.
+
 ## Boundaries
 
 - **Do not invoke other skills.**
@@ -146,6 +154,7 @@ The contributions bullets in `introduction` and the headline table in `experimen
 - **Do not embellish.** If results don't support a claim, weaken or drop it.
 - **Do not edit prior DraftSection rows.** Emit a new one with `version=<N+1>`.
 - **Do not retype numbers from the pre-rendered tables in prose.** Reference them and add interpretation.
+- **Do not leak internal artifact IDs or pipeline jargon into the paper.** See "Conference-ready language" above.
 - Word count guideline per section: outline 100, abstract 200, intro 700, related 600, background 400, data-models 800, method 900, experiments 900, discussion 600, conclusion 150, broader-impact 250, reproducibility 250. Stay close.
 
 ## Stdout contract
