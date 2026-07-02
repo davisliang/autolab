@@ -30,7 +30,7 @@ Take a single `ExperimentPlan`, materialize its code skeleton into `experiments/
 
 ## Recommended model
 
-`sonnet-4-6`
+`fable-5`
 
 ## Procedure
 
@@ -67,6 +67,7 @@ Take a single `ExperimentPlan`, materialize its code skeleton into `experiments/
 - **Do not write outside `experiments/<EXP-id>/`** at the experiment-code level (top-level write roots from `program.md` still apply for thread/papers/thoughts/drafts).
 - **Do not invoke other skills.**
 - **Do not skip the sanity gate.** Even one-line code changes need it.
+- **Apply the minimal fix during debug retries.** Change only what the failure requires; don't refactor, rename, or restructure working code between attempts.
 - **Do not modify other experiments' code or results.**
 - **Do not increase compute past `compute_budget_minutes`.** The tool enforces a hard timeout.
 

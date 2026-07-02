@@ -41,7 +41,7 @@ A single `ExperimentPlan` artifact via `python -m autolab.append_artifact`. Requ
 
 ## Recommended model
 
-`opus-4-7`
+`fable-5`
 
 ## Procedure (mode=primary)
 

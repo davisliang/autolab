@@ -41,6 +41,7 @@ PHASES = [
     "survey",
     "gap-fill",
     "screen",
+    "thought-experiment",
     "design",
     "run",
     "critique",
@@ -78,11 +79,20 @@ PHASE_DESCRIPTIONS = {
         "titles against the survey results. High-severity HYPs are "
         "parked. Triggers idea retreat if too few survive."
     ),
+    "thought-experiment": (
+        "thought-experimenter rolls out a deliberate toy problem per "
+        "surviving Hypothesis — pure reasoning, no compute. It isolates "
+        "the mechanism, simulates it against the null, names failure "
+        "modes, and renders a verdict (promising / inconclusive / "
+        "refuted). Scalability is contemplated only after the toy "
+        "rollout. Refuted hypotheses are parked and never reach design."
+    ),
     "design": (
         "experiment-designer emits one ExperimentPlan per surviving "
-        "Hypothesis. Each plan must include ≥3 seeds and a "
-        "matched-budget baseline; missing fields are rejected by the "
-        "runner."
+        "Hypothesis, building the first informative (non-toy) step beyond "
+        "the thought experiment's toy problem. Each plan must include ≥3 "
+        "seeds and a matched-budget baseline; missing fields are rejected "
+        "by the runner."
     ),
     "run": (
         "experiment-runner sanity-gates each plan (32-example overfit), "
@@ -457,6 +467,26 @@ def event_decision_summary(ev: dict) -> str:
         wt = ev.get("wildness_tickets") or ev.get("wildness_ticket")
         if wt:
             parts.append(f"**Wildness:** {wt}")
+        return "\n".join(parts)
+
+    if t == "ThoughtExperiment":
+        verdict = (ev.get("verdict") or "?").strip()
+        hid = ev.get("hypothesis_id") or ""
+        marker = {
+            "promising": "✓ promising",
+            "inconclusive": "~ inconclusive",
+            "refuted": "✗ refuted",
+        }.get(verdict.lower(), verdict)
+        parts = [f"**{marker}**" + (f" for `{hid}`" if hid else "")]
+        toy = ev.get("toy_problem") or ""
+        if toy:
+            parts.append(f"**Toy problem:** {_truncate(toy, 220)}")
+        pred = ev.get("predicted_outcome") or ""
+        if pred:
+            parts.append(f"**Predicts:** {_truncate(pred, 200)}")
+        scale = ev.get("scalability_note") or ""
+        if scale and verdict.lower() != "refuted":
+            parts.append(f"**Next (toward scale):** {_truncate(scale, 200)}")
         return "\n".join(parts)
 
     if t == "LitFinding":
@@ -850,6 +880,40 @@ def _phase_narrative(phase: str, arts: list[dict], thread: list[dict]) -> list[d
                     "ids": [c["id"] for c in cites],
                 }
             )
+        return out
+
+    if phase == "thought-experiment":
+        tes = _by_type(arts, "ThoughtExperiment")
+        if tes:
+            counts = {"promising": 0, "inconclusive": 0, "refuted": 0}
+            for te in tes:
+                v = (te.get("verdict") or "").strip().lower()
+                if v in counts:
+                    counts[v] += 1
+            bits = [f"{n} {v}" for v, n in counts.items() if n]
+            tail = f" ({', '.join(bits)})" if bits else ""
+            noun = "toy-problem thought experiment" + ("s" if len(tes) != 1 else "")
+            out.append(
+                {
+                    "kind": "thought-experiment",
+                    "ts": _earliest_ts(tes),
+                    "text": f"Rolled out {len(tes)} {noun}{tail}",
+                    "ids": [t["id"] for t in tes],
+                }
+            )
+            for te in tes:
+                if (te.get("verdict") or "").strip().lower() != "refuted":
+                    continue
+                hid = te.get("hypothesis_id") or "?"
+                why = (te.get("predicted_outcome") or te.get("summary") or "").strip()
+                out.append(
+                    {
+                        "kind": "parked",
+                        "ts": _ts(te),
+                        "text": f"Refuted {hid} on a toy problem (parked): {why[:140]}",
+                        "ids": [te["id"], hid],
+                    }
+                )
         return out
 
     if phase == "design":

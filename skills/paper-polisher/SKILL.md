@@ -36,7 +36,7 @@ A pre-rendered results-tables block is also injected as the canonical numerical 
 
 ## Recommended model
 
-`opus-4-7`
+`fable-5`
 
 ## Procedure
 

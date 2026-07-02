@@ -20,6 +20,7 @@ class TestPhaseConstants:
             "survey",
             "gap-fill",
             "screen",
+            "thought-experiment",
             "design",
             "run",
             "critique",

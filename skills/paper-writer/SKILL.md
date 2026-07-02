@@ -88,7 +88,7 @@ The pre-rendered block is delimited by `===== BEGIN PRE-RENDERED TABLES (paste v
 
 ## Recommended model
 
-`opus-4-7`
+`fable-5`
 
 ## Procedure
 

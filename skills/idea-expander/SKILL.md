@@ -38,7 +38,7 @@ The orchestrator's prompt names one of:
 
 ## Recommended model
 
-`sonnet-4-6`
+`fable-5`
 
 ## Wildness bar (applies in BOTH modes)
 

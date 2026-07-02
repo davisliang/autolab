@@ -40,7 +40,7 @@ A single `Critique` artifact per invocation, via `python -m autolab.append_artif
 
 ## Recommended model
 
-`opus-4-7` for `boredom` and `validity`; `sonnet-4-6` for `failure-analysis`.
+`fable-5`
 
 ## Procedure (mode=boredom)
 

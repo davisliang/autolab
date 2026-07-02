@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """autolab orchestrator (project-aware).
 
-Drives the 10-phase pipeline: seed -> expand -> survey -> gap-fill -> screen
--> design -> run -> critique -> write -> final, scoped to a single project
-selected via the AUTOLAB_PROJECT env var.
+Drives the phase pipeline: seed -> expand -> survey -> gap-fill -> screen
+-> thought-experiment -> design -> run -> critique -> write -> final -> review,
+scoped to a single project selected via the AUTOLAB_PROJECT env var.
 
 The `start` and `resume` shell scripts set AUTOLAB_PROJECT before invoking
 this script. Subprocesses (`claude -p`, tools/*.py, tools/*.sh) inherit it.
@@ -54,6 +54,7 @@ PHASES = [
     "survey",
     "gap-fill",
     "screen",
+    "thought-experiment",
     "design",
     "run",
     "critique",
@@ -63,7 +64,15 @@ PHASES = [
 ]
 
 # Phases re-run on retreat (everything from survey through critique).
-RETREAT_PHASES = ["survey", "gap-fill", "screen", "design", "run", "critique"]
+RETREAT_PHASES = [
+    "survey",
+    "gap-fill",
+    "screen",
+    "thought-experiment",
+    "design",
+    "run",
+    "critique",
+]
 
 # Phases a committee reviewer may request as a `target_phase` for a major
 # revision. Anything outside this set is treated as a minor revision.
@@ -483,7 +492,7 @@ def phase_expand() -> list[str]:
         f"prediction_direction, and a body that explicitly names the wildness ticket(s) "
         f"it satisfies. Use `python -m autolab.append_artifact` for emission. End with the stdout contract."
     )
-    call_claude("expand", "idea-expander", "sonnet", prompt)
+    call_claude("expand", "idea-expander", "fable", prompt)
     refresh_indexes()
     return [r["id"] for r in by_type(read_thread(), "Hypothesis")]
 
@@ -511,7 +520,7 @@ def phase_survey() -> list[str]:
             {
                 "phase": "survey",
                 "skill": "literature-scout",
-                "model": "sonnet",
+                "model": "fable",
                 "prompt": prompt,
                 "timeout_s": 1800,
             }
@@ -539,7 +548,7 @@ def phase_gap_fill() -> list[str]:
         f"from the LitFinding set and emit 1-2 Hypothesis rows that satisfy the WILDNESS BAR. "
         f"End with the stdout contract."
     )
-    call_claude("gap-fill", "idea-expander", "sonnet", prompt)
+    call_claude("gap-fill", "idea-expander", "fable", prompt)
     refresh_indexes()
     return [
         r["id"] for r in by_type(read_thread(), "Hypothesis") if r.get("author") == "idea-expander"
@@ -582,7 +591,7 @@ def phase_screen() -> list[str]:
             {
                 "phase": "screen-boredom",
                 "skill": "critic",
-                "model": "haiku",
+                "model": "fable",
                 "prompt": prompt,
             }
         )
@@ -597,7 +606,7 @@ def phase_screen() -> list[str]:
         "arxiv_id. Emit Citation rows for each pair and high-severity Critiques "
         "for collisions (score >= 0.85). End with the stdout contract."
     )
-    call_claude("screen-novelty", "novelty-checker", "haiku", nov_prompt)
+    call_claude("screen-novelty", "novelty-checker", "fable", nov_prompt)
 
     refresh_indexes()
     park_failed_hypotheses()
@@ -674,21 +683,135 @@ def _framework_hint() -> str:
     return _FRAMEWORK_HINT_CACHE
 
 
+def phase_thought_experiment() -> list[str]:
+    """Roll out a toy-problem thought experiment per surviving Hypothesis.
+
+    Pure reasoning, no compute: for each hypothesis that cleared `screen`, the
+    thought-experimenter designs a deliberate toy problem isolating the
+    mechanism, simulates it mentally against the null, names the failure modes,
+    and renders a verdict (promising / inconclusive / refuted). Scalability is
+    contemplated only AFTER the toy rollout. The verdict gates `design`.
+    """
+    survivors = surviving_hypotheses()
+    if not survivors:
+        log_line("thought-experiment: no surviving hypotheses; nothing to roll out")
+        return []
+    history_ctx = history_block()
+    jobs = []
+    for h in survivors:
+        prompt = (
+            f"Phase: thought-experiment\n"
+            f"Invoke skill: thought-experimenter\n"
+            f"Target: {h['id']}\n\n"
+            f"{history_ctx}"
+            f"Read thoughts/{h['id']}.md and any LitFindings linked via parent_ids. "
+            f"Per the thought-experimenter skill, design ONE deliberate toy problem that "
+            f"isolates the hypothesized mechanism, roll the experiment forward in your head "
+            f"(hypothesis trajectory vs. null), name the failure modes, and render a verdict "
+            f"(promising | inconclusive | refuted). Only AFTER the rollout, sketch the single "
+            f"concrete step from the toy problem toward an informative (non-toy) experiment. "
+            f"Do NOT contemplate scale before the toy rollout is done, and do NOT default to a "
+            f"stock benchmark unless it is genuinely the minimal probe of the claim. "
+            f"Emit one ThoughtExperiment via `python -m autolab.append_artifact`. "
+            f"End with the stdout contract."
+        )
+        jobs.append(
+            {
+                "phase": "thought-experiment",
+                "skill": "thought-experimenter",
+                "model": "fable",
+                "prompt": prompt,
+                "timeout_s": 1200,
+            }
+        )
+    parallel_calls(jobs)
+    refresh_indexes()
+    return [r["id"] for r in by_type(read_thread(), "ThoughtExperiment")]
+
+
+def thought_experiments_by_hyp() -> dict[str, dict]:
+    """Map each Hypothesis id to its latest ThoughtExperiment artifact (if any)."""
+    out: dict[str, dict] = {}
+    for te in by_type(read_thread(), "ThoughtExperiment"):
+        hid = te.get("hypothesis_id") or next(
+            (p for p in (te.get("parent_ids") or []) if str(p).startswith("HYP-")),
+            None,
+        )
+        if hid:
+            out[hid] = te  # chronological iteration → latest wins
+    return out
+
+
+def park_refuted_hypotheses(hyps: list[dict], tes: dict[str, dict]):
+    """Append thought-experiment-refuted hypotheses to the parking lot with the
+    refutation reasoning attached, mirroring screen's boredom parking."""
+    if not hyps:
+        return
+    pl = parking_lot()
+    pl.parent.mkdir(parents=True, exist_ok=True)
+    with pl.open("a") as f:
+        f.write(f"\n## Parked at {now_iso()} (thought experiment refuted)\n\n")
+        for h in hyps:
+            te = tes.get(h["id"], {})
+            f.write(f"- `{h['id']}` ({h.get('author', '?')}): {h.get('summary', '')}\n")
+            toy = te.get("toy_problem")
+            if toy:
+                f.write(f"    - toy problem: {toy}\n")
+            reason = te.get("predicted_outcome") or te.get("summary")
+            if reason:
+                f.write(f"    - refuted: {reason}\n")
+    log_line(
+        f"parked {len(hyps)} thought-experiment-refuted hypotheses: " f"{[h['id'] for h in hyps]}"
+    )
+
+
 def phase_design(benchmark: str | None) -> list[str]:
     survivors = surviving_hypotheses()
     if not survivors:
         log_line("design: no surviving hypotheses; nothing to design")
         return []
+    # Gate on the thought-experiment verdict: hypotheses whose toy-problem
+    # rollout refuted the mechanism are parked, not designed. Safety net: if
+    # EVERY survivor was refuted, proceed with all of them rather than ending
+    # the run empty — pessimism shouldn't be able to nuke the whole pipeline.
+    tes = thought_experiments_by_hyp()
+    refuted = [h for h in survivors if tes.get(h["id"], {}).get("verdict") == "refuted"]
+    cleared = [h for h in survivors if tes.get(h["id"], {}).get("verdict") != "refuted"]
+    if not cleared:
+        log_line(
+            "design: every surviving hypothesis was refuted by its thought "
+            "experiment; proceeding with all survivors rather than ending empty"
+        )
+        cleared, refuted = survivors, []
+    park_refuted_hypotheses(refuted, tes)
     bench_note = f" Benchmark hint: {benchmark}." if benchmark else ""
     history_ctx = history_block()
     fw_hint = _framework_hint()
     jobs = []
-    for h in survivors:
+    for h in cleared:
+        te = tes.get(h["id"])
+        if te:
+            te_block = (
+                f"## Thought experiment for {h['id']} "
+                f"(verdict: {te.get('verdict', '?')})\n"
+                f"Toy problem: {te.get('toy_problem', '')}\n"
+                f"Predicted toy-scale outcome: {te.get('predicted_outcome', '')}\n"
+                f"Mechanism: {te.get('mechanism', '')}\n"
+                f"Path to an informative experiment: {te.get('scalability_note', '')}\n"
+                f"Read thoughts/{te['id']}.md for the full rollout. Build the "
+                f"ExperimentPlan as the FIRST informative (non-toy) step beyond this "
+                f"toy problem — ground it in the deciding comparison the thought "
+                f"experiment identified, and do NOT default to MNIST or a generic "
+                f"benchmark.\n\n"
+            )
+        else:
+            te_block = ""
         prompt = (
             f"Phase: design\n"
             f"Invoke skill: experiment-designer (mode=primary)\n"
             f"Target: {h['id']}\n\n"
             f"{fw_hint}"
+            f"{te_block}"
             f"{history_ctx}"
             f"Read thoughts/{h['id']}.md. Per the experiment-designer skill, "
             f"emit one ExperimentPlan with seeds (>=3) and baseline_spec.{bench_note} "
@@ -698,7 +821,7 @@ def phase_design(benchmark: str | None) -> list[str]:
             {
                 "phase": "design",
                 "skill": "experiment-designer",
-                "model": "opus",
+                "model": "fable",
                 "prompt": prompt,
                 "timeout_s": 1200,
             }
@@ -730,7 +853,7 @@ def phase_run() -> list[str]:
             f"then run the multi-seed sweep. Emit one ExperimentResult. "
             f"End with the stdout contract."
         )
-        call_claude("run", "experiment-runner", "sonnet", prompt, timeout_s=2400)
+        call_claude("run", "experiment-runner", "fable", prompt, timeout_s=2400)
         refresh_indexes()
         results_for_plan = [
             r for r in by_type(read_thread(), "ExperimentResult") if r.get("plan_id") == pid
@@ -760,7 +883,7 @@ def phase_run() -> list[str]:
         call_claude(
             "design-ablation",
             "experiment-designer",
-            "opus",
+            "fable",
             ablation_prompt,
             timeout_s=1200,
         )
@@ -804,7 +927,7 @@ def phase_critique() -> list[str]:
         f"covering threats to validity, baseline parity, statistical concerns. "
         f"End with the stdout contract."
     )
-    call_claude("critique", "critic", "opus", prompt, timeout_s=1800)
+    call_claude("critique", "critic", "fable", prompt, timeout_s=1800)
     refresh_indexes()
     return [
         r["id"]
@@ -930,7 +1053,7 @@ def phase_write() -> list[str]:
             "End with the stdout contract."
         )
         prompt = "\n".join(prompt_parts)
-        call_claude("write", "paper-writer", "opus", prompt, timeout_s=1800)
+        call_claude("write", "paper-writer", "fable", prompt, timeout_s=1800)
         refresh_indexes()
         latest = [r for r in by_type(read_thread(), "DraftSection") if r.get("section") == sec]
         if latest:
@@ -1180,7 +1303,7 @@ def _run_polish_pass(paper_path: Path) -> None:
     prompt = "\n".join(prompt_parts)
 
     try:
-        call_claude("polish", "paper-polisher", "opus", prompt, timeout_s=1800)
+        call_claude("polish", "paper-polisher", "fable", prompt, timeout_s=1800)
         log_line(f"final: polish pass complete; final paper at {paper_path}")
     except SystemExit as e:
         # Polish is best-effort. If it fails, restore the pre-polish
@@ -1263,7 +1386,7 @@ def phase_review() -> list[str]:
             {
                 "phase": "review",
                 "skill": "committee-reviewer",
-                "model": "opus",
+                "model": "fable",
                 "prompt": prompt,
                 "timeout_s": 1800,
             }
@@ -1613,7 +1736,7 @@ def crash_retry_pass() -> int:
             f"shape error). Re-run with sanity gate then full sweep. Emit a fresh "
             f"ExperimentResult. End with the stdout contract."
         )
-        call_claude("run-debug-retry", "experiment-runner", "sonnet", prompt, timeout_s=2400)
+        call_claude("run-debug-retry", "experiment-runner", "fable", prompt, timeout_s=2400)
         refresh_indexes()
         retries_done += 1
     return retries_done
@@ -2011,6 +2134,8 @@ def run_phase(phase: str, args) -> list[str]:
         ids = phase_gap_fill()
     elif phase == "screen":
         ids = phase_screen()
+    elif phase == "thought-experiment":
+        ids = phase_thought_experiment()
     elif phase == "design":
         ids = phase_design(args.benchmark)
     elif phase == "run":

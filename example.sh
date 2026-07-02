@@ -21,7 +21,9 @@ cd "$REPO_DIR"
 
 # (a) Inline string. Safe for short ideas; avoid embedded apostrophes/quotes
 #     because the shell will split them across argv.
-IDEA="We want to build an AI superforecaster. We want to predict arbitrary future events including one-off non-repeatable events like geopolitical events but also potentially more frequent phenomena like macro economic reporting data. We want to at once leverage patterns in numerical data and at the same time to engage in open world reasoning (for example: when forecasting demand for a product, evidence might come from numerical trends and month-over-month purchasing data but also in the form of online chatter or product reviews). Ideal system should be able to adaptively leverage the appropriate mode of inquiry depending on the query. Taken in aggregate across a large population of queries, predictions should be both internally consistent and probabilistically coherent."
+# IDEA="We want to build an AI superforecaster. We want to predict arbitrary future events including one-off non-repeatable events like geopolitical events but also potentially more frequent phenomena like macro economic reporting data. We want to at once leverage patterns in numerical data and at the same time to engage in open world reasoning (for example: when forecasting demand for a product, evidence might come from numerical trends and month-over-month purchasing data but also in the form of online chatter or product reviews). Ideal system should be able to adaptively leverage the appropriate mode of inquiry depending on the query. Taken in aggregate across a large population of queries, predictions should be both internally consistent and probabilistically coherent."
+
+IDEA="Models are uncreative — good at execution of boring problems bad at finding interesting problems to tackle and collapse to the mode of boring approaches. Is how we are training models today not conducive to this type of creative thinking? Can we marry a creative ideation model w/ a frontier execution model that presents the best of both worlds?"
 
 # (b) From a file. Recommended for long, multi-paragraph ideas.
 # IDEA_FILE="$REPO_DIR/my-idea.txt"
@@ -55,7 +57,7 @@ export AUTOLAB_MAX_CRASH_RETRIES="${AUTOLAB_MAX_CRASH_RETRIES:-20}"
 # different experimental setup (keeping the same hypotheses). After this
 # many cycles, it falls through to `critique` where the broader
 # experiment-retreat may park the hypotheses and retreat to `survey`.
-export AUTOLAB_MAX_RUN_DESIGN_CYCLES="${AUTOLAB_MAX_RUN_DESIGN_CYCLES:-10}"
+export AUTOLAB_MAX_RUN_DESIGN_CYCLES="${AUTOLAB_MAX_RUN_DESIGN_CYCLES:-1000}"
 
 # Cap committee-review loopbacks. After this many rounds, the paper ships
 # unconditionally regardless of reviewer recommendations. Each cycle =
@@ -70,11 +72,11 @@ export AUTOLAB_MAX_REVIEW_CYCLES="${AUTOLAB_MAX_REVIEW_CYCLES:-5}"
 # Uncomment either to skip that step. The orchestrator still runs every
 # other phase normally; only the named step is bypassed.
 
-# Skip the polish pass at the end of `final` (saves ~1 opus call). The
+# Skip the polish pass at the end of `final` (saves ~1 fable call). The
 # unpolished assembled paper is still written to drafts/paper-vFINAL.md.
 # export AUTOLAB_SKIP_POLISH=1
 
-# Skip the committee-review phase entirely (saves 3 opus calls per cycle).
+# Skip the committee-review phase entirely (saves 3 fable calls per cycle).
 # The paper ships straight from `final` with no reviewer feedback.
 # export AUTOLAB_SKIP_REVIEW=1
 

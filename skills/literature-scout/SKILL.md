@@ -37,7 +37,7 @@ Side effects:
 
 ## Recommended model
 
-`sonnet-4-6`
+`fable-5`
 
 ## Procedure
 
