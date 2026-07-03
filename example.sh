@@ -21,9 +21,8 @@ cd "$REPO_DIR"
 
 # (a) Inline string. Safe for short ideas; avoid embedded apostrophes/quotes
 #     because the shell will split them across argv.
-# IDEA="We want to build an AI superforecaster. We want to predict arbitrary future events including one-off non-repeatable events like geopolitical events but also potentially more frequent phenomena like macro economic reporting data. We want to at once leverage patterns in numerical data and at the same time to engage in open world reasoning (for example: when forecasting demand for a product, evidence might come from numerical trends and month-over-month purchasing data but also in the form of online chatter or product reviews). Ideal system should be able to adaptively leverage the appropriate mode of inquiry depending on the query. Taken in aggregate across a large population of queries, predictions should be both internally consistent and probabilistically coherent."
 
-IDEA="Models are uncreative — good at execution of boring problems bad at finding interesting problems to tackle and collapse to the mode of boring approaches. Is how we are training models today not conducive to this type of creative thinking? Can we marry a creative ideation model w/ a frontier execution model that presents the best of both worlds?"
+IDEA="I'm working on building a router that can properly route between models based on model capability and expected task performance. Can you figure out an optimal way to do this that is better than what I've already tried? Take a look at this repo to check out what I've tried (https://github.com/davisliang/routerllm) and take a look at some of these examples to see what others have tried https://cognition.com/blog/devin-fusion https://sakana.ai/fugu/ https://openrouter.ai/blog/announcements/fusion-beats-frontier/ https://github.com/NVIDIA-AI-Blueprints/llm-router Specifically I want you to explore novel MODELING methodologies."
 
 # (b) From a file. Recommended for long, multi-paragraph ideas.
 # IDEA_FILE="$REPO_DIR/my-idea.txt"
@@ -79,6 +78,18 @@ export AUTOLAB_MAX_REVIEW_CYCLES="${AUTOLAB_MAX_REVIEW_CYCLES:-5}"
 # Skip the committee-review phase entirely (saves 3 fable calls per cycle).
 # The paper ships straight from `final` with no reviewer feedback.
 # export AUTOLAB_SKIP_REVIEW=1
+
+# Human-in-the-loop hypothesis gate. By default, after `screen` the run
+# BLOCKS and waits for you to pick which surviving hypotheses to pursue (or
+# request a fresh batch, with optional feedback) from the dashboard's gate
+# panel. For hands-off / overnight / watchdog runs, bypass it so the run
+# proceeds with every surviving hypothesis:
+# export AUTOLAB_SKIP_GATE=1
+#
+# How long the gate blocks waiting for your decision, in seconds. 0 (default)
+# waits indefinitely; set a value to auto-proceed with all survivors after a
+# timeout. Poll interval is AUTOLAB_GATE_POLL_S (default 2).
+# export AUTOLAB_GATE_TIMEOUT_S=0
 
 # ---------------------------------------------------------------------------
 # 4. Optional CLI flags for scripts/start.

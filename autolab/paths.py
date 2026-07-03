@@ -49,6 +49,18 @@ def thread_index(project_id: str | None = None) -> Path:
     return thread_dir(project_id) / "INDEX.md"
 
 
+def gate_request(project_id: str | None = None) -> Path:
+    """Human-in-the-loop hypothesis gate: the request the orchestrator writes
+    (status=waiting + the survivors to choose from) and blocks on."""
+    return thread_dir(project_id) / "gate.json"
+
+
+def gate_decision(project_id: str | None = None) -> Path:
+    """The decision the dashboard POSTs back (select / regenerate + payload).
+    Consumed and deleted by the orchestrator once applied."""
+    return thread_dir(project_id) / "gate_decision.json"
+
+
 def checkpoints_dir(project_id: str | None = None) -> Path:
     return thread_dir(project_id) / "checkpoints"
 

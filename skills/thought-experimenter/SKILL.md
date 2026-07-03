@@ -62,13 +62,19 @@ Do **not** read every artifact in the project. Stay focused on this one claim.
    - `refuted` — the rollout shows the mechanism cannot work, is confounded
      beyond rescue, or the outcome is trivially predictable. Do not design;
      the orchestrator will park the hypothesis with your reasoning attached.
-6. **Only now, contemplate scalability.** If (and only if) the verdict is
-   `promising` or `inconclusive`, sketch the path *out* of the toy problem: what
-   the first informative (non-toy) experiment looks like, what would have to hold
-   for the toy result to survive contact with realistic scale/data/modality, and
-   the cheapest observation that would break the claim at scale. This is what the
-   `design` phase will build on — keep it concrete and a single step beyond the
-   toy, not a research program.
+6. **Only now, contemplate scalability — and consequence.** If (and only if) the
+   verdict is `promising` or `inconclusive`, sketch the path *out* of the toy
+   problem: what the first informative (non-toy) experiment looks like, what would
+   have to hold for the toy result to survive contact with realistic
+   scale/data/modality, and the cheapest observation that would break the claim at
+   scale. Name, in one sentence, the **consequential claim the toy is a proxy
+   for** — the thing someone would actually act on if the full result held. If the
+   only honest path forward is "a slightly bigger version of the same toy" with no
+   line of sight to anything anyone would build on, say so plainly and lean toward
+   `refuted` (a myopic dead end), even when the mechanism itself is coherent: a
+   coherent mechanism that leads nowhere is not worth a GPU-hour. This is what the
+   `design` phase builds on — keep it concrete and a single step beyond the toy,
+   not a research program.
 
 ## Outputs
 
@@ -81,7 +87,8 @@ Required fields:
 - `mechanism` — the de-jargoned one-sentence reason the effect would occur
 - `verdict` — `"promising"` | `"inconclusive"` | `"refuted"`
 - `scalability_note` — the single concrete step from toy problem toward an
-  informative experiment (write `"n/a — refuted"` when the verdict is `refuted`)
+  informative experiment, ending with the one-sentence consequential claim the
+  toy is a proxy for (write `"n/a — refuted"` when the verdict is `refuted`)
 
 Put the full step-by-step rollout, the null trajectory, and the failure-mode
 list in the markdown body via `--body-from-stdin`. Keep the body concise and

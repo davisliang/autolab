@@ -26,6 +26,8 @@ from autolab.paths import (
     cost_ledger,
     drafts_dir,
     experiments_dir,
+    gate_decision,
+    gate_request,
     history_log,
     list_projects,
     orchestrator_log,
@@ -41,6 +43,7 @@ PHASES = [
     "survey",
     "gap-fill",
     "screen",
+    "select",
     "thought-experiment",
     "design",
     "run",
@@ -78,6 +81,12 @@ PHASE_DESCRIPTIONS = {
         "argues against each claim, and novelty-checker fuzzy-matches "
         "titles against the survey results. High-severity HYPs are "
         "parked. Triggers idea retreat if too few survive."
+    ),
+    "select": (
+        "Human-in-the-loop gate. The run BLOCKS here: you pick which "
+        "surviving hypotheses to pursue, or request a fresh batch (with "
+        "optional feedback) from the panel at the top of this view. "
+        "Bypassed when AUTOLAB_SKIP_GATE=1."
     ),
     "thought-experiment": (
         "thought-experimenter rolls out a deliberate toy problem per "
@@ -1180,6 +1189,7 @@ def active_work(pid: str) -> dict:
             {
                 "id": h["id"],
                 "claim": (h.get("claim") or h.get("summary") or "")[:240],
+                "plain_summary": (h.get("plain_summary", "") or "")[:400],
                 "prediction_metric": h.get("prediction_metric", "") or "",
                 "prediction_threshold": h.get("prediction_threshold"),
                 "prediction_direction": h.get("prediction_direction", "") or "",
@@ -1208,9 +1218,54 @@ def active_work(pid: str) -> dict:
     return {"hypotheses": alive_hyps, "plans": active_plans}
 
 
+def read_gate(pid: str) -> dict | None:
+    """Return the current hypothesis-gate request for the project, or None.
+
+    Only a `status=waiting` gate is surfaced to the UI as actionable; applied /
+    consumed gates return None so the panel disappears once resolved.
+    """
+    p = gate_request(pid)
+    if not p.exists():
+        return None
+    try:
+        g = json.loads(p.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    if g.get("status") != "waiting":
+        return None
+    return g
+
+
+def write_gate_decision(pid: str, decision: dict) -> dict:
+    """Persist a user decision from the dashboard for the orchestrator to pick
+    up. Validates the action and stamps the request it answers."""
+    action = str(decision.get("action") or "select").strip().lower()
+    if action not in ("select", "regenerate"):
+        return {"error": "bad_action", "action": action}
+    gate = read_gate(pid)
+    if gate is None:
+        return {"error": "no_open_gate"}
+    valid_ids = {h.get("id") for h in gate.get("hypotheses", [])}
+    payload: dict = {
+        "action": action,
+        "request_created_at": gate.get("created_at"),
+        "decided_at": datetime.now(UTC).isoformat(timespec="seconds"),
+    }
+    if action == "select":
+        chosen = [c for c in (decision.get("hypothesis_ids") or []) if c in valid_ids]
+        if not chosen:
+            return {"error": "no_valid_hypotheses"}
+        payload["hypothesis_ids"] = chosen
+    else:  # regenerate
+        payload["feedback"] = str(decision.get("feedback") or "").strip()
+    gate_decision(pid).write_text(json.dumps(payload, indent=2))
+    return {"ok": True, "action": action, **payload}
+
+
 def project_detail(pid: str) -> dict:
     return {
         **project_summary(pid),
+        "gate": read_gate(pid),
         "checkpoints": list_checkpoints(pid),
         "ledger": parse_ledger(cost_ledger(pid)),
         "thoughts": list_thoughts(pid),
@@ -1346,6 +1401,28 @@ class Handler(BaseHTTPRequestHandler):
                         return self._json({"error": "missing_name"}, code=400)
                     return self._json(read_draft_full(pid, parts[2]))
                 return self._json({"error": "unknown_subpath"}, code=404)
+            self.send_error(404, "Not Found")
+        except Exception as e:
+            self._json({"error": str(e)}, code=500)
+
+    def do_POST(self):
+        url = urlparse(self.path)
+        path = url.path
+        try:
+            # /api/project/<pid>/gate  — submit a hypothesis-gate decision
+            if path.startswith("/api/project/") and path.endswith("/gate"):
+                pid = path[len("/api/project/") : -len("/gate")]
+                if pid not in list_projects():
+                    return self._json({"error": "not_found", "id": pid}, code=404)
+                length = int(self.headers.get("Content-Length") or 0)
+                raw = self.rfile.read(length) if length else b"{}"
+                try:
+                    decision = json.loads(raw.decode("utf-8") or "{}")
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    return self._json({"error": "bad_json"}, code=400)
+                result = write_gate_decision(pid, decision)
+                code = 200 if result.get("ok") else 400
+                return self._json(result, code=code)
             self.send_error(404, "Not Found")
         except Exception as e:
             self._json({"error": str(e)}, code=500)

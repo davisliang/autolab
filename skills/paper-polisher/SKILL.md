@@ -58,6 +58,12 @@ A pre-rendered results-tables block is also injected as the canonical numerical 
    - Spot-check that every numerical claim in prose matches the pre-rendered results tables.
    - For negative-results work, lead with the falsified prediction; do not soften "fail" into "promising trend" if a pre-registered threshold was missed.
    - **Check for "wall of details" anti-pattern:** If any section dumps specifications, numbers, or citations without explaining *why* the reader needs them, restructure to lead with motivation.
+   - **Scrub the machine-generated voice.** These tells make the paper read as pipeline output; remove them:
+     - **Roadmap paragraph.** Delete any "The remainder of this paper proceeds as follows. Section 2… Section 3…" paragraph outright.
+     - **Number-stuffed abstract.** The abstract should be conceptual with at most ONE headline number; if it carries several `± / n=` triples, cut them down to the single most crystallizing figure (or zero, replaced by a qualitative claim). Do not add numbers the writer left out — only thin an over-numbered abstract.
+     - **Pipeline decision-rule language.** Remove "pre-registered threshold", "exceeds our threshold of", "our prediction was met", "headline number", and similar — anywhere in the paper, not just the abstract.
+     - **Templated contributions.** If the contributions are the identical rigid `**Bold noun.** sentence.` four-bullet block, vary the phrasing/structure so it doesn't read as a filled-in slot; let the count match the real contributions.
+     - **Uniform openings/rhythm.** If every section opens "In this section, we…"/"We now…" or every result sentence is "We find X (n=Z)", vary them.
 8. **Scrub internal identifiers.** Search the paper for any `HYP-`, `EXP-`, `CRIT-`, `LIT-`, `RES-`, `REV-`, `DRAFT-`, `CITE-` prefixed IDs (pattern: uppercase letters followed by a dash and digits). Replace each with a descriptive phrase. Also replace pipeline jargon ("decisively refuted", "downgraded to preliminary", "parked", "wildness bar", "retreat cycle") with standard academic language.
 9. Edit the file in place via `Edit` (preferred; sends only the diff) or `Write` (for whole-section rewrites). Preserve the title line and every section heading exactly — do not renumber, add, or remove sections.
 10. Print the stdout contract.

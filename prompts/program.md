@@ -41,7 +41,7 @@ Every artifact has: `id`, `type`, `created_at`, `parent_ids`, `author` (skill na
 | Type             | ID prefix | Type-specific fields                                                                              |
 |------------------|-----------|---------------------------------------------------------------------------------------------------|
 | `Idea`           | `IDEA-`   | `seed`, `framing`, `open_questions[]`                                                             |
-| `Hypothesis`     | `HYP-`    | `claim`, `prediction_metric`, `prediction_threshold`, `prediction_direction`, `prerequisites[]`   |
+| `Hypothesis`     | `HYP-`    | `claim`, `plain_summary` (undergrad-readable, no jargon), `prediction_metric`, `prediction_threshold`, `prediction_direction`, `prerequisites[]`   |
 | `ThoughtExperiment`| `TOY-`  | `hypothesis_id`, `toy_problem`, `predicted_outcome`, `mechanism`, `verdict` (promising/inconclusive/refuted), `scalability_note` |
 | `LitFinding`     | `LIT-`    | `arxiv_id`, `title`, `relevance` (0-1), `key_claims[]`, `paper_path`                              |
 | `Citation`       | `CITE-`   | `claim`, `arxiv_id`, `verified` (bool), `verifier_score`, `verifier_method`                       |
@@ -53,31 +53,42 @@ Every artifact has: `id`, `type`, `created_at`, `parent_ids`, `author` (skill na
 
 **Cross-references use IDs only** — do not requote bodies.
 
-## The 12-phase pipeline
+## The 13-phase pipeline
 
 The orchestrator drives one phase per `claude -p` invocation. Each phase ends by writing `thread/checkpoints/<phase>.json` with `{phase, completed_artifact_ids, next_action, completed_at}`. The orchestrator reads the latest checkpoint to decide the next phase.
 
+**The phases are the *default* shape, not the only shape a paper can take.** They encode one common template — a novel mechanism, isolated in a toy, tested with a matched baseline and a single ablation. Many strong papers are not that: a reframing of a known problem, a phenomenon characterized across conditions, a benchmark or measurement contribution, a mostly-theoretical result. Do not amputate an idea to fit the single-mechanism-plus-ablation mold. Fill the phases in service of the idea's natural shape — an "ablation" may be a control condition, a "baseline" may be a null model, the "method" may be a measurement protocol — rather than forcing the idea to become a narrow mechanism test just because that is what the slots default to.
+
 1. **`seed`** — Read the user's idea from CLI args; emit one `Idea` artifact. The orchestrator does this directly without an LLM call.
-2. **`expand`** — Invoke `idea-expander` skill. Output: 3–5 `Hypothesis` rows. Each must include a numeric pre-registered prediction. At least one must be a cross-domain transplant (technique from an adjacent subfield).
+2. **`expand`** — Invoke `idea-expander` skill. Output: 3–5 `Hypothesis` rows. Each must include a falsifiable pre-registered prediction (numeric threshold when honest, a relational/structural condition otherwise) AND name the bigger question it probes plus the stakes. At least one must be a cross-domain transplant (technique from an adjacent subfield). Novelty is necessary but not sufficient — a wild idea that tests one scalar on one toy with no consequence is parked as myopic.
 3. **`survey`** — Fan out: one `literature-scout` invocation per `Hypothesis` (cap 5 in parallel). Output: 5+ `LitFinding` rows referencing fetched `papers/<arxiv-id>.md`.
 4. **`gap-fill`** — Re-invoke `idea-expander` in negative-space mode. Output: 1+ additional `Hypothesis` targeting a question conspicuously absent from the LitFinding set.
 5. **`screen`** — Two passes: `critic` in `boredom` mode argues against each Hypothesis; `novelty-checker` runs fuzzy-title verification. Hypotheses with severe boredom Critiques OR novelty collisions move to `ideas/parking_lot.md` and are skipped this run.
-6. **`thought-experiment`** — Invoke `thought-experimenter` per surviving Hypothesis (pure reasoning, no compute). Output: one `ThoughtExperiment` row per Hypothesis. Each designs a deliberate **toy problem** that isolates the mechanism, rolls the experiment forward mentally (hypothesis trajectory vs. null), names the failure modes, and renders a `verdict` ∈ `{promising, inconclusive, refuted}`. **Scalability is contemplated only after the toy rollout**, captured in `scalability_note`. The verdict gates `design`.
-7. **`design`** — `experiment-designer` per surviving Hypothesis whose `ThoughtExperiment.verdict` is NOT `refuted` (refuted ones are parked). The plan is built as the **first informative (non-toy) step beyond the toy problem** — grounded in the deciding comparison the thought experiment identified, never a default benchmark. Each `ExperimentPlan` MUST include `seeds: [≥3 seeds]` and `baseline_spec` matched to the proposed compute budget. Plans missing these fields will be rejected by the runner.
-8. **`run`** — `experiment-runner` per `ExperimentPlan`, sequentially (one local job at a time). Each run starts with a sanity-gate (`overfit-32-examples` test). Failed retries trigger `critic` in `failure-analysis` mode. Passing experiments trigger an automatic ablation: a follow-up `ExperimentPlan` with `is_ablation=true` isolating the proposed mechanism, also run sequentially.
-9. **`critique`** — `critic` in `validity` mode over all `ExperimentResult` rows. Threats to validity, missing baselines, suspect metrics — all become `Critique` rows.
-10. **`write`** — `paper-writer` produces section-by-section. Outline first; then Abstract / Introduction / Related Work / Method / Experiments / Discussion. Each section is a separate `claude -p` call reading only the artifact IDs it cites. Citations are admissible only if their `Citation.verified=true`.
-11. **`final`** — Orchestrator concatenates `DraftSection` rows into `drafts/paper-vFINAL.md`, emits `drafts/citations.bib`, then runs a polish pass via the `paper-polisher` skill that fills any `_(missing)_` sections, tightens weak prose, and enforces consistency between the intro contributions and the experiments table. The pre-polish version is kept at `drafts/paper-vFINAL.pre-polish.md`.
-12. **`review`** — `committee-reviewer` is invoked 3× in parallel, one call per persona (`methodologist`, `domain-expert`, `clarity-reviewer`). Each emits one `Review` artifact carrying a `recommendation` ∈ `{accept, minor_revision, major_revision}` and (for `major_revision`) a `target_phase` ∈ `{survey, design, run, critique, write, final}`. If any reviewer requests `major_revision`, the orchestrator wipes checkpoints from the earliest requested target phase, bumps `review_cycle`, and re-runs from that phase. Capped at `AUTOLAB_MAX_REVIEW_CYCLES` rounds.
+6. **`select`** — Human-in-the-loop gate. The orchestrator **blocks** and hands control to the user via the dashboard: they pick which surviving Hypotheses to pursue (the rest are set aside via a `gate-deselect` Critique), or request a fresh `expand` batch — optionally with free-text feedback that is injected into RUN HISTORY as a high-priority steer. Bypassed when `AUTOLAB_SKIP_GATE=1` (headless runs proceed with every survivor). The orchestrator writes `thread/gate.json` and polls for `thread/gate_decision.json` (written by the dashboard). A `regenerate` decision loops back to `expand` (bounded by `AUTOLAB_MAX_IDEA_CYCLES`).
+7. **`thought-experiment`** — Invoke `thought-experimenter` per surviving Hypothesis (pure reasoning, no compute). Output: one `ThoughtExperiment` row per Hypothesis. Each designs a deliberate **toy problem** that isolates the mechanism, rolls the experiment forward mentally (hypothesis trajectory vs. null), names the failure modes, and renders a `verdict` ∈ `{promising, inconclusive, refuted}`. **Scalability is contemplated only after the toy rollout**, captured in `scalability_note`. The verdict gates `design`.
+8. **`design`** — `experiment-designer` per surviving Hypothesis whose `ThoughtExperiment.verdict` is NOT `refuted` (refuted ones are parked). The plan is built as the **first informative (non-toy) step beyond the toy problem** — grounded in the deciding comparison the thought experiment identified, never a default benchmark. Each `ExperimentPlan` MUST include `seeds: [≥3 seeds]` and `baseline_spec` matched to the proposed compute budget. Plans missing these fields will be rejected by the runner.
+9. **`run`** — `experiment-runner` per `ExperimentPlan`, sequentially (one local job at a time). Each run starts with a sanity-gate (`overfit-32-examples` test). Failed retries trigger `critic` in `failure-analysis` mode. Passing experiments trigger an automatic ablation: a follow-up `ExperimentPlan` with `is_ablation=true` isolating the proposed mechanism, also run sequentially.
+10. **`critique`** — `critic` in `validity` mode over all `ExperimentResult` rows. Threats to validity, missing baselines, suspect metrics — all become `Critique` rows.
+11. **`write`** — `paper-writer` produces section-by-section. Outline first; then Abstract / Introduction / Related Work / Method / Experiments / Discussion. Each section is a separate `claude -p` call reading only the artifact IDs it cites. Citations are admissible only if their `Citation.verified=true`.
+12. **`final`** — Orchestrator concatenates `DraftSection` rows into `drafts/paper-vFINAL.md`, emits `drafts/citations.bib`, then runs a polish pass via the `paper-polisher` skill that fills any `_(missing)_` sections, tightens weak prose, enforces consistency between the intro contributions and the experiments table, and scrubs the machine-generated voice (roadmap paragraph, number-stuffed abstract, pipeline decision-rule language). The pre-polish version is kept at `drafts/paper-vFINAL.pre-polish.md`.
+13. **`review`** — `committee-reviewer` is invoked 3× in parallel, one call per persona (`methodologist`, `domain-expert`, `clarity-reviewer`). Each emits one `Review` artifact carrying a `recommendation` ∈ `{accept, minor_revision, major_revision}` and (for `major_revision`) a `target_phase` ∈ `{survey, design, run, critique, write, final}`. If any reviewer requests `major_revision`, the orchestrator wipes checkpoints from the earliest requested target phase, bumps `review_cycle`, and re-runs from that phase. Capped at `AUTOLAB_MAX_REVIEW_CYCLES` rounds.
 
 ## Pre-registration contract
 
-Every `Hypothesis` row MUST include:
-- `prediction_metric` — the metric the hypothesis predicts (e.g., `val_accuracy`)
-- `prediction_threshold` — a numeric value (e.g., `0.5` for "≥0.5pp gain")
-- `prediction_direction` — `"greater"` | `"less"` | `"equal-within"`
+Every `Hypothesis` row MUST include a **falsifiable** pre-registered prediction:
+- `prediction_metric` — the metric or observable the hypothesis predicts (e.g., `val_accuracy`)
+- `prediction_threshold` — the decision boundary. Prefer a numeric value (e.g., `0.5`
+  for "≥0.5pp gain") when a scalar is the *honest* summary of the claim. When forcing
+  the claim into one number would distort the science — the real prediction is
+  relational ("monotone decrease with depth"), structural ("survives control X but not
+  Y"), or a shape ("crossover at some scale") — record that falsifiable condition as a
+  string instead, and still name the observable that would break it. Do not fabricate a
+  number just to fill the field.
+- `prediction_direction` — `"greater"` | `"less"` | `"equal-within"` | `"relational"`
 
-Hypotheses without these are rejected at `screen` and parked.
+The requirement is *falsifiability*, not a scalar: a hypothesis with no way to be
+proven wrong is rejected at `screen` and parked. A relational prediction with a clear
+breaking observable is admissible; a fake number is not.
 
 ## Thought-experiment gate (toy problems before scale)
 

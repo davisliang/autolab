@@ -27,6 +27,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -38,6 +39,8 @@ from autolab.paths import (
     cost_ledger,
     drafts_dir,
     experiments_dir,
+    gate_decision,
+    gate_request,
     get_project_id,
     history_log,
     init_project_dir,
@@ -54,6 +57,7 @@ PHASES = [
     "survey",
     "gap-fill",
     "screen",
+    "select",
     "thought-experiment",
     "design",
     "run",
@@ -84,6 +88,16 @@ MAX_IDEA_CYCLES = int(os.environ.get("AUTOLAB_MAX_IDEA_CYCLES", "3"))
 MAX_REVIEW_CYCLES = int(os.environ.get("AUTOLAB_MAX_REVIEW_CYCLES", "2"))
 MAX_RUN_DESIGN_CYCLES = int(os.environ.get("AUTOLAB_MAX_RUN_DESIGN_CYCLES", "2"))
 MIN_WILD_HYPOTHESES = int(os.environ.get("AUTOLAB_MIN_WILD_HYPOTHESES", "2"))
+
+# Human-in-the-loop hypothesis-selection gate (phase `select`). When active,
+# the orchestrator blocks after `screen` and waits for the user to pick which
+# surviving hypotheses to pursue (or to request a fresh batch with feedback)
+# via the dashboard. Set AUTOLAB_SKIP_GATE=1 for fully-autonomous / headless
+# runs (overnight, CI, watchdog) — the gate then auto-proceeds with every
+# surviving hypothesis.
+GATE_POLL_S = float(os.environ.get("AUTOLAB_GATE_POLL_S", "2"))
+# Max seconds to block waiting for a decision. 0 (default) = wait indefinitely.
+GATE_TIMEOUT_S = float(os.environ.get("AUTOLAB_GATE_TIMEOUT_S", "0"))
 
 REVIEWER_PERSONAS = [
     {
@@ -135,7 +149,16 @@ State which ticket(s) it satisfies in the body.
        no obvious method?).
   (W4) Regime swap — what changes when scale, data quality, modality, or
        compute is 100× or 0.01× the standard? The hypothesis must commit to
-       a numeric prediction in the new regime.
+       a prediction in the new regime.
+
+The ticket buys NOVELTY, not CONSEQUENCE. On top of its ticket, every
+hypothesis must also clear the consequence bar:
+  - Name the BIGGER QUESTION it is one probe of, and the STAKES — who would
+    act differently if the answer were yes. "It would be interesting" is not
+    stakes.
+  - It must have line of sight: a credible path from the toy/first experiment
+    to something someone would build on. If "and then what?" answers to
+    "nothing," it is a dead end no matter how exotic the framing.
 
 REJECT-YOURSELF examples (do NOT emit these):
   - "Test if X works on Y" (too obvious; produces a measurement, not insight)
@@ -143,9 +166,13 @@ REJECT-YOURSELF examples (do NOT emit these):
   - "Replicate paper P with smaller model" (replication, not novelty)
   - "Combine A and B" (without a *mechanistic* reason the combination matters)
   - Any hypothesis whose result a sharp PhD student would predict in 30 seconds
+  - WILD-BUT-MYOPIC: a striking cross-domain analogy that still only tests one
+    scalar on one toy, with no bigger question and nobody who would act on the
+    answer. Exotic framing does not rescue a small idea.
 
-A hypothesis that fails the wildness bar will be parked at screen. The
-orchestrator will retreat and ask you to try again — wilder.
+A hypothesis that fails the wildness bar OR the consequence bar will be parked
+at screen. The orchestrator will retreat and ask you to try again — bigger and
+more consequential, not just more exotic.
 """
 
 
@@ -279,6 +306,32 @@ def project_paths_block() -> str:
     )
 
 
+# Transient API failures (dropped streaming connections, 5xx/overloaded)
+# surface as a nonzero exit from `claude -p`. Retry a couple of times,
+# resuming the interrupted session so cached context and partial work
+# aren't thrown away.
+MAX_API_RETRIES = 2
+API_RETRY_BACKOFF_S = 30
+
+RESUME_PROMPT = (
+    "The previous session was interrupted by an API error mid-task. "
+    "Review what you already completed (files written, artifacts emitted) "
+    "and continue from where you left off. Do not redo finished work; "
+    "finish the remaining work for this phase."
+)
+
+
+def _extract_session_id(parsed, envelope) -> str | None:
+    """Pull the session id from the result envelope or any emitted event."""
+    if isinstance(envelope, dict) and envelope.get("session_id"):
+        return envelope["session_id"]
+    if isinstance(parsed, list):
+        for ev in parsed:
+            if isinstance(ev, dict) and ev.get("session_id"):
+                return ev["session_id"]
+    return None
+
+
 def call_claude(
     phase: str,
     skill: str,
@@ -286,21 +339,13 @@ def call_claude(
     prompt: str,
     timeout_s: int = 1200,
 ) -> dict:
-    """Spawn a headless `claude -p` call. Returns the parsed JSON envelope."""
+    """Spawn a headless `claude -p` call. Returns the parsed JSON envelope.
+
+    Failed calls are retried up to MAX_API_RETRIES times. When the failed
+    attempt left a session behind, the retry resumes it (`--resume`) instead
+    of restarting the phase from scratch.
+    """
     sys_prompt = PROGRAM.read_text() + "\n" + project_paths_block()
-    cmd = [
-        "claude",
-        "--dangerously-skip-permissions",
-        "--model",
-        model,
-        "--output-format",
-        "json",
-        "--append-system-prompt",
-        sys_prompt,
-        "-p",
-        prompt,
-    ]
-    log_line(f"call_claude phase={phase} skill={skill} model={model}")
     env = os.environ.copy()
     for k in (
         "ANTHROPIC_API_KEY",
@@ -310,47 +355,80 @@ def call_claude(
     ):
         env.pop(k, None)
     env["AUTOLAB_PROJECT"] = get_project_id()
-    try:
-        r = subprocess.run(
-            cmd,
-            cwd=REPO,
-            env=env,
-            capture_output=True,
-            text=True,
-            timeout=timeout_s,
-            check=False,
-        )
-    except subprocess.TimeoutExpired:
-        log_line(f"call_claude TIMEOUT phase={phase} skill={skill}")
-        return {"is_error": True, "error": "timeout", "result": ""}
-    if r.returncode != 0:
+
+    resume_id: str | None = None
+    r = None
+    envelope: dict = {}
+    for attempt in range(1 + MAX_API_RETRIES):
+        cmd = [
+            "claude",
+            "--dangerously-skip-permissions",
+            "--model",
+            model,
+            "--output-format",
+            "json",
+            "--append-system-prompt",
+            sys_prompt,
+        ]
+        if resume_id:
+            cmd += ["--resume", resume_id, "-p", RESUME_PROMPT]
+        else:
+            cmd += ["-p", prompt]
         log_line(
-            f"call_claude exit={r.returncode} phase={phase} skill={skill}\n"
-            f"  stdout: {r.stdout[:2000] if r.stdout else '(empty)'}\n"
-            f"  stderr: {r.stderr[:2000] if r.stderr else '(empty)'}"
+            f"call_claude phase={phase} skill={skill} model={model} "
+            f"attempt={attempt + 1}/{1 + MAX_API_RETRIES}"
+            + (f" resume={resume_id}" if resume_id else "")
         )
-    try:
-        parsed = json.loads(r.stdout) if r.stdout.strip() else {}
-    except json.JSONDecodeError:
-        parsed = {"is_error": True, "result": r.stdout, "raw_stderr": r.stderr}
-    envelope = _result_envelope(parsed)
-    # Debug: log the raw usage block so we can verify cache attribution.
-    _u = envelope.get("usage") if isinstance(envelope, dict) else None
-    if isinstance(_u, dict):
-        log_line(
-            f"call_claude usage phase={phase} skill={skill} "
-            f"in={_u.get('input_tokens')} "
-            f"cache_create={_u.get('cache_creation_input_tokens')} "
-            f"cache_read={_u.get('cache_read_input_tokens')} "
-            f"out={_u.get('output_tokens')}"
-        )
-    append_cost(phase, skill, model, envelope)
-    if r.returncode != 0 or envelope.get("is_error"):
-        raise SystemExit(
-            f"claude failed in phase={phase} skill={skill} rc={r.returncode} "
-            f"envelope_keys={list(envelope.keys())}; see logs/orchestrator.log for full output"
-        )
-    return envelope
+        try:
+            r = subprocess.run(
+                cmd,
+                cwd=REPO,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=timeout_s,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            log_line(f"call_claude TIMEOUT phase={phase} skill={skill}")
+            return {"is_error": True, "error": "timeout", "result": ""}
+        if r.returncode != 0:
+            log_line(
+                f"call_claude exit={r.returncode} phase={phase} skill={skill}\n"
+                f"  stdout: {r.stdout[:2000] if r.stdout else '(empty)'}\n"
+                f"  stderr: {r.stderr[:2000] if r.stderr else '(empty)'}"
+            )
+        try:
+            parsed = json.loads(r.stdout) if r.stdout.strip() else {}
+        except json.JSONDecodeError:
+            parsed = {"is_error": True, "result": r.stdout, "raw_stderr": r.stderr}
+        envelope = _result_envelope(parsed)
+        # Debug: log the raw usage block so we can verify cache attribution.
+        _u = envelope.get("usage") if isinstance(envelope, dict) else None
+        if isinstance(_u, dict):
+            log_line(
+                f"call_claude usage phase={phase} skill={skill} "
+                f"in={_u.get('input_tokens')} "
+                f"cache_create={_u.get('cache_creation_input_tokens')} "
+                f"cache_read={_u.get('cache_read_input_tokens')} "
+                f"out={_u.get('output_tokens')}"
+            )
+        append_cost(phase, skill, model, envelope)
+        if r.returncode == 0 and not envelope.get("is_error"):
+            return envelope
+        if attempt < MAX_API_RETRIES:
+            resume_id = _extract_session_id(parsed, envelope) or resume_id
+            log_line(
+                f"call_claude retrying phase={phase} skill={skill} in "
+                f"{API_RETRY_BACKOFF_S}s "
+                f"({'resuming session ' + resume_id if resume_id else 'fresh session'})"
+            )
+            time.sleep(API_RETRY_BACKOFF_S)
+    raise SystemExit(
+        f"claude failed in phase={phase} skill={skill} rc={r.returncode} "
+        f"after {1 + MAX_API_RETRIES} attempts "
+        f"envelope_keys={list(envelope.keys())}; see logs/orchestrator.log for full output"
+    )
 
 
 def parallel_calls(jobs: list[dict]) -> list[dict]:
@@ -571,10 +649,15 @@ def phase_screen() -> list[str]:
             f"{history_ctx}"
             f"Read thoughts/{h['id']}.md and any LitFindings linked via parent_ids. "
             f"Per the critic skill (boredom mode), emit one Critique.\n"
-            f"\n## Wildness bar (apply STRICTLY in addition to trivial/known/dead-end)\n"
+            f"\n## Wildness + consequence bar (apply STRICTLY in addition to trivial/known/dead-end)\n"
             f"Mark severity=high if ANY of the following hold:\n"
             f"  - The hypothesis would be unsurprising to a sharp PhD student in the field "
             f"(rate it 'dead-end' with concern 'low novelty: outcome predictable').\n"
+            f"  - MYOPIC: even if novel and true, it probes a single mechanism with a single "
+            f"number on a toy that answers a question nobody asked — no stated bigger "
+            f"question, nobody who would act on the answer, or 'and then what?' answers to "
+            f"'nothing'. Exotic cross-domain framing does NOT rescue it. Rate 'dead-end' with "
+            f"concern 'myopic: no consequence'. This is the most common defect — look hardest here.\n"
             f"  - It is an incremental tweak of a standard method without a mechanistic "
             f"reason the tweak matters.\n"
             f"  - It claims to satisfy Wildness Ticket W1 (cross-domain) but the source "
@@ -642,13 +725,313 @@ def surviving_hypotheses() -> list[dict]:
     hyps = by_type(thread, "Hypothesis")
     parked = set()
     for crit in by_type(thread, "Critique"):
-        if (
-            crit.get("severity") == "high"
-            and crit.get("mode") in ("boredom", "validity")
-            and crit.get("target_id", "").startswith("HYP-")
+        # `gate-deselect` is a user decision at the selection gate — it parks
+        # the hypothesis regardless of severity. boredom/validity park only at
+        # high severity.
+        mode = crit.get("mode")
+        target = crit.get("target_id", "")
+        if not target.startswith("HYP-"):
+            continue
+        if mode == "gate-deselect" or (
+            crit.get("severity") == "high" and mode in ("boredom", "validity")
         ):
-            parked.add(crit["target_id"])
+            parked.add(target)
     return [h for h in hyps if h["id"] not in parked]
+
+
+# ---------------------------------------------------------------------------
+# Human-in-the-loop hypothesis-selection gate (phase `select`).
+#
+# After `screen` (and the automatic idea-retreat), the orchestrator blocks and
+# hands control to the human running the lab, via the dashboard. They can:
+#   - SELECT which surviving hypotheses to pursue (the rest are set aside), or
+#   - REGENERATE — request a fresh `expand` batch, optionally with free-text
+#     feedback steering the next round.
+#
+# The orchestrator communicates with the dashboard purely through two files in
+# the project's thread/ dir: it writes `gate.json` (status=waiting + the
+# survivors) and polls for `gate_decision.json` (written by the dashboard POST
+# handler). Set AUTOLAB_SKIP_GATE=1 to bypass the gate for headless runs.
+# ---------------------------------------------------------------------------
+
+
+def _hypothesis_gate_payload(survivors: list[dict]) -> list[dict]:
+    """Shape surviving hypotheses for the dashboard gate UI."""
+    out = []
+    for h in survivors:
+        out.append(
+            {
+                "id": h["id"],
+                "claim": (h.get("claim") or h.get("summary") or "").strip(),
+                "plain_summary": (h.get("plain_summary", "") or "").strip(),
+                "prediction_metric": h.get("prediction_metric", "") or "",
+                "prediction_threshold": h.get("prediction_threshold"),
+                "prediction_direction": h.get("prediction_direction", "") or "",
+                "wildness": h.get("wildness_tickets") or h.get("wildness_ticket") or "",
+                "bigger_question": h.get("bigger_question", "") or "",
+                "stakes": h.get("stakes", "") or "",
+                "author": h.get("author", "") or "",
+            }
+        )
+    return out
+
+
+def _clear_gate_files() -> None:
+    for p in (gate_request(), gate_decision()):
+        try:
+            if p.exists():
+                p.unlink()
+        except OSError:
+            pass
+
+
+def _write_gate_request(survivors: list[dict], created_at: str) -> None:
+    state = read_cycle_state()
+    gr = gate_request()
+    gr.parent.mkdir(parents=True, exist_ok=True)
+    gr.write_text(
+        json.dumps(
+            {
+                "status": "waiting",
+                "phase": "select",
+                "created_at": created_at,
+                "idea_cycle": state.get("idea_cycle", 1),
+                "max_idea_cycles": MAX_IDEA_CYCLES,
+                "hypotheses": _hypothesis_gate_payload(survivors),
+                "instructions": (
+                    "Pick the hypotheses to pursue, or request a fresh batch "
+                    "(optionally with feedback). The run is blocked until you decide."
+                ),
+            },
+            indent=2,
+        )
+    )
+
+
+def _read_gate_decision(created_at: str) -> dict | None:
+    """Return a valid decision for the current gate request, else None.
+
+    A decision file that references an older request (`request_created_at`
+    mismatch) is stale — drop it so a leftover decision can't auto-resolve a
+    new gate round.
+    """
+    gd = gate_decision()
+    if not gd.exists():
+        return None
+    try:
+        d = json.loads(gd.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    req_ts = d.get("request_created_at")
+    if req_ts not in (None, "", created_at):
+        try:
+            gd.unlink()
+        except OSError:
+            pass
+        return None
+    return d
+
+
+def _finish_gate(created_at: str, action: str, extra: dict) -> None:
+    """Rewrite gate.json as an applied record and consume the decision file."""
+    payload = {
+        "status": "applied",
+        "phase": "select",
+        "created_at": created_at,
+        "action": action,
+        "applied_at": now_iso(),
+        "consumed": False,
+        **extra,
+    }
+    try:
+        gr = gate_request()
+        gr.parent.mkdir(parents=True, exist_ok=True)
+        gr.write_text(json.dumps(payload, indent=2))
+    except OSError:
+        pass
+    gd = gate_decision()
+    try:
+        if gd.exists():
+            gd.unlink()
+    except OSError:
+        pass
+
+
+def _record_gate_feedback(feedback: str) -> None:
+    """Append a high-priority USER FEEDBACK entry to history.md so the next
+    `expand` batch sees the human's steer."""
+    lines = [
+        f"### User feedback at hypothesis gate ({now_iso()}) — regenerate → expand",
+        "",
+        "**USER FEEDBACK / DIRECTION.** The human running the lab reviewed the "
+        "current batch of hypotheses and asked for a fresh set from `expand`.",
+        "",
+    ]
+    if feedback:
+        lines += [f"> {feedback}", ""]
+        lines.append(
+            "**Next:** treat the quote above as the highest-priority steer for the "
+            "next `expand` batch — it outranks the generic wildness heuristics. "
+            "Propose new hypotheses in the direction the user asked for; do not "
+            "re-emit the batch they just set aside."
+        )
+    else:
+        lines.append(
+            "**Next:** the user asked for a fresh `expand` batch without specific "
+            "feedback — propose materially different, more consequential hypotheses "
+            "than the set they just saw; do not re-emit minor variations."
+        )
+    append_history_entry("\n".join(lines))
+
+
+def _apply_gate_select(survivors: list[dict], chosen_ids: list[str]) -> list[str]:
+    """Park every survivor the user did NOT choose via a `gate-deselect`
+    Critique (which `surviving_hypotheses` honors) plus the parking lot."""
+    chosen = set(chosen_ids)
+    kept = [h for h in survivors if h["id"] in chosen]
+    deselected = [h for h in survivors if h["id"] not in chosen]
+    for h in deselected:
+        append_via_tool(
+            [
+                "--type",
+                "Critique",
+                "--author",
+                "user-gate",
+                "--parent",
+                h["id"],
+                "--summary",
+                f"Set aside by user at the selection gate: {h['id']}",
+                "--field",
+                f"target_id={json.dumps(h['id'])}",
+                "--field",
+                'mode="gate-deselect"',
+                "--field",
+                'severity="high"',
+                "--field",
+                'concerns=["not selected by the user at the hypothesis-selection gate"]',
+                "--field",
+                'proposed_fix=""',
+            ]
+        )
+    if deselected:
+        park_hypotheses(
+            [h["id"] for h in deselected],
+            reason="not selected by user at the hypothesis-selection gate",
+        )
+    log_line(
+        f"select: user kept {[h['id'] for h in kept]}, "
+        f"set aside {[h['id'] for h in deselected]}"
+    )
+    return [h["id"] for h in kept]
+
+
+def phase_select() -> list[str]:
+    """Block after `screen` until the user picks which surviving hypotheses to
+    pursue, or requests a fresh batch. Bypassed by AUTOLAB_SKIP_GATE."""
+    survivors = surviving_hypotheses()
+    if os.environ.get("AUTOLAB_SKIP_GATE"):
+        log_line("select: gate skipped (AUTOLAB_SKIP_GATE set); keeping all survivors")
+        _clear_gate_files()
+        return [h["id"] for h in survivors]
+    if not survivors:
+        log_line("select: no surviving hypotheses to choose from; nothing to gate")
+        _clear_gate_files()
+        return []
+
+    created_at = now_iso()
+    _write_gate_request(survivors, created_at)
+    log_line(
+        "select: GATE OPEN — waiting for user decision on "
+        f"{[h['id'] for h in survivors]} (dashboard → hypothesis gate)"
+    )
+
+    waited = 0.0
+    decision: dict | None = None
+    while True:
+        if STOP_FILE.exists():
+            log_line("select: STOP file present while waiting; proceeding with all survivors")
+            break
+        decision = _read_gate_decision(created_at)
+        if decision is not None:
+            break
+        if GATE_TIMEOUT_S and waited >= GATE_TIMEOUT_S:
+            log_line(
+                f"select: no decision after {GATE_TIMEOUT_S}s (AUTOLAB_GATE_TIMEOUT_S); "
+                "proceeding with all survivors"
+            )
+            break
+        time.sleep(GATE_POLL_S)
+        waited += GATE_POLL_S
+
+    if decision is None:
+        _finish_gate(created_at, "timeout", {"selected": [h["id"] for h in survivors]})
+        return [h["id"] for h in survivors]
+
+    action = (decision.get("action") or "select").strip().lower()
+    if action == "regenerate":
+        feedback = (decision.get("feedback") or "").strip()
+        _record_gate_feedback(feedback)
+        _finish_gate(created_at, "regenerate", {"feedback": feedback})
+        log_line(f"select: user requested a fresh batch; feedback={feedback[:120]!r}")
+        # The loopback to `expand` is performed by gate_regen_check() in
+        # next_phase_to_run once this phase's checkpoint is written.
+        return []
+
+    chosen = [c for c in (decision.get("hypothesis_ids") or []) if isinstance(c, str)]
+    valid_ids = {h["id"] for h in survivors}
+    chosen = [c for c in chosen if c in valid_ids]
+    if not chosen:
+        log_line("select: decision named no valid hypotheses; keeping all survivors")
+        _finish_gate(created_at, "select", {"selected": [h["id"] for h in survivors]})
+        return [h["id"] for h in survivors]
+    kept = _apply_gate_select(survivors, chosen)
+    _finish_gate(created_at, "select", {"selected": kept})
+    return kept
+
+
+def gate_regen_check() -> str | None:
+    """After `select`, if the user asked to regenerate, loop back to `expand`.
+
+    Reuses the idea-cycle counter/cap so user regenerations and automatic
+    wildness retreats share one budget (AUTOLAB_MAX_IDEA_CYCLES).
+    """
+    gr = gate_request()
+    if not gr.exists():
+        return None
+    try:
+        g = json.loads(gr.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    if g.get("status") != "applied" or g.get("action") != "regenerate" or g.get("consumed"):
+        return None
+    # Consume regardless of outcome so we act at most once per decision.
+    g["consumed"] = True
+    try:
+        gr.write_text(json.dumps(g, indent=2))
+    except OSError:
+        pass
+    state = read_cycle_state()
+    icycle = state.get("idea_cycle", 1)
+    if MAX_IDEA_CYCLES > 0 and icycle >= MAX_IDEA_CYCLES:
+        log_line(
+            f"gate-regen: at MAX_IDEA_CYCLES={MAX_IDEA_CYCLES}; cannot regenerate, "
+            "proceeding with the current batch"
+        )
+        return None
+    state["idea_history"].append(
+        {
+            "idea_cycle": icycle,
+            "ended_at": now_iso(),
+            "n_survivors": len(surviving_hypotheses()),
+            "parked_hyp_ids": [],
+            "trigger": "user-regenerate",
+        }
+    )
+    state["idea_cycle"] = icycle + 1
+    write_cycle_state(state)
+    _wipe_checkpoints_from("expand")
+    log_line(f"gate-regen: idea-cycle {icycle} → {icycle+1}; user regenerate; wiped from expand")
+    return "expand"
 
 
 _FRAMEWORK_HINT_CACHE: str | None = None
@@ -1029,12 +1412,13 @@ def phase_write() -> list[str]:
         elif results_tables and sec in ("abstract", "discussion"):
             prompt_parts.extend(
                 [
-                    "## Reference data (use these numbers — do NOT paste verbatim)",
+                    "## Reference data (numerical anchor — do NOT paste verbatim)",
                     "",
                     "Below are the canonical results tables for accurate numerical reference. "
-                    "When stating headline results in prose, use these exact numbers. The full "
-                    "tables will appear in the Experiments section; you do not need to "
-                    "reproduce them here.",
+                    "Any number you DO cite must match these exactly. But do not feel obliged "
+                    "to cite many: the abstract should stay conceptual (at most one headline "
+                    "number), and the discussion should interpret rather than re-list figures. "
+                    "The full tables live in the Experiments section; do not reproduce them here.",
                     "",
                     results_tables,
                     "",
@@ -1077,12 +1461,15 @@ def _neurips_section_brief() -> dict[str, str]:
             "narrative: question → approach → finding."
         ),
         "abstract": (
-            "150–250 words. Tell a mini-story: problem → gap → approach → "
-            "2–3 headline numbers (use exact values from the reference "
-            "tables) → takeaway. Open with a sentence that makes the reader "
-            "care *before* jumping to the solution. Commit to specific "
-            "claims, not vague gestures. For negative-results work, lead "
-            "with the refutation and quantify the falsified prediction."
+            "150–250 words, conceptual first. Lead with the idea — the "
+            "question, the insight, why it matters — not the results. At "
+            "MOST one headline number, and only if a single figure truly "
+            "crystallizes the contribution; zero is often the right choice "
+            "(a qualitative claim beats a `± / n=` triple in an abstract). "
+            "If you do cite a number, use the exact value from the reference "
+            "tables. Banned: 'pre-registered threshold' and any narration of "
+            "the lab's internal decision rule. No roadmap sentence. For "
+            "negative-results work, lead with the refutation in plain words."
         ),
         "introduction": (
             "~1 page. Hook the reader with *why this problem matters* — a "
@@ -1297,6 +1684,18 @@ def _run_polish_pass(paper_path: Path) -> None:
         "'parked', 'wildness bar', 'retreat cycle', 'loopback'). Use "
         "standard academic language. This paper is being submitted to a "
         "peer-reviewed conference.",
+        "6. **Scrub the machine-generated voice.** (a) Delete any roadmap "
+        "paragraph ('The remainder of this paper proceeds as follows. "
+        "Section 2… Section 3…'). (b) Thin a number-stuffed abstract to at "
+        "most ONE headline figure — replace the rest with qualitative "
+        "claims; never ADD numbers the writer omitted. (c) Remove "
+        "decision-rule language ('pre-registered threshold', 'exceeds our "
+        "threshold of', 'our prediction was met', 'headline number') "
+        "everywhere. (d) If the contributions are the identical rigid "
+        "'**Bold.** sentence.' four-bullet block, vary the structure. (e) "
+        "Break up uniform section openings and hedge-then-number result "
+        "sentences. The paper must read as one human author's work, not "
+        "filled-in slots.",
         "",
         f"Edit {paper_path.relative_to(REPO)} in place. End with the stdout contract.",
     ]
@@ -1913,9 +2312,13 @@ def _history_entry_idea_retreat(state: dict, entry: dict, thread: list[dict]) ->
         lines.append("  (none recorded)")
     lines.append("")
     lines.append(
-        "**Next:** push hard into Wildness Tickets W1 (NON-ML cross-domain) "
-        "and W2 (textbook contradiction). If your draft hypothesis would not "
-        "surprise a sharp PhD student, throw it out before emitting."
+        "**Next:** the last batch was too small, not too tame. Lead with a "
+        "bigger, more consequential question and make each hypothesis a probe "
+        "of it — name who would act differently if it held. Wildness Tickets "
+        "W1 (NON-ML cross-domain) and W2 (textbook contradiction) still apply, "
+        "but exotic framing without stakes is exactly what got parked. If your "
+        "draft hypothesis would not surprise a sharp PhD student, or nobody "
+        "would act on the answer, throw it out before emitting."
     )
     return "\n".join(lines)
 
@@ -2095,6 +2498,12 @@ def next_phase_to_run(args) -> str | None:
         retreat = idea_retreat_check()
         if retreat:
             return retreat
+    # Human-in-the-loop gate hook: after `select`, if the user asked for a
+    # fresh batch, loop back to `expand` (bounded by the idea-cycle cap).
+    if cur == "select":
+        regen = gate_regen_check()
+        if regen:
+            return regen
     # Run-positive-result hook: after run, if no experiment produced a positive
     # result, loop back to design to re-investigate the experiment design.
     if cur == "run":
@@ -2134,6 +2543,8 @@ def run_phase(phase: str, args) -> list[str]:
         ids = phase_gap_fill()
     elif phase == "screen":
         ids = phase_screen()
+    elif phase == "select":
+        ids = phase_select()
     elif phase == "thought-experiment":
         ids = phase_thought_experiment()
     elif phase == "design":
