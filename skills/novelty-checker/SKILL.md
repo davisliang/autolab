@@ -29,7 +29,7 @@ The orchestrator uses high-severity Critiques to park the hypothesis.
 
 ## Recommended model
 
-`haiku-4-5`
+`fable-5`
 
 ## Procedure
 

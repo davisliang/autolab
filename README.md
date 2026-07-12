@@ -69,7 +69,7 @@ bash example.sh
 The script will:
 1. Create a fresh project directory under `projects/<slug>-<YYYYMMDD>/`.
 2. Print the env var values it will use.
-3. `exec` into `scripts/start`, which drives the full phase pipeline (`seed → expand → survey → gap-fill → screen → design → run → critique → write → final`).
+3. `exec` into `scripts/start`, which drives the full phase pipeline (`seed → expand → survey → gap-fill → screen → select → thought-experiment → design → run → critique → write → final → review`).
 
 While it runs, watch progress in another terminal:
 
@@ -133,14 +133,14 @@ The bot is a `claude` CLI loop. Each phase is a fresh headless `claude -p` subpr
 ### Phase pipeline
 
 ```
-seed → expand → survey → gap-fill → screen → design → run → critique → write → final → review
-                              ↑                                  │                       │
-                              │  experiment retreat (no pass)    │                       │
-                              └──────────────────────────────────┘                       │
-                  ↑              │                                                       │
-                  │ idea retreat │                                                       │
-                  │ (too boring) │                                                       │
-                  └──────────────┘                                                       │
+seed → expand → survey → gap-fill → screen → select → thought-experiment → design → run → critique → write → final → review
+                              ↑                                              │                       │
+                              │  experiment retreat (no pass)                │                       │
+                              └──────────────────────────────────────────────┘                       │
+                  ↑              │                                                                    │
+                  │ idea retreat │                                                                    │
+                  │ (too boring) │                                                                    │
+                  └──────────────┘                                                                    │
                                                                                          │
               ┌──────────────────────────────────────────────────────────────────────────┘
               │ review loopback (committee says major_revision → target_phase)
@@ -151,16 +151,18 @@ seed → expand → survey → gap-fill → screen → design → run → critiq
 | Phase | Skill (mode) | Model | What it does |
 |-------|--------------|-------|--------------|
 | `seed` | — (orchestrator) | — | Emits one `Idea` artifact from your `--idea` |
-| `expand` | `idea-expander` (expand) | Sonnet | 3-5 `Hypothesis` artifacts; ≥1 must be a W1 cross-domain transplant from a non-ML field |
-| `survey` | `literature-scout` | Sonnet | Per-hypothesis paper search; emits `LitFinding` rows |
-| `gap-fill` | `idea-expander` (gap-fill) | Sonnet | 1-2 more `Hypothesis` rows targeting what the lit set conspicuously misses |
-| `screen` | `critic` (boredom) ‖ `novelty-checker` | Haiku | Argues each hypothesis is trivial/known/dead-end/insufficiently-wild; verifies citations; parks high-severity HYPs |
-| `design` | `experiment-designer` (primary) | Opus | One `ExperimentPlan` per surviving HYP (≥3 seeds, matched-budget baseline, ≤30min compute) |
-| `run` | `experiment-runner` | Sonnet | Materializes code, runs sanity gate then full sweep; emits `ExperimentResult` (`pass`/`fail`/`crash`); auto-ablates on pass |
-| `critique` | `critic` (validity) | Opus | Reviews each `ExperimentResult` for threats to validity, baseline parity, statistical sins |
-| `write` | `paper-writer` | Opus | Section-by-section: outline → abstract → intro → related → background → data/models → method → experiments → discussion → conclusion → broader-impact → reproducibility |
-| `final` | `paper-polisher` | Opus | Stitches `paper-vFINAL.md`, then runs a polish pass that re-reads the whole paper, fills any `_(missing)_` sections, tightens weak prose, and enforces consistency between the intro contributions and the experiments table. Pre-polish version is kept at `paper-vFINAL.pre-polish.md` for diffing. |
-| `review` | `committee-reviewer` ×3 (parallel) | Opus | A 3-persona committee (methodologist, domain-expert, clarity-reviewer) reads the polished paper plus the artifact thread and emits one `Review` per persona. Recommendations aggregate to `accept` (ship), `minor_revision` (ship; advisory), or `major_revision` → loop back to a reviewer-named `target_phase` (one of `survey`, `design`, `run`, `critique`, `write`, `final`). |
+| `expand` | `idea-expander` (expand) | Fable 5 | 3-5 `Hypothesis` artifacts; ≥1 must be a W1 cross-domain transplant from a non-ML field |
+| `survey` | `literature-scout` | Fable 5 | Per-hypothesis paper search; emits `LitFinding` rows |
+| `gap-fill` | `idea-expander` (gap-fill) | Fable 5 | 1-2 more `Hypothesis` rows targeting what the lit set conspicuously misses |
+| `screen` | `critic` (boredom) ‖ `novelty-checker` | Fable 5 | Argues each hypothesis is trivial/known/dead-end/myopic/insufficiently-wild; verifies citations; parks high-severity HYPs |
+| `select` | — (human-in-the-loop) | — | **Blocks** and hands control to you via the dashboard: pick which surviving HYPs to pursue (the rest are set aside), or request a fresh `expand` batch with optional feedback. Bypass with `AUTOLAB_SKIP_GATE=1` |
+| `thought-experiment` | `thought-experimenter` | Fable 5 | One `ThoughtExperiment` per surviving HYP (no compute): a deliberate toy problem isolating the mechanism, a mental rollout vs. the null, failure modes, and a `verdict` (promising/inconclusive/refuted). Scalability is contemplated only after the toy rollout; refuted HYPs are parked |
+| `design` | `experiment-designer` (primary) | Fable 5 | One `ExperimentPlan` per non-refuted HYP, built as the first informative (non-toy) step beyond the thought experiment's toy problem (≥3 seeds, matched-budget baseline, ≤30min compute) |
+| `run` | `experiment-runner` | Fable 5 | Materializes code, runs sanity gate then full sweep; emits `ExperimentResult` (`pass`/`fail`/`crash`); auto-ablates on pass |
+| `critique` | `critic` (validity) | Fable 5 | Reviews each `ExperimentResult` for threats to validity, baseline parity, statistical sins |
+| `write` | `paper-writer` | Fable 5 | Section-by-section: outline → abstract → intro → related → background → data/models → method → experiments → discussion → conclusion → broader-impact → reproducibility |
+| `final` | `paper-polisher` | Fable 5 | Stitches `paper-vFINAL.md`, then runs a polish pass that re-reads the whole paper, fills any `_(missing)_` sections, tightens weak prose, and enforces consistency between the intro contributions and the experiments table. Pre-polish version is kept at `paper-vFINAL.pre-polish.md` for diffing. |
+| `review` | `committee-reviewer` ×3 (parallel) | Fable 5 | A 3-persona committee (methodologist, domain-expert, clarity-reviewer) reads the polished paper plus the artifact thread and emits one `Review` per persona. Recommendations aggregate to `accept` (ship), `minor_revision` (ship; advisory), or `major_revision` → loop back to a reviewer-named `target_phase` (one of `survey`, `design`, `run`, `critique`, `write`, `final`). |
 
 ### Four feedback loops
 
@@ -179,7 +181,7 @@ State for all four loops lives in `projects/<id>/thread/cycles.json` (structured
 
 Every retreat / loopback (experiment retreat, idea retreat, review loopback) appends one deterministically-templated Markdown section to `projects/<id>/thread/history.md`. Each section names what was tried, the parked artifact ids (HYP-/REV-/CRIT-), the specific concerns that drove the loopback, and an explicit `**Next:**` directive for the re-run skill.
 
-Every phase that may run as part of a loopback (`expand`, `survey`, `gap-fill`, `screen`, `design`, `run`, `critique`, `write`, the `final` polish pass, and `review` itself) injects this file's content as a `## RUN HISTORY (groomed, append-only)` block at the top of its prompt — so skills always see the cross-loop story in one place, with pointers to the raw artifacts they can `Read` for full bodies.
+Every phase that may run as part of a loopback (`expand`, `survey`, `gap-fill`, `screen`, `thought-experiment`, `design`, `run`, `critique`, `write`, the `final` polish pass, and `review` itself) injects this file's content as a `## RUN HISTORY (groomed, append-only)` block at the top of its prompt — so skills always see the cross-loop story in one place, with pointers to the raw artifacts they can `Read` for full bodies.
 
 Compounding context: cycle 3 sees both cycle 1 and cycle 2's entries, in order. The block is capped at ~8000 chars per prompt; older entries are elided with a note pointing at the on-disk file. To watch the narrative grow live: `tail -f projects/<id>/thread/history.md`.
 
@@ -228,15 +230,16 @@ Plus a markdown body with strengths, weaknesses, specific concerns (cited by sec
 
 | Skill | Role | Model |
 |-------|------|-------|
-| `idea-expander` | Seed Idea → Hypotheses (cross-domain transplant + gap-fill) | Sonnet |
-| `literature-scout` | Pull related work via HF papers + arXiv + Semantic Scholar | Sonnet |
-| `novelty-checker` | Fuzzy-title verify each Hypothesis vs LitFindings | Haiku |
-| `experiment-designer` | Emit ExperimentPlan (≥3 seeds + matched-budget baseline) | Opus |
-| `experiment-runner` | Sanity-gate + run + log; auto-ablate on pass; failure-analysis retry | Sonnet |
-| `critic` | `boredom` / `validity` / `failure-analysis` modes | Opus / Haiku |
-| `paper-writer` | Section-by-section, only verified citations; pastes pre-rendered tables | Opus |
-| `paper-polisher` | Final whole-paper pass: fills missing sections, improves clarity, enforces intro↔experiments consistency | Opus |
-| `committee-reviewer` | Single-persona NeurIPS-style reviewer; emits one `Review` artifact (accept / minor / major + target_phase). Run 3× in parallel during `review` | Opus |
+| `idea-expander` | Seed Idea → Hypotheses (cross-domain transplant + gap-fill) | Fable 5 |
+| `literature-scout` | Pull related work via HF papers + arXiv + Semantic Scholar | Fable 5 |
+| `novelty-checker` | Fuzzy-title verify each Hypothesis vs LitFindings | Fable 5 |
+| `thought-experimenter` | Roll out a toy-problem thought experiment per Hypothesis (no compute); verdict gates design; scalability contemplated only after the toy rollout | Fable 5 |
+| `experiment-designer` | Emit ExperimentPlan (≥3 seeds + matched-budget baseline) | Fable 5 |
+| `experiment-runner` | Sanity-gate + run + log; auto-ablate on pass; failure-analysis retry | Fable 5 |
+| `critic` | `boredom` / `validity` / `failure-analysis` modes | Fable 5 |
+| `paper-writer` | Section-by-section, only verified citations; pastes pre-rendered tables | Fable 5 |
+| `paper-polisher` | Final whole-paper pass: fills missing sections, improves clarity, enforces intro↔experiments consistency | Fable 5 |
+| `committee-reviewer` | Single-persona NeurIPS-style reviewer; emits one `Review` artifact (accept / minor / major + target_phase). Run 3× in parallel during `review` | Fable 5 |
 
 Plus the bundled `huggingface-papers` skill (used by `literature-scout`, `novelty-checker`).
 
@@ -325,6 +328,8 @@ All env vars are optional.
 | `AUTOLAB_MAX_REVIEW_CYCLES` | `2` | Max committee-review loopbacks before shipping the paper unconditionally |
 | `AUTOLAB_SKIP_POLISH` | unset | If set (any value), skip the polish pass at the end of `phase_final`. The unpolished assembled paper is still written. |
 | `AUTOLAB_SKIP_REVIEW` | unset | If set, skip the `review` phase entirely. The paper ships straight from `final`. |
+| `AUTOLAB_SKIP_GATE` | unset | If set, skip the human-in-the-loop `select` gate; the run proceeds with every surviving hypothesis (use for headless / overnight / watchdog runs). |
+| `AUTOLAB_GATE_TIMEOUT_S` | `0` | Seconds the `select` gate blocks waiting for your decision. `0` waits indefinitely; a positive value auto-proceeds with all survivors after the timeout. Poll interval via `AUTOLAB_GATE_POLL_S` (default `2`). |
 
 Stop conditions: terminal-phase checkpoint exists (`review.json` once the committee has run, or `final.json` when `AUTOLAB_SKIP_REVIEW=1`), `STOP` file at repo root, or you Ctrl+C. There is no dollar budget cap.
 

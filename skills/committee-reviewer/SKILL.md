@@ -36,7 +36,7 @@ A `## Persona focus` block is also injected; it tells you what to look at most c
 
 ## Recommended model
 
-`opus-4-7`
+`fable-5`
 
 ## Persona scopes (for reference)
 

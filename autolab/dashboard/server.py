@@ -26,6 +26,8 @@ from autolab.paths import (
     cost_ledger,
     drafts_dir,
     experiments_dir,
+    gate_decision,
+    gate_request,
     history_log,
     list_projects,
     orchestrator_log,
@@ -41,6 +43,8 @@ PHASES = [
     "survey",
     "gap-fill",
     "screen",
+    "select",
+    "thought-experiment",
     "design",
     "run",
     "critique",
@@ -78,11 +82,26 @@ PHASE_DESCRIPTIONS = {
         "titles against the survey results. High-severity HYPs are "
         "parked. Triggers idea retreat if too few survive."
     ),
+    "select": (
+        "Human-in-the-loop gate. The run BLOCKS here: you pick which "
+        "surviving hypotheses to pursue, or request a fresh batch (with "
+        "optional feedback) from the panel at the top of this view. "
+        "Bypassed when AUTOLAB_SKIP_GATE=1."
+    ),
+    "thought-experiment": (
+        "thought-experimenter rolls out a deliberate toy problem per "
+        "surviving Hypothesis — pure reasoning, no compute. It isolates "
+        "the mechanism, simulates it against the null, names failure "
+        "modes, and renders a verdict (promising / inconclusive / "
+        "refuted). Scalability is contemplated only after the toy "
+        "rollout. Refuted hypotheses are parked and never reach design."
+    ),
     "design": (
         "experiment-designer emits one ExperimentPlan per surviving "
-        "Hypothesis. Each plan must include ≥3 seeds and a "
-        "matched-budget baseline; missing fields are rejected by the "
-        "runner."
+        "Hypothesis, building the first informative (non-toy) step beyond "
+        "the thought experiment's toy problem. Each plan must include ≥3 "
+        "seeds and a matched-budget baseline; missing fields are rejected "
+        "by the runner."
     ),
     "run": (
         "experiment-runner sanity-gates each plan (32-example overfit), "
@@ -457,6 +476,26 @@ def event_decision_summary(ev: dict) -> str:
         wt = ev.get("wildness_tickets") or ev.get("wildness_ticket")
         if wt:
             parts.append(f"**Wildness:** {wt}")
+        return "\n".join(parts)
+
+    if t == "ThoughtExperiment":
+        verdict = (ev.get("verdict") or "?").strip()
+        hid = ev.get("hypothesis_id") or ""
+        marker = {
+            "promising": "✓ promising",
+            "inconclusive": "~ inconclusive",
+            "refuted": "✗ refuted",
+        }.get(verdict.lower(), verdict)
+        parts = [f"**{marker}**" + (f" for `{hid}`" if hid else "")]
+        toy = ev.get("toy_problem") or ""
+        if toy:
+            parts.append(f"**Toy problem:** {_truncate(toy, 220)}")
+        pred = ev.get("predicted_outcome") or ""
+        if pred:
+            parts.append(f"**Predicts:** {_truncate(pred, 200)}")
+        scale = ev.get("scalability_note") or ""
+        if scale and verdict.lower() != "refuted":
+            parts.append(f"**Next (toward scale):** {_truncate(scale, 200)}")
         return "\n".join(parts)
 
     if t == "LitFinding":
@@ -852,6 +891,40 @@ def _phase_narrative(phase: str, arts: list[dict], thread: list[dict]) -> list[d
             )
         return out
 
+    if phase == "thought-experiment":
+        tes = _by_type(arts, "ThoughtExperiment")
+        if tes:
+            counts = {"promising": 0, "inconclusive": 0, "refuted": 0}
+            for te in tes:
+                v = (te.get("verdict") or "").strip().lower()
+                if v in counts:
+                    counts[v] += 1
+            bits = [f"{n} {v}" for v, n in counts.items() if n]
+            tail = f" ({', '.join(bits)})" if bits else ""
+            noun = "toy-problem thought experiment" + ("s" if len(tes) != 1 else "")
+            out.append(
+                {
+                    "kind": "thought-experiment",
+                    "ts": _earliest_ts(tes),
+                    "text": f"Rolled out {len(tes)} {noun}{tail}",
+                    "ids": [t["id"] for t in tes],
+                }
+            )
+            for te in tes:
+                if (te.get("verdict") or "").strip().lower() != "refuted":
+                    continue
+                hid = te.get("hypothesis_id") or "?"
+                why = (te.get("predicted_outcome") or te.get("summary") or "").strip()
+                out.append(
+                    {
+                        "kind": "parked",
+                        "ts": _ts(te),
+                        "text": f"Refuted {hid} on a toy problem (parked): {why[:140]}",
+                        "ids": [te["id"], hid],
+                    }
+                )
+        return out
+
     if phase == "design":
         plans = [p for p in _by_type(arts, "ExperimentPlan") if not p.get("is_ablation")]
         if plans:
@@ -1116,6 +1189,7 @@ def active_work(pid: str) -> dict:
             {
                 "id": h["id"],
                 "claim": (h.get("claim") or h.get("summary") or "")[:240],
+                "plain_summary": (h.get("plain_summary", "") or "")[:400],
                 "prediction_metric": h.get("prediction_metric", "") or "",
                 "prediction_threshold": h.get("prediction_threshold"),
                 "prediction_direction": h.get("prediction_direction", "") or "",
@@ -1144,9 +1218,54 @@ def active_work(pid: str) -> dict:
     return {"hypotheses": alive_hyps, "plans": active_plans}
 
 
+def read_gate(pid: str) -> dict | None:
+    """Return the current hypothesis-gate request for the project, or None.
+
+    Only a `status=waiting` gate is surfaced to the UI as actionable; applied /
+    consumed gates return None so the panel disappears once resolved.
+    """
+    p = gate_request(pid)
+    if not p.exists():
+        return None
+    try:
+        g = json.loads(p.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    if g.get("status") != "waiting":
+        return None
+    return g
+
+
+def write_gate_decision(pid: str, decision: dict) -> dict:
+    """Persist a user decision from the dashboard for the orchestrator to pick
+    up. Validates the action and stamps the request it answers."""
+    action = str(decision.get("action") or "select").strip().lower()
+    if action not in ("select", "regenerate"):
+        return {"error": "bad_action", "action": action}
+    gate = read_gate(pid)
+    if gate is None:
+        return {"error": "no_open_gate"}
+    valid_ids = {h.get("id") for h in gate.get("hypotheses", [])}
+    payload: dict = {
+        "action": action,
+        "request_created_at": gate.get("created_at"),
+        "decided_at": datetime.now(UTC).isoformat(timespec="seconds"),
+    }
+    if action == "select":
+        chosen = [c for c in (decision.get("hypothesis_ids") or []) if c in valid_ids]
+        if not chosen:
+            return {"error": "no_valid_hypotheses"}
+        payload["hypothesis_ids"] = chosen
+    else:  # regenerate
+        payload["feedback"] = str(decision.get("feedback") or "").strip()
+    gate_decision(pid).write_text(json.dumps(payload, indent=2))
+    return {"ok": True, "action": action, **payload}
+
+
 def project_detail(pid: str) -> dict:
     return {
         **project_summary(pid),
+        "gate": read_gate(pid),
         "checkpoints": list_checkpoints(pid),
         "ledger": parse_ledger(cost_ledger(pid)),
         "thoughts": list_thoughts(pid),
@@ -1282,6 +1401,28 @@ class Handler(BaseHTTPRequestHandler):
                         return self._json({"error": "missing_name"}, code=400)
                     return self._json(read_draft_full(pid, parts[2]))
                 return self._json({"error": "unknown_subpath"}, code=404)
+            self.send_error(404, "Not Found")
+        except Exception as e:
+            self._json({"error": str(e)}, code=500)
+
+    def do_POST(self):
+        url = urlparse(self.path)
+        path = url.path
+        try:
+            # /api/project/<pid>/gate  — submit a hypothesis-gate decision
+            if path.startswith("/api/project/") and path.endswith("/gate"):
+                pid = path[len("/api/project/") : -len("/gate")]
+                if pid not in list_projects():
+                    return self._json({"error": "not_found", "id": pid}, code=404)
+                length = int(self.headers.get("Content-Length") or 0)
+                raw = self.rfile.read(length) if length else b"{}"
+                try:
+                    decision = json.loads(raw.decode("utf-8") or "{}")
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    return self._json({"error": "bad_json"}, code=400)
+                result = write_gate_decision(pid, decision)
+                code = 200 if result.get("ok") else 400
+                return self._json(result, code=code)
             self.send_error(404, "Not Found")
         except Exception as e:
             self._json({"error": str(e)}, code=500)

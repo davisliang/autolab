@@ -40,7 +40,7 @@ A single `Critique` artifact per invocation, via `python -m autolab.append_artif
 
 ## Recommended model
 
-`opus-4-7` for `boredom` and `validity`; `sonnet-4-6` for `failure-analysis`.
+`fable-5`
 
 ## Procedure (mode=boredom)
 
@@ -49,8 +49,9 @@ A single `Critique` artifact per invocation, via `python -m autolab.append_artif
    - **Trivial** — its prediction is mechanically obvious from a textbook result
    - **Known** — there is a paper (cite arxiv id from the LitFinding set if possible) that already answers it
    - **Dead end** — even if the prediction holds, the result wouldn't be interesting (no follow-up, no implication)
+   - **Myopic** — the claim is small even if novel and true: it probes a single mechanism with a single number on a toy that answers a question nobody was asking. The tell: it has no stated *bigger question*, or nobody would act differently if the answer were yes, or the honest answer to "and then what?" is "nothing." Exotic framing (a cross-domain analogy, an unusual source field) does NOT rescue a myopic claim — flag it anyway. This is the most common defect; look for it hardest.
 3. If no strong case can be made: emit a `Critique` with `severity=low` and one concern saying "no boredom angle found".
-4. Otherwise: emit `severity=med` (one of {trivial, known, dead-end} arguably applies) or `severity=high` (clearly applies, with citation).
+4. Otherwise: emit `severity=med` (one of {trivial, known, dead-end, myopic} arguably applies) or `severity=high` (clearly applies — for `known`, with a citation; for `myopic`, when you cannot name any consequence or follow-up).
 5. The orchestrator parks Hypotheses with `severity=high`.
 
 ## Procedure (mode=validity)

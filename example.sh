@@ -21,7 +21,8 @@ cd "$REPO_DIR"
 
 # (a) Inline string. Safe for short ideas; avoid embedded apostrophes/quotes
 #     because the shell will split them across argv.
-IDEA="We want to build an AI superforecaster. We want to predict arbitrary future events including one-off non-repeatable events like geopolitical events but also potentially more frequent phenomena like macro economic reporting data. We want to at once leverage patterns in numerical data and at the same time to engage in open world reasoning (for example: when forecasting demand for a product, evidence might come from numerical trends and month-over-month purchasing data but also in the form of online chatter or product reviews). Ideal system should be able to adaptively leverage the appropriate mode of inquiry depending on the query. Taken in aggregate across a large population of queries, predictions should be both internally consistent and probabilistically coherent."
+
+IDEA="I'm working on building a router that can properly route between models based on model capability and expected task performance. Can you figure out an optimal way to do this that is better than what I've already tried? Take a look at this repo to check out what I've tried (https://github.com/davisliang/routerllm) and take a look at some of these examples to see what others have tried https://cognition.com/blog/devin-fusion https://sakana.ai/fugu/ https://openrouter.ai/blog/announcements/fusion-beats-frontier/ https://github.com/NVIDIA-AI-Blueprints/llm-router Specifically I want you to explore novel MODELING methodologies."
 
 # (b) From a file. Recommended for long, multi-paragraph ideas.
 # IDEA_FILE="$REPO_DIR/my-idea.txt"
@@ -55,7 +56,7 @@ export AUTOLAB_MAX_CRASH_RETRIES="${AUTOLAB_MAX_CRASH_RETRIES:-20}"
 # different experimental setup (keeping the same hypotheses). After this
 # many cycles, it falls through to `critique` where the broader
 # experiment-retreat may park the hypotheses and retreat to `survey`.
-export AUTOLAB_MAX_RUN_DESIGN_CYCLES="${AUTOLAB_MAX_RUN_DESIGN_CYCLES:-10}"
+export AUTOLAB_MAX_RUN_DESIGN_CYCLES="${AUTOLAB_MAX_RUN_DESIGN_CYCLES:-1000}"
 
 # Cap committee-review loopbacks. After this many rounds, the paper ships
 # unconditionally regardless of reviewer recommendations. Each cycle =
@@ -70,13 +71,25 @@ export AUTOLAB_MAX_REVIEW_CYCLES="${AUTOLAB_MAX_REVIEW_CYCLES:-5}"
 # Uncomment either to skip that step. The orchestrator still runs every
 # other phase normally; only the named step is bypassed.
 
-# Skip the polish pass at the end of `final` (saves ~1 opus call). The
+# Skip the polish pass at the end of `final` (saves ~1 fable call). The
 # unpolished assembled paper is still written to drafts/paper-vFINAL.md.
 # export AUTOLAB_SKIP_POLISH=1
 
-# Skip the committee-review phase entirely (saves 3 opus calls per cycle).
+# Skip the committee-review phase entirely (saves 3 fable calls per cycle).
 # The paper ships straight from `final` with no reviewer feedback.
 # export AUTOLAB_SKIP_REVIEW=1
+
+# Human-in-the-loop hypothesis gate. By default, after `screen` the run
+# BLOCKS and waits for you to pick which surviving hypotheses to pursue (or
+# request a fresh batch, with optional feedback) from the dashboard's gate
+# panel. For hands-off / overnight / watchdog runs, bypass it so the run
+# proceeds with every surviving hypothesis:
+# export AUTOLAB_SKIP_GATE=1
+#
+# How long the gate blocks waiting for your decision, in seconds. 0 (default)
+# waits indefinitely; set a value to auto-proceed with all survivors after a
+# timeout. Poll interval is AUTOLAB_GATE_POLL_S (default 2).
+# export AUTOLAB_GATE_TIMEOUT_S=0
 
 # ---------------------------------------------------------------------------
 # 4. Optional CLI flags for scripts/start.

@@ -31,6 +31,7 @@ from autolab.paths import thoughts_dir, thread_log
 TYPE_PREFIX = {
     "Idea": "IDEA",
     "Hypothesis": "HYP",
+    "ThoughtExperiment": "TOY",
     "LitFinding": "LIT",
     "Citation": "CITE",
     "ExperimentPlan": "EXP",

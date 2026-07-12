@@ -20,6 +20,8 @@ class TestPhaseConstants:
             "survey",
             "gap-fill",
             "screen",
+            "select",
+            "thought-experiment",
             "design",
             "run",
             "critique",
@@ -27,6 +29,12 @@ class TestPhaseConstants:
             "final",
             "review",
         ]
+
+    def test_select_gate_between_screen_and_thought_experiment(self):
+        # The human-in-the-loop selection gate must sit right after screen
+        # (survivors known) and before any compute is planned.
+        assert orch.PHASES.index("select") == orch.PHASES.index("screen") + 1
+        assert orch.PHASES.index("select") < orch.PHASES.index("thought-experiment")
 
     def test_review_is_terminal_phase(self):
         # `review` is the new terminal phase; it gates whether the paper
@@ -622,3 +630,159 @@ class TestStopConditionsTracksTerminalPhase:
         msg = orch.stop_conditions_met()
         assert msg is not None
         assert terminal in msg, f"stop message should mention the terminal phase; got: {msg!r}"
+
+
+class TestHypothesisGate:
+    """The human-in-the-loop `select` gate: blocks after screen, lets the user
+    pick hypotheses or regenerate, and is bypassable for headless runs."""
+
+    def test_run_phase_dispatches_select(self):
+        import inspect
+
+        src = inspect.getsource(orch.run_phase)
+        assert "phase_select()" in src
+
+    def test_phase_select_respects_skip_env_var(self):
+        import inspect
+
+        src = inspect.getsource(orch.phase_select)
+        assert "AUTOLAB_SKIP_GATE" in src, (
+            "phase_select must honor AUTOLAB_SKIP_GATE so headless/overnight "
+            "runs are not blocked forever waiting for a human"
+        )
+
+    def test_phase_select_blocks_on_a_decision_file(self):
+        import inspect
+
+        src = inspect.getsource(orch.phase_select)
+        # It must poll for a decision rather than returning immediately.
+        assert "time.sleep" in src
+        assert "STOP_FILE" in src, "the gate must stay interruptible via STOP"
+
+    def test_gate_regen_check_exists_and_targets_expand(self):
+        import inspect
+
+        assert hasattr(orch, "gate_regen_check") and callable(orch.gate_regen_check)
+        src = inspect.getsource(orch.gate_regen_check)
+        assert 'return "expand"' in src, "a regenerate decision must loop back to expand"
+
+    def test_next_phase_dispatches_gate_regen_after_select(self):
+        import inspect
+
+        src = inspect.getsource(orch.next_phase_to_run)
+        assert "gate_regen_check" in src
+        assert 'cur == "select"' in src
+
+    def test_surviving_hypotheses_honors_gate_deselect(self):
+        import inspect
+
+        src = inspect.getsource(orch.surviving_hypotheses)
+        assert "gate-deselect" in src, "user-deselected hypotheses must be excluded from survivors"
+
+
+class TestCallClaudeRetry:
+    """call_claude must retry transient API failures, resuming the
+    interrupted session so cached context and partial work survive."""
+
+    def _patch_io(self, monkeypatch, tmp_path, results):
+        """Stub out file IO, logging, and subprocess for call_claude.
+
+        `results` is a list of fake CompletedProcess objects returned by
+        successive subprocess.run calls. Returns (cmds, sleeps) capturing
+        the argv of each spawn and any backoff sleeps."""
+        from types import SimpleNamespace
+
+        prog = tmp_path / "program.md"
+        prog.write_text("sys prompt")
+        monkeypatch.setattr(orch, "PROGRAM", prog)
+        monkeypatch.setattr(orch, "project_paths_block", lambda: "")
+        monkeypatch.setattr(orch, "get_project_id", lambda: "proj-test")
+        monkeypatch.setattr(orch, "log_line", lambda *a, **k: None)
+        monkeypatch.setattr(orch, "append_cost", lambda *a, **k: None)
+        sleeps = []
+        monkeypatch.setattr(orch.time, "sleep", lambda s: sleeps.append(s))
+        cmds = []
+
+        def fake_run(cmd, **kw):
+            cmds.append(cmd)
+            return results[len(cmds) - 1]
+
+        monkeypatch.setattr(orch.subprocess, "run", fake_run)
+        return cmds, sleeps, SimpleNamespace
+
+    def test_success_first_try_spawns_once(self, monkeypatch, tmp_path):
+        import json as _json
+        from types import SimpleNamespace
+
+        ok = SimpleNamespace(
+            returncode=0,
+            stdout=_json.dumps({"type": "result", "result": "done", "usage": {}}),
+            stderr="",
+        )
+        cmds, sleeps, _ = self._patch_io(monkeypatch, tmp_path, [ok])
+        env = orch.call_claude("gap-fill", "idea-expander", "fable", "do the thing")
+        assert env["result"] == "done"
+        assert len(cmds) == 1
+        assert sleeps == []
+        assert "do the thing" in cmds[0]
+
+    def test_api_failure_retries_with_resume(self, monkeypatch, tmp_path):
+        import json as _json
+        from types import SimpleNamespace
+
+        # First attempt: dropped connection — rc=1, but the stream events
+        # carry the session id of the interrupted session.
+        failed = SimpleNamespace(
+            returncode=1,
+            stdout=_json.dumps([{"type": "system", "subtype": "init", "session_id": "sess-123"}]),
+            stderr="",
+        )
+        ok = SimpleNamespace(
+            returncode=0,
+            stdout=_json.dumps({"type": "result", "result": "done", "usage": {}}),
+            stderr="",
+        )
+        cmds, sleeps, _ = self._patch_io(monkeypatch, tmp_path, [failed, ok])
+        env = orch.call_claude("gap-fill", "idea-expander", "fable", "do the thing")
+        assert env["result"] == "done"
+        assert len(cmds) == 2
+        assert sleeps == [orch.API_RETRY_BACKOFF_S]
+        # The retry must resume the interrupted session, not restart cold.
+        assert "--resume" in cmds[1]
+        assert cmds[1][cmds[1].index("--resume") + 1] == "sess-123"
+        assert orch.RESUME_PROMPT in cmds[1]
+
+    def test_exhausted_retries_raise_system_exit(self, monkeypatch, tmp_path):
+        from types import SimpleNamespace
+
+        import pytest
+
+        failed = SimpleNamespace(returncode=1, stdout="", stderr="boom")
+        results = [failed] * (1 + orch.MAX_API_RETRIES)
+        cmds, sleeps, _ = self._patch_io(monkeypatch, tmp_path, results)
+        with pytest.raises(SystemExit) as exc:
+            orch.call_claude("gap-fill", "idea-expander", "fable", "do the thing")
+        assert len(cmds) == 1 + orch.MAX_API_RETRIES
+        assert f"after {1 + orch.MAX_API_RETRIES} attempts" in str(exc.value)
+
+    def test_timeout_still_returns_error_dict_without_retry(self, monkeypatch, tmp_path):
+        # Timeouts keep their old contract: an error envelope, no retry loop
+        # (callers like crash_retry_pass handle timeouts themselves).
+        self._patch_io(monkeypatch, tmp_path, [])
+
+        def raise_timeout(cmd, **kw):
+            raise orch.subprocess.TimeoutExpired(cmd=cmd, timeout=1)
+
+        monkeypatch.setattr(orch.subprocess, "run", raise_timeout)
+        env = orch.call_claude("gap-fill", "idea-expander", "fable", "x", timeout_s=1)
+        assert env == {"is_error": True, "error": "timeout", "result": ""}
+
+    def test_extract_session_id_prefers_envelope(self):
+        assert (
+            orch._extract_session_id(
+                [{"session_id": "from-events"}], {"session_id": "from-envelope"}
+            )
+            == "from-envelope"
+        )
+        assert orch._extract_session_id([{"session_id": "from-events"}], {}) == "from-events"
+        assert orch._extract_session_id({}, {}) is None
